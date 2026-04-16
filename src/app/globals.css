@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #080808;
+  --color-foreground: #ffffff;
+  --color-green: #b0ff00;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-geist);
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #080808;
+  color: #ffffff;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ─── Eyebrow pulse ──────────────────────────────────────── */
+@keyframes eyebrow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(176, 255, 0, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(176, 255, 0, 0); }
+}
+
+.eyebrow-dot {
+  animation: eyebrow-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Canvas fade mask ───────────────────────────────────── */
+.canvas-fade {
+  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}
+
+/* ─── Search input ───────────────────────────────────────── */
+.search-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0;
+  color: #ffffff;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-weight: 700;
+  width: 100%;
+  padding: 0.75rem 0;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  outline: none;
+  transition: border-color 0.25s ease;
+  letter-spacing: -0.02em;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 400;
+}
+
+.search-input:focus {
+  border-bottom-color: #b0ff00;
+}
+
+/* ─── Service card top-border hover ─────────────────────── */
+.service-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #b0ff00;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.service-card:hover::before {
+  width: 100%;
+}
+
+/* ─── Platform tag ───────────────────────────────────────── */
+.platform-tag {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.platform-tag:hover {
+  border-color: #b0ff00;
+  color: #b0ff00;
+}
+
+/* ─── Template scroll container ─────────────────────────── */
+.templates-scroll {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 5%,
+    black 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 5%,
+    black 95%,
+    transparent 100%
+  );
+  scrollbar-width: none;
+}
+
+.templates-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Blog content ───────────────────────────────────────── */
+.blog-content {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.blog-content h2 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.blog-content p {
+  margin-bottom: 1.25rem;
+}
+
+.blog-content ul {
+  margin-bottom: 1.25rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.blog-content li {
+  margin-bottom: 0.5rem;
+}
+
+.blog-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.blog-content a {
+  color: #b0ff00;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.2s;
+}
+
+.blog-content a:hover {
+  opacity: 0.75;
+}
