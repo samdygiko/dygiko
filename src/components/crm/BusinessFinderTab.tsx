@@ -91,19 +91,19 @@ export default function BusinessFinderTab() {
   const crmIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    // Always merge Firestore entries into localStorage so imported history is picked up
+    // even on devices that already have some local entries.
     const existing = loadHistory();
-    if (existing.size > 0) {
-      setHistoryCount(existing.size);
-      return;
-    }
-    // First visit on this device: seed localStorage from Firestore if available
+    setHistoryCount(existing.size);
     getDoc(doc(db, "config", "searchHistory")).then((snap) => {
       if (!snap.exists()) return;
-      const entries: string[] = snap.data()?.entries ?? [];
-      if (entries.length === 0) return;
+      const remote: string[] = snap.data()?.entries ?? [];
+      if (remote.length === 0) return;
+      const merged = new Set([...existing, ...remote]);
+      if (merged.size === existing.size) return; // nothing new
       try {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
-        setHistoryCount(entries.length);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify([...merged]));
+        setHistoryCount(merged.size);
       } catch {}
     }).catch(() => {});
   }, []);
