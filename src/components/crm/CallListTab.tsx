@@ -19,6 +19,18 @@ import { GBP_CATEGORIES } from "@/lib/gbp-categories";
 import Combobox from "@/components/crm/Combobox";
 
 type CallStatus = "New" | "Pending callback" | "Not interested" | "Closed";
+type StatusFilter = "All" | "New" | "Pending/Callback" | "Not Interested" | "Closed";
+
+const STATUS_FILTERS: StatusFilter[] = ["All", "New", "Pending/Callback", "Not Interested", "Closed"];
+
+function matchesStatusFilter(status: string, filter: StatusFilter): boolean {
+  if (filter === "All") return true;
+  if (filter === "New") return /^new$/i.test(status) || !status;
+  if (filter === "Pending/Callback") return /pending|callback/i.test(status);
+  if (filter === "Not Interested") return /not.?interested/i.test(status);
+  if (filter === "Closed") return /^closed$/i.test(status);
+  return false;
+}
 
 const STATUS_COLORS: Record<CallStatus, { bg: string; color: string }> = {
   New: { bg: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)" },
@@ -102,6 +114,8 @@ export default function CallListTab() {
   const [searched, setSearched] = useState(false);
 
   const [callList, setCallList] = useState<CallEntry[]>([]);
+  const [callSearch, setCallSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [scriptOpen, setScriptOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
@@ -220,6 +234,26 @@ export default function CallListTab() {
 
   const unadded = results.filter((r) => !addedIds.has(r.placeId));
   const selectedResults = results.filter((r) => selectedIds.has(r.placeId));
+
+  const statusCounts = Object.fromEntries(
+    STATUS_FILTERS.map((f) => [
+      f,
+      f === "All" ? callList.length : callList.filter((e) => matchesStatusFilter(e.status, f)).length,
+    ])
+  ) as Record<StatusFilter, number>;
+
+  const filteredCallList = callList.filter((e) => {
+    if (!matchesStatusFilter(e.status, statusFilter)) return false;
+    if (callSearch.trim()) {
+      const q = callSearch.toLowerCase();
+      return (
+        e.businessName?.toLowerCase().includes(q) ||
+        e.phone?.toLowerCase().includes(q) ||
+        e.address?.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   function toggleSelect(placeId: string) {
     setSelectedIds((prev) => {
@@ -446,21 +480,67 @@ export default function CallListTab() {
           {/* Saved call list */}
           {callList.length > 0 && (
             <div className="shrink-0">
-              <h3 className="text-base font-semibold text-white mb-3">
-                Saved call list ({callList.length})
-              </h3>
-              <div className="flex flex-col gap-3">
-                {callList.map((entry) => (
-                  <CallListCard
-                    key={entry.id}
-                    entry={entry}
-                    onStatusChange={updateStatus}
-                    onNotesChange={updateNotes}
-                    onDelete={(id, name) => confirmDelete(id, name)}
-                    onSubmitToLeads={() => setMoveToLeadsId(entry.id)}
-                  />
-                ))}
+              <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                <h3 className="text-base font-semibold text-white">
+                  Saved call list{" "}
+                  <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>
+                    ({filteredCallList.length}{filteredCallList.length !== callList.length ? ` of ${callList.length}` : ""})
+                  </span>
+                </h3>
               </div>
+
+              {/* Search bar */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  value={callSearch}
+                  onChange={(e) => setCallSearch(e.target.value)}
+                  placeholder="Search by name, phone, or address…"
+                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                  style={inputSt}
+                />
+              </div>
+
+              {/* Status filter buttons */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {STATUS_FILTERS.map((f) => {
+                  const active = statusFilter === f;
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setStatusFilter(f)}
+                      className="text-xs px-3 py-1.5 rounded-sm font-medium transition-colors"
+                      style={{
+                        background: active ? "#b0ff00" : "rgba(255,255,255,0.05)",
+                        color: active ? "#000" : "rgba(255,255,255,0.5)",
+                        border: `1px solid ${active ? "#b0ff00" : "rgba(255,255,255,0.1)"}`,
+                      }}
+                    >
+                      {f} ({statusCounts[f]})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {filteredCallList.length === 0 ? (
+                <div className="rounded-sm px-5 py-8 text-center text-sm" style={{ border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)" }}>
+                  No businesses match this filter.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {filteredCallList.map((entry) => (
+                    <CallListCard
+                      key={entry.id}
+                      entry={entry}
+                      onStatusChange={updateStatus}
+                      onNotesChange={updateNotes}
+                      onDelete={(id, name) => confirmDelete(id, name)}
+                      onSubmitToLeads={() => setMoveToLeadsId(entry.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
