@@ -242,18 +242,26 @@ export default function CallListTab() {
     ])
   ) as Record<StatusFilter, number>;
 
-  const filteredCallList = callList.filter((e) => {
-    if (!matchesStatusFilter(e.status, statusFilter)) return false;
-    if (callSearch.trim()) {
-      const q = callSearch.toLowerCase();
-      return (
-        e.businessName?.toLowerCase().includes(q) ||
-        e.phone?.toLowerCase().includes(q) ||
-        e.address?.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const filteredCallList = callList
+    .filter((e) => {
+      if (!matchesStatusFilter(e.status, statusFilter)) return false;
+      if (callSearch.trim()) {
+        const q = callSearch.toLowerCase();
+        return (
+          e.businessName?.toLowerCase().includes(q) ||
+          e.phone?.toLowerCase().includes(q) ||
+          e.address?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const aNotInterested = /not.?interested/i.test(a.status ?? "");
+      const bNotInterested = /not.?interested/i.test(b.status ?? "");
+      if (aNotInterested && !bNotInterested) return 1;
+      if (!aNotInterested && bNotInterested) return -1;
+      return 0;
+    });
 
   function toggleSelect(placeId: string) {
     setSelectedIds((prev) => {
@@ -672,10 +680,16 @@ function CallListCard({
     setSavingNotes(false);
   }
 
+  const isNotInterested = /not.?interested/i.test(entry.status ?? "");
+
   return (
     <div
       className="rounded-sm p-4 flex flex-col gap-3"
-      style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}
+      style={{
+        border: `1px solid ${isNotInterested ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)"}`,
+        background: "rgba(255,255,255,0.02)",
+        opacity: isNotInterested ? 0.45 : 1,
+      }}
     >
       {/* Top */}
       <div className="flex items-start gap-3">

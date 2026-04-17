@@ -9,8 +9,9 @@ import DygikoLogo from "@/components/DygikoLogo";
 import BusinessFinderTab from "@/components/crm/BusinessFinderTab";
 import CRMTab from "@/components/crm/CRMTab";
 import LeadsTab from "@/components/crm/LeadsTab";
+import ClientsTab from "@/components/crm/ClientsTab";
 
-const TABS = ["Business Finder", "CRM", "Leads", "Admin", "Design"] as const;
+const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = [
@@ -43,6 +44,7 @@ const TAB_ICONS: Record<Tab, string> = {
   "Business Finder": "🔍",
   CRM: "☎",
   Leads: "◎",
+  Clients: "◈",
   Admin: "⚙",
   Design: "✦",
 };
@@ -54,6 +56,7 @@ export default function CRMPage() {
   const [callCount, setCallCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
+  const [clientsCount, setClientsCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -62,13 +65,20 @@ export default function CRMPage() {
 
   useEffect(() => {
     if (!user) return;
-    const u1 = onSnapshot(collection(db, "callList"), (s) => setCallCount(s.size));
+    const u1 = onSnapshot(collection(db, "callList"), (s) => {
+      const active = s.docs.filter((d) => {
+        const data = d.data();
+        return !data.movedToLeads && !/not.?interested/i.test(data.status ?? "");
+      });
+      setCallCount(active.length);
+    });
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
       setLeadsCount(docs.length);
       setClosedCount(docs.filter((d) => d.stage === "Closed").length);
     });
-    return () => { u1(); u2(); };
+    const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
+    return () => { u1(); u2(); u3(); };
   }, [user]);
 
   if (loading || !user) {
@@ -116,6 +126,7 @@ export default function CRMPage() {
             {[
               { label: "CRM list", value: callCount },
               { label: "Leads", value: leadsCount },
+              { label: "Clients", value: clientsCount },
               { label: "Conversion", value: `${convRate}%` },
             ].map((stat) => (
               <div key={stat.label} className="flex items-center justify-between px-3 py-2.5 rounded-sm" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -166,6 +177,7 @@ export default function CRMPage() {
           </div>
           {tab === "CRM" && <CRMTab />}
           {tab === "Leads" && <LeadsTab />}
+          {tab === "Clients" && <ClientsTab />}
           {tab === "Admin" && <AdminContent />}
           {tab === "Design" && <DesignContent />}
         </main>
