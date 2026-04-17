@@ -71,6 +71,15 @@ export default function LeadsTab() {
   const [moveToClientsId, setMoveToClientsId] = useState<string | null>(null);
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
+  const [callbackDay, setCallbackDay] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+    return d.toLocaleDateString("en-GB", { weekday: "long" });
+  });
+  const [copiedCallbackEmail, setCopiedCallbackEmail] = useState(false);
+  const [followUpNameWarning, setFollowUpNameWarning] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -89,6 +98,7 @@ export default function LeadsTab() {
         setPanelNotes(updated.notes ?? "");
         setPanelEmail(updated.email ?? "");
         setPanelName(updated.contactName ?? "");
+        setFollowUpNameWarning(false);
       }
     }
   }, [leads]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -144,6 +154,40 @@ export default function LeadsTab() {
     setMoveToClientsId(null);
     setMoveWebsiteUrl("");
     setMovingToClients(false);
+  }
+
+  // Ensure name is saved to Firestore before follow-up actions; returns false if name is missing
+  async function ensureNameSaved(): Promise<boolean> {
+    if (!selectedLead) return false;
+    if (!panelName.trim()) {
+      setFollowUpNameWarning(true);
+      return false;
+    }
+    setFollowUpNameWarning(false);
+    // Auto-save name to Firestore if it changed
+    if (panelName.trim() !== (selectedLead.contactName ?? "").trim()) {
+      await updateDoc(doc(db, "leads", selectedLead.id), { contactName: panelName.trim() });
+    }
+    return true;
+  }
+
+  async function handleSendCallbackText() {
+    const ok = await ensureNameSaved();
+    if (!ok || !selectedLead) return;
+    const phone = selectedLead.phone?.replace(/[\s()-]/g, "") ?? "";
+    const msg = `Hi ${panelName.trim()}, it's Samuel from Dygiko. Great speaking with you! I'll give you a call back ${callbackDay} as discussed. In the meantime feel free to check out our website: dygiko.com 😊`;
+    window.open(`sms:${phone}?&body=${encodeURIComponent(msg)}`);
+  }
+
+  async function handleCopyCallbackEmail() {
+    const ok = await ensureNameSaved();
+    if (!ok || !selectedLead) return;
+    const name = panelName.trim();
+    const biz = selectedLead.businessName;
+    const text = `Subject: Great speaking with you - Dygiko Web Design\n\nHi ${name},\n\nIt was great speaking with you today! As discussed, I'll give you a call back ${callbackDay} to walk you through what we can build for ${biz}.\n\nIn the meantime, feel free to check out our website to see examples of our work: dygiko.com\n\nLooking forward to speaking again!`;
+    await navigator.clipboard.writeText(text);
+    setCopiedCallbackEmail(true);
+    setTimeout(() => setCopiedCallbackEmail(false), 2500);
   }
 
   function formatDate(lead: Lead) {
@@ -457,6 +501,46 @@ export default function LeadsTab() {
                 >
                   {saving ? "Saving…" : "Save changes"}
                 </button>
+
+                {/* Follow-up tools */}
+                <div className="flex flex-col gap-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Follow-up</p>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Callback day</label>
+                    <input
+                      type="text"
+                      value={callbackDay}
+                      onChange={(e) => setCallbackDay(e.target.value)}
+                      placeholder="e.g. Monday"
+                      className="w-full rounded-sm px-3 py-2 text-xs outline-none"
+                      style={inputSt}
+                    />
+                  </div>
+                  {followUpNameWarning && (
+                    <p className="text-xs" style={{ color: "#ff9999" }}>
+                      Enter a contact name above first.
+                    </p>
+                  )}
+                  <button
+                    onClick={handleSendCallbackText}
+                    className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    💬 Send Callback Text
+                  </button>
+                  <button
+                    onClick={handleCopyCallbackEmail}
+                    className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+                    style={{
+                      background: copiedCallbackEmail ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.06)",
+                      color: copiedCallbackEmail ? "#b0ff00" : "rgba(255,255,255,0.7)",
+                      border: `1px solid ${copiedCallbackEmail ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
+                    }}
+                  >
+                    {copiedCallbackEmail ? "✓ Copied!" : "✉ Copy Callback Email"}
+                  </button>
+                </div>
+
                 <button
                   onClick={() => { setMoveToClientsId(selectedLead.id); setMoveWebsiteUrl(""); }}
                   className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80 mt-1"
