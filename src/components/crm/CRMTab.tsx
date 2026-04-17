@@ -180,13 +180,29 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
   }
 
   const searchQ = searchQuery.trim().toLowerCase();
-  const filteredList = searchQ
-    ? callList.filter(
-        (e) =>
-          e.businessName.toLowerCase().includes(searchQ) ||
-          (e.phone ?? "").toLowerCase().includes(searchQ)
-      )
-    : callList;
+
+  // Exclude movedToLeads entirely — sort not-interested to bottom
+  const visibleList = callList
+    .filter((e) => !e.movedToLeads)
+    .filter((e) =>
+      !searchQ ||
+      e.businessName.toLowerCase().includes(searchQ) ||
+      (e.phone ?? "").toLowerCase().includes(searchQ)
+    )
+    .sort((a, b) => {
+      const aNI = /not.?interested/i.test(a.status ?? "");
+      const bNI = /not.?interested/i.test(b.status ?? "");
+      if (aNI && !bNI) return 1;
+      if (!aNI && bNI) return -1;
+      return 0;
+    });
+
+  const filteredList = visibleList;
+
+  // Active count excludes not-interested and movedToLeads (for header display)
+  const activeCount = callList.filter(
+    (e) => !e.movedToLeads && !/not.?interested/i.test(e.status ?? "")
+  ).length;
 
   return (
     <div className="flex flex-col h-full">
@@ -195,7 +211,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
         <div>
           <h2 className="text-2xl font-bold text-white">CRM</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {callList.length} businesses to call through. Find more in Business Finder.
+            {activeCount} businesses to call through. Find more in Business Finder.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap shrink-0">
@@ -563,11 +579,16 @@ function CRMCard({
   }
 
   const callCount = entry.callCount ?? 0;
+  const isNotInterested = /not.?interested/i.test(entry.status ?? "");
 
   return (
     <div
       className="rounded-sm p-4 flex flex-col gap-3 shrink-0"
-      style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}
+      style={{
+        border: `1px solid ${isNotInterested ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)"}`,
+        background: "rgba(255,255,255,0.02)",
+        opacity: isNotInterested ? 0.4 : 1,
+      }}
     >
       {/* Top */}
       <div className="flex items-start gap-3">

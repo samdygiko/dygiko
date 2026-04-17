@@ -7,8 +7,10 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  addDoc,
   query,
   orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -66,6 +68,9 @@ export default function LeadsTab() {
   const [panelName, setPanelName] = useState("");
   const [saving, setSaving] = useState(false);
   const [scriptOpen, setScriptOpen] = useState(false);
+  const [moveToClientsId, setMoveToClientsId] = useState<string | null>(null);
+  const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
+  const [movingToClients, setMovingToClients] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -110,6 +115,35 @@ export default function LeadsTab() {
   async function deleteLead(id: string) {
     if (selectedLead?.id === id) setSelectedLead(null);
     await deleteDoc(doc(db, "leads", id));
+  }
+
+  async function confirmMoveToClients() {
+    if (!moveToClientsId) return;
+    const lead = leads.find((l) => l.id === moveToClientsId);
+    if (!lead) return;
+    setMovingToClients(true);
+
+    // Map "Basic £500" → "Basic" etc.
+    const pkgMap: Record<string, string> = {
+      "Basic £500": "Basic",
+      "Growth £750": "Growth",
+      "Full Business £1,500": "Full Business",
+    };
+    const clientPkg = pkgMap[lead.package] ?? "Basic";
+
+    await addDoc(collection(db, "clients"), {
+      businessName: lead.businessName,
+      email: lead.email ?? "",
+      package: clientPkg,
+      subscriptionStatus: "Active",
+      websiteUrl: moveWebsiteUrl.trim(),
+      dateAdded: serverTimestamp(),
+    });
+    await deleteDoc(doc(db, "leads", moveToClientsId));
+    if (selectedLead?.id === moveToClientsId) setSelectedLead(null);
+    setMoveToClientsId(null);
+    setMoveWebsiteUrl("");
+    setMovingToClients(false);
   }
 
   function formatDate(lead: Lead) {
@@ -312,14 +346,24 @@ export default function LeadsTab() {
                     </td>
                     <td className="py-3 px-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{formatDate(lead)}</td>
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => deleteLead(lead.id)}
-                        className="text-xs opacity-30 hover:opacity-80 transition-opacity"
-                        style={{ color: "#ff6b6b" }}
-                        title="Delete lead"
-                      >
-                        ✕
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => { setMoveToClientsId(lead.id); setMoveWebsiteUrl(""); }}
+                          className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
+                          style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)" }}
+                          title="Move to Clients"
+                        >
+                          → Client
+                        </button>
+                        <button
+                          onClick={() => deleteLead(lead.id)}
+                          className="text-xs opacity-30 hover:opacity-80 transition-opacity"
+                          style={{ color: "#ff6b6b" }}
+                          title="Delete lead"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -414,8 +458,15 @@ export default function LeadsTab() {
                   {saving ? "Saving…" : "Save changes"}
                 </button>
                 <button
-                  onClick={() => deleteLead(selectedLead.id)}
+                  onClick={() => { setMoveToClientsId(selectedLead.id); setMoveWebsiteUrl(""); }}
                   className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80 mt-1"
+                  style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)" }}
+                >
+                  Move to Clients →
+                </button>
+                <button
+                  onClick={() => deleteLead(selectedLead.id)}
+                  className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
                   style={{ background: "rgba(255,107,107,0.1)", color: "#ff6b6b", border: "1px solid rgba(255,107,107,0.2)" }}
                 >
                   Delete lead
@@ -429,6 +480,52 @@ export default function LeadsTab() {
           )}
         </div>
       )}
+
+      {/* Move to Clients modal */}
+      {moveToClientsId && (() => {
+        const lead = leads.find((l) => l.id === moveToClientsId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.75)" }}>
+            <div className="w-full max-w-sm rounded-sm p-6 flex flex-col gap-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-white">Move to Clients</h3>
+                <button onClick={() => setMoveToClientsId(null)} style={{ color: "rgba(255,255,255,0.35)" }}>✕</button>
+              </div>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Moving <span className="text-white font-medium">{lead?.businessName}</span> to Clients. This will remove them from Leads.
+              </p>
+              <div>
+                <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Website URL (optional)</label>
+                <input
+                  type="text"
+                  value={moveWebsiteUrl}
+                  onChange={(e) => setMoveWebsiteUrl(e.target.value)}
+                  placeholder="https://business.com"
+                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                  style={inputSt}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setMoveToClientsId(null)}
+                  className="flex-1 py-2.5 text-sm rounded-sm"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmMoveToClients}
+                  disabled={movingToClients}
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
+                  style={{ background: "#b0ff00" }}
+                >
+                  {movingToClients ? "Moving…" : "Move to Clients"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Closing script panel — fixed right */}
       {scriptOpen && (

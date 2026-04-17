@@ -155,11 +155,12 @@ export default function BusinessFinderTab() {
       // Load ALL CRM place IDs into memory once — instant dedup for every result, no per-item reads
       crmIdsRef.current = new Set<string>();
       try {
-        const [callListSnap, leadsSnap] = await Promise.all([
+        const [callListSnap, leadsSnap, clientsSnap] = await Promise.all([
           getDocs(collection(db, "callList")),
           getDocs(collection(db, "leads")),
+          getDocs(collection(db, "clients")),
         ]);
-        for (const doc of [...callListSnap.docs, ...leadsSnap.docs]) {
+        for (const doc of [...callListSnap.docs, ...leadsSnap.docs, ...clientsSnap.docs]) {
           const pid = doc.data().placeId as string | undefined;
           if (pid) crmIdsRef.current.add(pid);
         }
