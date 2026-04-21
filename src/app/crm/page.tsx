@@ -21,6 +21,8 @@ const PAYMENT_LINKS = [
 ];
 
 const QUICK_LINKS = [
+  { label: "Vercel Dashboard", url: "https://vercel.com/samdygikos-projects" },
+  { label: "GitHub — samdygiko", url: "https://github.com/samdygiko" },
   { label: "Firebase Console", url: "https://console.firebase.google.com/project/sako-digital" },
   { label: "IONOS", url: "https://my.ionos.co.uk" },
   { label: "Stripe Dashboard", url: "https://dashboard.stripe.com" },
