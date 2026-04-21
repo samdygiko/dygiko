@@ -72,7 +72,6 @@ export default function LeadsTab() {
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelTemplateLink, setPanelTemplateLink] = useState("");
-  const [scriptOpen, setScriptOpen] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -204,23 +203,6 @@ export default function LeadsTab() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Script toggle button */}
-      <button
-        onClick={() => setScriptOpen((v) => !v)}
-        className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80"
-        style={{
-          position: "fixed",
-          top: 16,
-          right: scriptOpen ? "calc(38% + 8px)" : 8,
-          zIndex: 51,
-          background: scriptOpen ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.05)",
-          color: scriptOpen ? "#b0ff00" : "rgba(255,255,255,0.6)",
-          border: `1px solid ${scriptOpen ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
-        }}
-      >
-        {scriptOpen ? "Hide script" : "📋 Script"}
-      </button>
-
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
@@ -579,37 +561,6 @@ export default function LeadsTab() {
           </div>
         );
       })()}
-
-      {/* Script panel — fixed right */}
-      {scriptOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            width: "38%",
-            height: "100vh",
-            overflowY: "auto",
-            zIndex: 50,
-            background: "#0d0d0d",
-            borderLeft: "1px solid rgba(255,255,255,0.1)",
-            padding: "24px",
-          }}
-        >
-          <p style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "20px" }}>
-            Cold Call Script
-          </p>
-
-          <div style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.25)", borderRadius: "4px", padding: "20px" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#b0ff00", marginBottom: "14px" }}>
-              Opening
-            </p>
-            <p style={{ fontSize: "15px", lineHeight: 1.8, color: "#ffffff" }}>
-              {`"Hi, how's it going? This is Sam from Dygiko — we noticed that you didn't have a website, and we wanted to offer to build you a free template website. If you liked it, we could get you on one of our packages."`}
-            </p>
-          </div>
-        </div>
-      )}
 
     </div>
   );
