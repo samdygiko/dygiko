@@ -499,6 +499,15 @@ export default function LeadsTab() {
                       )}
                     </div>
                   </div>
+                  {selectedLead.phone && panelTemplateLink && (
+                    <a
+                      href={`sms:${selectedLead.phone.replace(/\s/g, "")}?body=${encodeURIComponent(`Hi ${selectedLead.contactName || selectedLead.businessName}, here's your website template ${panelTemplateLink} 👍`)}`}
+                      className="text-xs py-2 rounded-sm font-medium transition-all hover:opacity-80 text-center"
+                      style={{ background: "rgba(168,85,247,0.12)", color: "#c084fc", border: "1px solid rgba(168,85,247,0.25)", textDecoration: "none", display: "block" }}
+                    >
+                      💬 Send Template Text
+                    </a>
+                  )}
                 </div>
 
                 <button
