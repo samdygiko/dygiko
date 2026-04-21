@@ -578,66 +578,6 @@ function AdminContent() {
         </div>
       </div>
 
-      {/* Payment Received Email */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-4">Payment Received Email</h3>
-        <div
-          className="rounded-sm p-5 flex flex-col gap-5"
-          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}
-        >
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
-              Client name
-            </label>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="e.g. James"
-              className="w-full rounded-sm px-3 py-2.5 text-sm outline-none max-w-xs"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-            />
-          </div>
-          <div>
-            <p className="text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>Subject</p>
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-white flex-1">{SUBJECT}</p>
-              <button
-                onClick={copySubject}
-                className="text-xs px-3 py-1.5 rounded-sm font-medium transition-all shrink-0"
-                style={{
-                  background: copiedSubject ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)",
-                  color: copiedSubject ? "#b0ff00" : "rgba(255,255,255,0.6)",
-                  border: `1px solid ${copiedSubject ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
-                }}
-              >
-                {copiedSubject ? "✓ Copied!" : "Copy subject"}
-              </button>
-            </div>
-          </div>
-          <div>
-            <p className="text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>Body</p>
-            <div
-              className="rounded-sm p-4 text-sm whitespace-pre-wrap mb-3"
-              style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.85)", lineHeight: 1.65 }}
-            >
-              {bodyWithName}
-            </div>
-            <button
-              onClick={copyBody}
-              className="text-xs px-3 py-1.5 rounded-sm font-medium transition-all"
-              style={{
-                background: copiedBody ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)",
-                color: copiedBody ? "#b0ff00" : "rgba(255,255,255,0.6)",
-                border: `1px solid ${copiedBody ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
-              }}
-            >
-              {copiedBody ? "✓ Copied!" : "Copy email body"}
-            </button>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

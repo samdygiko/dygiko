@@ -345,7 +345,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
               <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px', marginBottom: '28px' }}>
                 <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0ff00', marginBottom: '10px' }}>Opening</p>
                 <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#ffffff' }}>
-                  {`"Hi, how's it going? My name's ${callerName || '[X]'} from Dygiko — the reason I was calling is we noticed that your business didn't appear at the top of your search results, so we wanted to offer to build you a website."`}
+                  {`"Hi, how's it going? My name's ${callerName || '[X]'} from Dygiko — we noticed you didn't have a website, so we wanted to offer you a free template. If you liked it, we could get you on one of our packages."`}
                 </p>
               </div>
 
