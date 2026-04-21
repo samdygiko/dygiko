@@ -491,11 +491,9 @@ Great to speak with you! As discussed, here's your free website template:
 
 ${url}
 
-Take a look and let us know what you think — we can adjust colours, content, images, or layout before you commit to anything.
+All our websites are fully compatible with mobile and desktop.
 
-—
-
-When you're ready to go ahead, here's a quick overview of our packages:
+Here's a quick overview of our packages:
 
 Basic Website — £500 + £29/month
 ✓ Custom website design
@@ -520,11 +518,7 @@ Full Business Package — £1,500 + £29/month
 ✓ Custom CRM system
 ✓ WhatsApp & click-to-call button integration
 ✓ Live within 2 business days
-✓ Monthly hosting & support (£29/mo)
-
-No obligation at all — the template is completely free. If you'd like to chat through the options or have any questions, just reply here or give me a call.
-
-[Your signature]`;
+✓ Monthly hosting & support (£29/mo)`;
 }
 
 function AdminContent() {
