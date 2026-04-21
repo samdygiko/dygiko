@@ -486,6 +486,7 @@ function AdminContent() {
   const [clientName, setClientName] = useState("");
   const [copiedSubject, setCopiedSubject] = useState(false);
   const [copiedBody, setCopiedBody] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [openQuotePkg, setOpenQuotePkg] = useState<typeof QUOTE_TEMPLATES[0] | null>(null);
 
   const SUBJECT = "Welcome to Dygiko — Let's get started!";
@@ -516,18 +517,16 @@ function AdminContent() {
         <h3 className="text-base font-semibold text-white mb-4">Payment Links</h3>
         <div className="flex flex-col sm:flex-row gap-4">
           {PAYMENT_LINKS.map((item) => (
-            <a
+            <button
               key={item.label}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80"
-              style={{ background: "#b0ff00", textDecoration: "none", flex: "1 1 0" }}
+              onClick={() => { navigator.clipboard.writeText(item.url); setCopiedLink(item.label); setTimeout(() => setCopiedLink(null), 2000); }}
+              className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80 text-left"
+              style={{ background: copiedLink === item.label ? "rgba(176,255,0,0.12)" : "#b0ff00", flex: "1 1 0", border: copiedLink === item.label ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer" }}
             >
-              <span className="text-xs font-medium" style={{ color: "rgba(0,0,0,0.55)" }}>{item.label}</span>
-              <span className="text-xl font-black text-black">{item.price}</span>
-              <span className="text-xs font-medium" style={{ color: "rgba(0,0,0,0.45)" }}>Open Stripe checkout ↗</span>
-            </a>
+              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "rgba(176,255,0,0.6)" : "rgba(0,0,0,0.55)" }}>{item.label}</span>
+              <span className="text-xl font-black" style={{ color: copiedLink === item.label ? "#b0ff00" : "#000" }}>{item.price}</span>
+              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "#b0ff00" : "rgba(0,0,0,0.45)" }}>{copiedLink === item.label ? "✓ Link copied!" : "Copy payment link"}</span>
+            </button>
           ))}
         </div>
       </div>
