@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sako-digital",
+  "private_key_id": "961b1259bef6ab2f6bab1c33c36a7a5a79672431",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClG4Qrcfl7tUQZ\ncPutDM3rpV8PlS09JGekLX79YEgzeO5U2+GXhhrDwWZBhegFXgMGkEUGJCMp0dX6\nMjPZZXmPznD7gAFP5hwQ0QWtXNV/K5FJlDbxumsw7vNxmAdqzuZi69B8qIY3E9DB\njlKfSAfx2KGaUvv07Vt5kNmGweNI4jOF4bce9qA4mAgw9nlizOOQu8FsVHlGNgzR\ntmfABzu/JxMAmTMf/ybf/bNHSI30/m3dcCXcDHfG0qdHT4Raa/GAZzkOW9YzmVw7\njRZ4OiRpmUOU5JgHz9LuuEYdXHK6s/xSgi2FFnhC38ulP2ZjiyNlFjDCBxbiFlEf\n9yi3T/aLAgMBAAECggEAJiLMbQKG5yGPyLaVkzuFZrwMUHua9uftPnk5v0mZc7Yn\nipc9LLQPg46s0U6eMHsuBLqXDtuS+apbm84ztq+fG+3Jn/XJl8xlSCcXghsSvyxv\ngwjGhiASeTuAJIlCkVOX2FpyjhCY66jai5KVl+/Z0e1BKnWnd8PJYLNp4xvupRsn\nWKWiv/2LnXcwGD1y+TsAxQYKEtktaKP4IsK+EzB+h2qBDri+Y5RLH5GaXgLGyAeb\nD5iwhpv+3bnhQf5XBYBzW6n9j3f7p1HWpp5co8EbrVh4GntsADkdMOF6JscCgpIB\nAhplGda2BgkYBihM61NRVDA+M6rODVrSaG6NeisOQQKBgQDUO7B1frt6Bj+PMEV4\n9hx2IVHbcRvw/2l1ls5/Riq5sbyIW5FjFBymD64CbWneHjnyN2/l2bCXGrUDdK4B\nSPKD03wkemmGN2kk5BNbW+JCVbGcLRIpH0SD2lP1q3VMP8XdEDMwLDoPSpuP8Gt0\nz2mihFBmdPnViuZaMSmrEciFwQKBgQDHJ/JWnHJBBtxSwhvwVqus4PhaGTwYqazX\nyVImW1wrmgK0XKKYOV2VK1FF7N4ftEuHhoQGA55S6kmK9v1B5LoCBb/O4r7fpPd4\nO363KO4Ix+SegJ0yF3atm3zYEm8ZIImFmRegPHGzLIWC25v5KVAb+6kxyxXvhx35\nf8Uc1QiHSwKBgQDFmv3lqCYuq3qqe6tzwNMnOkbZJyt47JbooY2K+230kASWgYuQ\n0L0L8TV3lSApa8NQP0W0oUfGqVs46H7LO3xyOYsw+7kc+qKvcpyDR74XPWqtm1l5\naF+G1NWvvADvCcHU3qyKgeNdMX4+OwASNryIUOH7Q5cKuNVZzMSbP2eRAQKBgFWR\nRkAMS9LAnd045UQoGO7YYhxkBzwZetfj+dXdHwbkzxCrVHjO/PRgfjTrBqzcjC8Y\njpT+7QF3BE4evMWY/opr6fN73MK+YE1aUqFjhpJjQEkRvXiOOEFzMvqrQOys3Cl4\nk3wXPErdcCe/L46oP3EmeZWZSj118l0GlqxCo71tAoGAa0groR0LPJQlvVGqi9Gt\n6+5nSmn6FIHoiXqrkGYkpPxsrxcwfSE0g7D9Sfhb/KRMeK7oYUOknv00Ol8KUzTX\n7cajAjGP6ecZzKZlcVFF9EngnYqaJOFBx4HDsa4rDoAz4CN0V2D5jq0bbWImEEc7\nYuqtTXRu0IaUEX73HvrFbtA=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@sako-digital.iam.gserviceaccount.com",
+  "client_id": "114767918953119485747",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40sako-digital.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
