@@ -14,13 +14,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-type Stage = "Pending/Callback" | "Closed" | "Not Interested" | "Completed";
+type Stage = "Pending/Callback" | "Template Made & Sent" | "Closed" | "Not Interested" | "Completed";
 type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
 
-const STAGES: Stage[] = ["Pending/Callback", "Closed", "Not Interested", "Completed"];
+const STAGES: Stage[] = ["Pending/Callback", "Template Made & Sent", "Closed", "Not Interested", "Completed"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending/Callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
+  "Template Made & Sent": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
   Closed: { bg: "rgba(72,199,142,0.15)", color: "#48c78e" },
   "Not Interested": { bg: "rgba(255,107,107,0.12)", color: "#ff6b6b" },
   Completed: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa" },
