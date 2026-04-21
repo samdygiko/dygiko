@@ -14,17 +14,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-type Stage = "Pending/Callback" | "Template Made & Sent" | "Closed" | "Not Interested" | "Completed";
+type Stage = "Pending/Callback" | "Template Made & Sent" | "Dead";
 type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
 
-const STAGES: Stage[] = ["Pending/Callback", "Template Made & Sent", "Closed", "Not Interested", "Completed"];
+const STAGES: Stage[] = ["Pending/Callback", "Template Made & Sent", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending/Callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
   "Template Made & Sent": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
-  Closed: { bg: "rgba(72,199,142,0.15)", color: "#48c78e" },
-  "Not Interested": { bg: "rgba(255,107,107,0.12)", color: "#ff6b6b" },
-  Completed: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa" },
+  "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
 const PACKAGES: Package[] = ["", "Basic £500", "Growth £750", "Full Business £1,500"];
@@ -190,11 +188,19 @@ export default function LeadsTab() {
     URL.revokeObjectURL(url);
   }
 
-  const filtered = leads.filter((l) => {
-    if (filterStage !== "All" && l.stage !== filterStage) return false;
-    if (filterPackage !== "All" && l.package !== filterPackage) return false;
-    return true;
-  });
+  const activeLeads = leads.filter((l) => l.stage !== "Dead");
+
+  const filtered = leads
+    .filter((l) => {
+      if (filterStage !== "All" && l.stage !== filterStage) return false;
+      if (filterPackage !== "All" && l.package !== filterPackage) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.stage === "Dead" && b.stage !== "Dead") return 1;
+      if (a.stage !== "Dead" && b.stage === "Dead") return -1;
+      return 0;
+    });
 
   return (
     <div className="flex flex-col h-full">
@@ -219,7 +225,7 @@ export default function LeadsTab() {
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {leads.length} total · {leads.filter((l) => l.stage === "Closed").length} closed
+            {activeLeads.length} total · {leads.filter((l) => l.stage === "Template Made & Sent").length} templated
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -493,17 +499,6 @@ export default function LeadsTab() {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => toggleTemplateSent(selectedLead)}
-                    className="text-xs py-2 rounded-sm font-medium transition-all hover:opacity-80"
-                    style={{
-                      background: selectedLead.templateSent ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.06)",
-                      color: selectedLead.templateSent ? "#b0ff00" : "rgba(255,255,255,0.7)",
-                      border: `1px solid ${selectedLead.templateSent ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
-                    }}
-                  >
-                    {selectedLead.templateSent ? "✓ Template Made & Sent" : "Mark Template Made & Sent"}
-                  </button>
                 </div>
 
                 <button
