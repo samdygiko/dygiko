@@ -48,6 +48,8 @@ type Lead = {
   notes: string;
   emailSentInterest: boolean;
   emailSentClosed: boolean;
+  templateSent: boolean;
+  templateLink: string;
   dateAdded: { toDate?: () => Date } | null;
 };
 
@@ -67,19 +69,10 @@ export default function LeadsTab() {
   const [panelEmail, setPanelEmail] = useState("");
   const [panelName, setPanelName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [scriptOpen, setScriptOpen] = useState(false);
   const [moveToClientsId, setMoveToClientsId] = useState<string | null>(null);
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
-  const [callbackDay, setCallbackDay] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-    if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-    return d.toLocaleDateString("en-GB", { weekday: "long" });
-  });
-  const [copiedCallbackEmail, setCopiedCallbackEmail] = useState(false);
-  const [followUpNameWarning, setFollowUpNameWarning] = useState(false);
+  const [panelTemplateLink, setPanelTemplateLink] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -98,7 +91,7 @@ export default function LeadsTab() {
         setPanelNotes(updated.notes ?? "");
         setPanelEmail(updated.email ?? "");
         setPanelName(updated.contactName ?? "");
-        setFollowUpNameWarning(false);
+        setPanelTemplateLink(updated.templateLink ?? "");
       }
     }
   }, [leads]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -118,8 +111,13 @@ export default function LeadsTab() {
       notes: panelNotes,
       email: panelEmail,
       contactName: panelName,
+      templateLink: panelTemplateLink,
     });
     setSaving(false);
+  }
+
+  async function toggleTemplateSent(lead: Lead) {
+    await updateDoc(doc(db, "leads", lead.id), { templateSent: !lead.templateSent });
   }
 
   async function deleteLead(id: string) {
@@ -154,40 +152,6 @@ export default function LeadsTab() {
     setMoveToClientsId(null);
     setMoveWebsiteUrl("");
     setMovingToClients(false);
-  }
-
-  // Ensure name is saved to Firestore before follow-up actions; returns false if name is missing
-  async function ensureNameSaved(): Promise<boolean> {
-    if (!selectedLead) return false;
-    if (!panelName.trim()) {
-      setFollowUpNameWarning(true);
-      return false;
-    }
-    setFollowUpNameWarning(false);
-    // Auto-save name to Firestore if it changed
-    if (panelName.trim() !== (selectedLead.contactName ?? "").trim()) {
-      await updateDoc(doc(db, "leads", selectedLead.id), { contactName: panelName.trim() });
-    }
-    return true;
-  }
-
-  async function handleSendCallbackText() {
-    const ok = await ensureNameSaved();
-    if (!ok || !selectedLead) return;
-    const phone = selectedLead.phone?.replace(/[\s()-]/g, "") ?? "";
-    const msg = `Hi ${panelName.trim()}, it's Samuel from Dygiko. Great speaking with you! I'll give you a call back ${callbackDay} as discussed. In the meantime feel free to check out our website: dygiko.com 😊`;
-    window.open(`sms:${phone}?&body=${encodeURIComponent(msg)}`);
-  }
-
-  async function handleCopyCallbackEmail() {
-    const ok = await ensureNameSaved();
-    if (!ok || !selectedLead) return;
-    const name = panelName.trim();
-    const biz = selectedLead.businessName;
-    const text = `Subject: Great speaking with you - Dygiko Web Design\n\nHi ${name},\n\nIt was great speaking with you today! As discussed, I'll give you a call back ${callbackDay} to walk you through what we can build for ${biz}.\n\nIn the meantime, feel free to check out our website to see examples of our work: dygiko.com\n\nLooking forward to speaking again!`;
-    await navigator.clipboard.writeText(text);
-    setCopiedCallbackEmail(true);
-    setTimeout(() => setCopiedCallbackEmail(false), 2500);
   }
 
   function formatDate(lead: Lead) {
@@ -230,28 +194,8 @@ export default function LeadsTab() {
     return true;
   });
 
-  const contactName = selectedLead?.contactName || panelName || "[Name]";
-  const businessName = selectedLead?.businessName || "[Business Name]";
-
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed script toggle button */}
-      <button
-        onClick={() => setScriptOpen((v) => !v)}
-        className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80"
-        style={{
-          position: "fixed",
-          top: 16,
-          right: scriptOpen ? "calc(40% + 8px)" : 8,
-          zIndex: 51,
-          background: scriptOpen ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.05)",
-          color: scriptOpen ? "#b0ff00" : "rgba(255,255,255,0.6)",
-          border: `1px solid ${scriptOpen ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
-        }}
-      >
-        {scriptOpen ? "Hide script" : "📋 Closing Script"}
-      </button>
-
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
@@ -332,6 +276,7 @@ export default function LeadsTab() {
                       setPanelNotes(lead.notes ?? "");
                       setPanelEmail(lead.email ?? "");
                       setPanelName(lead.contactName ?? "");
+                      setPanelTemplateLink(lead.templateLink ?? "");
                     }}
                     className="cursor-pointer transition-colors duration-100"
                     style={{
@@ -502,42 +447,43 @@ export default function LeadsTab() {
                   {saving ? "Saving…" : "Save changes"}
                 </button>
 
-                {/* Follow-up tools */}
+                {/* Template tools */}
                 <div className="flex flex-col gap-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Follow-up</p>
+                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Template</p>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Callback day</label>
-                    <input
-                      type="text"
-                      value={callbackDay}
-                      onChange={(e) => setCallbackDay(e.target.value)}
-                      placeholder="e.g. Monday"
-                      className="w-full rounded-sm px-3 py-2 text-xs outline-none"
-                      style={inputSt}
-                    />
+                    <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Template link</label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="url"
+                        value={panelTemplateLink}
+                        onChange={(e) => setPanelTemplateLink(e.target.value)}
+                        placeholder="Paste template URL…"
+                        className="flex-1 rounded-sm px-3 py-2 text-xs outline-none"
+                        style={inputSt}
+                      />
+                      {panelTemplateLink && (
+                        <a
+                          href={panelTemplateLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs px-2 py-2 rounded-sm font-medium"
+                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", textDecoration: "none", whiteSpace: "nowrap" }}
+                        >
+                          ↗ Open
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  {followUpNameWarning && (
-                    <p className="text-xs" style={{ color: "#ff9999" }}>
-                      Enter a contact name above first.
-                    </p>
-                  )}
                   <button
-                    onClick={handleSendCallbackText}
-                    className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  >
-                    💬 Send Callback Text
-                  </button>
-                  <button
-                    onClick={handleCopyCallbackEmail}
-                    className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+                    onClick={() => toggleTemplateSent(selectedLead)}
+                    className="text-xs py-2 rounded-sm font-medium transition-all hover:opacity-80"
                     style={{
-                      background: copiedCallbackEmail ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.06)",
-                      color: copiedCallbackEmail ? "#b0ff00" : "rgba(255,255,255,0.7)",
-                      border: `1px solid ${copiedCallbackEmail ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
+                      background: selectedLead.templateSent ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.06)",
+                      color: selectedLead.templateSent ? "#b0ff00" : "rgba(255,255,255,0.7)",
+                      border: `1px solid ${selectedLead.templateSent ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`,
                     }}
                   >
-                    {copiedCallbackEmail ? "✓ Copied!" : "✉ Copy Callback Email"}
+                    {selectedLead.templateSent ? "✓ Template Made & Sent" : "Mark Template Made & Sent"}
                   </button>
                 </div>
 
@@ -611,90 +557,6 @@ export default function LeadsTab() {
         );
       })()}
 
-      {/* Closing script panel — fixed right */}
-      {scriptOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            width: "40%",
-            height: "100vh",
-            overflowY: "auto",
-            zIndex: 50,
-            background: "#0d0d0d",
-            borderLeft: "1px solid rgba(255,255,255,0.1)",
-          }}
-        >
-          <div style={{ padding: "24px", fontFamily: "var(--font-geist), system-ui, sans-serif" }}>
-            <p style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "16px" }}>Closing Script</p>
-
-            {/* Opening */}
-            <div style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.25)", borderRadius: "4px", padding: "16px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#b0ff00", marginBottom: "10px" }}>Opening</p>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff", marginBottom: "10px" }}>
-                {`"Hi ${contactName}, it's Sam calling from Dygiko — we spoke the other day about getting a website built for ${businessName}. How are you doing?"`}
-              </p>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff", marginBottom: "10px" }}>
-                {`"Did you get a chance to have a look at our website at dygiko.com?"`}
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingLeft: "12px", borderLeft: "2px solid rgba(176,255,0,0.3)" }}>
-                <p style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.65)" }}>
-                  <span style={{ color: "#b0ff00", fontWeight: 600 }}>If yes →</span> {`"What did you think?"`}
-                </p>
-                <p style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.65)" }}>
-                  <span style={{ color: "#b0ff00", fontWeight: 600 }}>If no →</span> {`"No worries at all — I can walk you through everything now, it'll only take a couple of minutes."`}
-                </p>
-              </div>
-            </div>
-
-            {/* The Pitch */}
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px", padding: "16px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "10px" }}>The Pitch</p>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff" }}>
-                {`"So basically what we do is build fully custom websites for businesses like yours — not templates, everything built from scratch so it looks completely unique to you. The reason it's worth having one is simple — when someone needs a [plumber/electrician/roofer] in your area, the first thing they do is Google it. If you're not showing up, that job goes to someone else. A website puts you in front of those customers 24/7 without you lifting a finger. We've got three packages depending on what you need:"`}
-              </p>
-            </div>
-
-            {/* Packages */}
-            <p style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "14px" }}>Packages</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
-              {[
-                { name: "Basic", price: "£500", recur: "+ £29/month", desc: "Fully custom website, your own domain name, hosting and basic SEO so Google can find you. Live within 2 days." },
-                { name: "Growth", price: "£750", recur: "+ £29/month", desc: "Everything in Basic plus advanced SEO, blog, contact form and company email address." },
-                { name: "Full Business", price: "£1,500", recur: "+ £29/month", desc: "Everything in Growth plus Google Business Profile setup, custom CRM, WhatsApp and call button integration." },
-              ].map((pkg) => (
-                <div key={pkg.name} style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px", padding: "14px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "5px" }}>
-                    <span style={{ fontWeight: 700, fontSize: "15px", color: "#ffffff" }}>{pkg.name}</span>
-                    <span style={{ fontWeight: 700, fontSize: "15px", color: "#b0ff00" }}>{pkg.price}</span>
-                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>{pkg.recur}</span>
-                  </div>
-                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>{pkg.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Retainer note */}
-            <div style={{ background: "rgba(176,255,0,0.05)", border: "1px solid rgba(176,255,0,0.15)", borderRadius: "4px", padding: "12px 16px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff" }}>
-                {`"All packages are then just £29 a month after that — covers hosting, domain renewal, maintenance, everything. We handle it all so you never have to think about it."`}
-              </p>
-            </div>
-
-            {/* The Close */}
-            <div style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.25)", borderRadius: "4px", padding: "16px" }}>
-              <p style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#b0ff00", marginBottom: "10px" }}>The Close</p>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff", marginBottom: "12px" }}>
-                {`"Most of our clients go for the Basic or Growth to start — gets them online quickly and professionally. Which one sounds like it fits what you need?"`}
-              </p>
-              <p style={{ fontSize: "14px", lineHeight: 1.7, color: "#ffffff" }}>
-                {`"Brilliant — I can get started today if you want to go ahead. I'll send you a payment link now and we'll have your website live within 48 hours. What email should I send it to?"`}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
