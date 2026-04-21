@@ -482,27 +482,63 @@ Looking forward to building something great for ${biz}!`;
   );
 }
 
+function buildTemplateFollowUpEmail(name: string, templateUrl: string) {
+  const n = name || "[Name]";
+  const url = templateUrl || "[Template URL]";
+  return `Hi ${n},
+
+Great to speak with you! As discussed, here's your free website template:
+
+${url}
+
+Take a look and let us know what you think — we can adjust colours, content, images, or layout before you commit to anything.
+
+—
+
+When you're ready to go ahead, here's a quick overview of our packages:
+
+Basic Website — £500 + £29/month
+✓ Custom website design
+✓ Domain registration & hosting setup
+✓ Mobile-responsive build
+✓ Basic on-page SEO
+✓ Live within 2 business days
+✓ Monthly hosting & support (£29/mo)
+
+Growth Website — £750 + £29/month
+✓ Everything in Basic
+✓ Advanced SEO configuration
+✓ Blog setup with 3 starter posts
+✓ Contact form integration
+✓ Professional company email address
+✓ Live within 2 business days
+✓ Monthly hosting & support (£29/mo)
+
+Full Business Package — £1,500 + £29/month
+✓ Everything in Growth
+✓ Google Business Profile setup & optimisation
+✓ Custom CRM system
+✓ WhatsApp & click-to-call button integration
+✓ Live within 2 business days
+✓ Monthly hosting & support (£29/mo)
+
+No obligation at all — the template is completely free. If you'd like to chat through the options or have any questions, just reply here or give me a call.
+
+[Your signature]`;
+}
+
 function AdminContent() {
-  const [clientName, setClientName] = useState("");
-  const [copiedSubject, setCopiedSubject] = useState(false);
-  const [copiedBody, setCopiedBody] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [openQuotePkg, setOpenQuotePkg] = useState<typeof QUOTE_TEMPLATES[0] | null>(null);
 
-  const SUBJECT = "Welcome to Dygiko — Let's get started!";
-  const bodyWithName = `Hi ${clientName || "[Name]"},\n\nAmazing — really excited to be working with you! Here's what happens next:\n\nWe'll build your website within 2 days and send you a preview link to review. Once you're happy we go live.\n\nIf you need anything in the meantime just reply here or call 07723396306.\n\nWelcome aboard!`;
+  // Template follow-up email
+  const [tmplName, setTmplName] = useState("");
+  const [tmplUrl, setTmplUrl] = useState("");
+  const [copiedTmplSubject, setCopiedTmplSubject] = useState(false);
+  const [copiedTmplBody, setCopiedTmplBody] = useState(false);
 
-  function copySubject() {
-    navigator.clipboard.writeText(SUBJECT);
-    setCopiedSubject(true);
-    setTimeout(() => setCopiedSubject(false), 2000);
-  }
-
-  function copyBody() {
-    navigator.clipboard.writeText(bodyWithName);
-    setCopiedBody(true);
-    setTimeout(() => setCopiedBody(false), 2000);
-  }
+  const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
+  const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
 
   return (
     <div className="flex flex-col gap-14 max-w-4xl">
@@ -554,6 +590,85 @@ function AdminContent() {
               <span className="mt-1 text-xs font-semibold" style={{ color: "#b0ff00" }}>Open template →</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Template Follow-up Email */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Template Follow-up Email</h3>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          Enter the prospect&apos;s name and their template URL, then copy the subject and email body.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-5">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Prospect name
+            </label>
+            <input
+              type="text"
+              value={tmplName}
+              onChange={(e) => setTmplName(e.target.value)}
+              placeholder="e.g. James"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Website template URL
+            </label>
+            <input
+              type="url"
+              value={tmplUrl}
+              onChange={(e) => setTmplUrl(e.target.value)}
+              placeholder="e.g. https://example-template.vercel.app"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+        </div>
+
+        {/* Subject copy row */}
+        <div
+          className="flex items-center justify-between px-4 py-3 mb-3"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <div>
+            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "3px" }}>Subject</p>
+            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)" }}>{tmplSubject}</p>
+          </div>
+          <button
+            onClick={() => { navigator.clipboard.writeText(tmplSubject); setCopiedTmplSubject(true); setTimeout(() => setCopiedTmplSubject(false), 2000); }}
+            style={{ fontSize: "11px", fontWeight: 600, padding: "6px 14px", borderRadius: "2px", background: copiedTmplSubject ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedTmplSubject ? "#b0ff00" : "rgba(255,255,255,0.55)", border: `1px solid ${copiedTmplSubject ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", whiteSpace: "nowrap" as const, flexShrink: 0, marginLeft: "1rem" }}
+          >
+            {copiedTmplSubject ? "✓ Copied" : "Copy"}
+          </button>
+        </div>
+
+        {/* Email body preview + copy */}
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Email body</p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(tmplBody); setCopiedTmplBody(true); setTimeout(() => setCopiedTmplBody(false), 2500); }}
+              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTmplBody ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTmplBody ? "#b0ff00" : "#080808", border: copiedTmplBody ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+            >
+              {copiedTmplBody ? "✓ Copied!" : "Copy full email"}
+            </button>
+          </div>
+          <pre
+            style={{
+              padding: "16px",
+              fontSize: "12px",
+              lineHeight: 1.75,
+              color: "rgba(255,255,255,0.55)",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+              maxHeight: "420px",
+              overflowY: "auto",
+            }}
+          >
+            {tmplBody}
+          </pre>
         </div>
       </div>
 
