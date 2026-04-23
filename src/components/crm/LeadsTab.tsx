@@ -289,6 +289,7 @@ export default function LeadsTab() {
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.04)",
                       background: selectedLead?.id === lead.id ? "rgba(176,255,0,0.04)" : "transparent",
+                      opacity: lead.stage === "Dead" ? 0.3 : 1,
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = selectedLead?.id === lead.id ? "rgba(176,255,0,0.06)" : "rgba(255,255,255,0.025)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = selectedLead?.id === lead.id ? "rgba(176,255,0,0.04)" : "transparent")}
