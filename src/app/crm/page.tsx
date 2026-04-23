@@ -10,8 +10,9 @@ import BusinessFinderTab from "@/components/crm/BusinessFinderTab";
 import CRMTab from "@/components/crm/CRMTab";
 import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
+import PromptGeneratorTab from "@/components/crm/PromptGeneratorTab";
 
-const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Design"] as const;
+const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Prompt Generator", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = [
@@ -48,6 +49,7 @@ const TAB_ICONS: Record<Tab, string> = {
   Leads: "◎",
   Clients: "◈",
   Admin: "⚙",
+  "Prompt Generator": "✦",
   Design: "✦",
 };
 
@@ -181,6 +183,7 @@ export default function CRMPage() {
           {tab === "Leads" && <LeadsTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Admin" && <AdminContent />}
+          {tab === "Prompt Generator" && <PromptGeneratorTab />}
           {tab === "Design" && <DesignContent />}
         </main>
       </div>
