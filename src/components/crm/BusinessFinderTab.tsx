@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { UK_POSTCODES } from "@/lib/uk-postcodes";
+import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 // ── Search history helpers ────────────────────────────────────────────────────
 const HISTORY_KEY = "dygiko_bf_history";
@@ -565,13 +566,13 @@ export default function BusinessFinderTab() {
                 {/* Phone */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-white">{r.phone}</span>
-                  <a
-                    href={`tel:${r.phone.replace(/\s/g, "")}`}
+                  <button
+                    onClick={() => dialViaJustCall(r.phone.replace(/\s/g, ""), "")}
                     className="text-xs px-3 py-1.5 rounded-sm font-semibold transition-opacity hover:opacity-80"
-                    style={{ background: "#b0ff00", color: "#000", textDecoration: "none" }}
+                    style={{ background: "#b0ff00", color: "#000", cursor: "pointer" }}
                   >
                     📞 Call
-                  </a>
+                  </button>
                 </div>
 
                 {/* Address */}

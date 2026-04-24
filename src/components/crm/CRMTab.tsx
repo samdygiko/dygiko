@@ -14,6 +14,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 type CallStatus = "New" | "Pending callback" | "Not interested" | "Closed";
 
@@ -627,14 +628,13 @@ function CRMCard({
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>📱 {entry.phone}</span>
         )}
         {entry.phone && (
-          <a
-            href={`tel:${entry.phone.replace(/\s/g, "")}`}
-            onClick={() => onCallIncrement(entry.id, callCount)}
+          <button
+            onClick={() => { dialViaJustCall(entry.phone.replace(/\s/g, ""), entry.id); onCallIncrement(entry.id, callCount); }}
             className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", textDecoration: "none", border: "1px solid rgba(176,255,0,0.2)" }}
+            style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
           >
             📞 Call
-          </a>
+          </button>
         )}
         {callCount > 0 && (
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>

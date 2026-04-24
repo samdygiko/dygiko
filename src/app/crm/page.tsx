@@ -10,6 +10,7 @@ import BusinessFinderTab from "@/components/crm/BusinessFinderTab";
 import CRMTab from "@/components/crm/CRMTab";
 import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
+import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
 
 const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Design"] as const;
 type Tab = (typeof TABS)[number];
@@ -95,6 +96,7 @@ export default function CRMPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#080808", color: "#fff" }}>
+      <JustCallDialerPanel />
       {/* Mobile top bar */}
       <div
         className="flex lg:hidden items-center justify-between px-4 h-14 sticky top-0 z-30"

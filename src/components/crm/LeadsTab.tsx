@@ -13,6 +13,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 type Stage = "Pending/Callback" | "Template Made & Sent" | "Dead";
 type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
@@ -298,13 +299,12 @@ export default function LeadsTab() {
                     <td className="py-3 px-3 max-w-[120px] truncate" style={{ color: "rgba(255,255,255,0.45)" }}>{lead.contactName || "—"}</td>
                     <td className="py-3 px-3" style={{ color: "rgba(255,255,255,0.45)" }}>
                       {lead.phone ? (
-                        <a
-                          href={`tel:${lead.phone.replace(/\s/g, "")}`}
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ color: "#b0ff00", textDecoration: "none" }}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); dialViaJustCall(lead.phone!.replace(/\s/g, ""), lead.id || ""); }}
+                          style={{ color: "#b0ff00", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
                         >
                           {lead.phone}
-                        </a>
+                        </button>
                       ) : "—"}
                     </td>
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
@@ -399,9 +399,12 @@ export default function LeadsTab() {
                 {selectedLead.phone && (
                   <p>
                     📱{" "}
-                    <a href={`tel:${selectedLead.phone.replace(/\s/g, "")}`} style={{ color: "#b0ff00" }}>
+                    <button
+                      onClick={() => dialViaJustCall(selectedLead.phone!.replace(/\s/g, ""), selectedLead.id || "")}
+                      style={{ color: "#b0ff00", background: "transparent", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                    >
                       {selectedLead.phone}
-                    </a>
+                    </button>
                   </p>
                 )}
                 {selectedLead.category && <p>🏷 {selectedLead.category}</p>}

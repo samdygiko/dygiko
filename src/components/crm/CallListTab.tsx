@@ -17,6 +17,7 @@ import {
 import { db } from "@/lib/firebase";
 import { GBP_CATEGORIES } from "@/lib/gbp-categories";
 import Combobox from "@/components/crm/Combobox";
+import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 type CallStatus = "New" | "Pending callback" | "Not interested" | "Closed";
 type StatusFilter = "All" | "New" | "Pending/Callback" | "Not Interested" | "Closed";
@@ -431,13 +432,13 @@ export default function CallListTab() {
                       {/* Phone + actions */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>📱 {r.phone}</span>
-                        <a
-                          href={`tel:${r.phone.replace(/\s/g, "")}`}
+                        <button
+                          onClick={() => dialViaJustCall(r.phone.replace(/\s/g, ""), "")}
                           className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-                          style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", textDecoration: "none", border: "1px solid rgba(176,255,0,0.2)" }}
+                          style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
                         >
                           📞 Call
-                        </a>
+                        </button>
                         <a
                           href={`https://www.google.com/search?q=${encodeURIComponent(r.businessName)}`}
                           target="_blank"
@@ -717,13 +718,13 @@ function CallListCard({
       {/* Phone + actions row */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>📱 {entry.phone}</span>
-        <a
-          href={`tel:${entry.phone.replace(/\s/g, "")}`}
+        <button
+          onClick={() => dialViaJustCall(entry.phone.replace(/\s/g, ""), entry.id || "")}
           className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-          style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", textDecoration: "none", border: "1px solid rgba(176,255,0,0.2)" }}
+          style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
         >
           📞 Call
-        </a>
+        </button>
         <a
           href={`https://www.google.com/search?q=${encodeURIComponent(entry.businessName)}`}
           target="_blank"
