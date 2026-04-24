@@ -76,7 +76,7 @@ export default function CRMPage() {
     });
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
-      setLeadsCount(docs.length);
+      setLeadsCount(docs.filter((d) => d.stage !== "Dead").length);
       setClosedCount(docs.filter((d) => d.stage === "Closed").length);
     });
     const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
