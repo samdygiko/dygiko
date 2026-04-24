@@ -243,7 +243,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
       {/* Fixed toggle button */}
       <button
         onClick={() => setScriptOpen((v) => !v)}
-        className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80"
+        className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 script-toggle-btn"
         style={{
           position: 'fixed',
           top: 16,
@@ -256,6 +256,11 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
       >
         {scriptOpen ? "Hide script" : "📋 Script"}
       </button>
+      <style>{`
+        @media (max-width: 1023px) {
+          .script-toggle-btn { top: 64px !important; }
+        }
+      `}</style>
 
       {/* Split layout — left scrolls, right is fixed */}
       <div className="flex gap-5 items-start">

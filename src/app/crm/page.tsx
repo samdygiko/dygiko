@@ -76,7 +76,7 @@ export default function CRMPage() {
     });
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
-      setLeadsCount(docs.filter((d) => d.stage !== "Dead").length);
+      setLeadsCount(docs.length);
       setClosedCount(docs.filter((d) => d.stage === "Closed").length);
     });
     const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
@@ -534,17 +534,6 @@ function AdminContent() {
   const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
   const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
 
-  // Template takedown notice
-  const [takedownName, setTakedownName] = useState("");
-  const [takedownNumber, setTakedownNumber] = useState("");
-  const [copiedTakedown, setCopiedTakedown] = useState(false);
-
-  const takedownBody = `Hi ${takedownName || "[Name]"} hope you're well, it's Eden from Dygiko, just letting you know we'll be taking your website template down as we've been unable to reach you.
-
-Kind Regards,
-
-Eden`;
-
   return (
     <div className="flex flex-col gap-14 max-w-4xl">
       {openQuotePkg && <QuoteEmailModal pkg={openQuotePkg} onClose={() => setOpenQuotePkg(null)} />}
@@ -673,75 +662,6 @@ Eden`;
             }}
           >
             {tmplBody}
-          </pre>
-        </div>
-      </div>
-
-      {/* Template Takedown Notice */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Template Takedown Notice</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          For prospects who&apos;ve gone cold — enter their name and number, then copy the message.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-5">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Prospect name
-            </label>
-            <input
-              type="text"
-              value={takedownName}
-              onChange={(e) => setTakedownName(e.target.value)}
-              placeholder="e.g. Sebastian"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Phone number
-            </label>
-            <input
-              type="tel"
-              value={takedownNumber}
-              onChange={(e) => setTakedownNumber(e.target.value)}
-              placeholder="e.g. 07700 900000"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center gap-3">
-              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message</p>
-              {takedownNumber && (
-                <a
-                  href={`sms:${takedownNumber.replace(/\s/g, "")}&body=${encodeURIComponent(takedownBody)}`}
-                  style={{ fontSize: "11px", fontWeight: 600, color: "rgba(176,255,0,0.8)", textDecoration: "none" }}
-                >
-                  Send as SMS →
-                </a>
-              )}
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText(takedownBody); setCopiedTakedown(true); setTimeout(() => setCopiedTakedown(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTakedown ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTakedown ? "#b0ff00" : "#080808", border: copiedTakedown ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedTakedown ? "✓ Copied!" : "Copy message"}
-            </button>
-          </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-            }}
-          >
-            {takedownBody}
           </pre>
         </div>
       </div>
