@@ -32,7 +32,7 @@ const projects: Project[] = [
   },
 ];
 
-const SLIDE_MS = 7000;
+const SLIDE_MS = 5000;
 
 /* ─── Testimonial card ───────────────────────────────────────────────────── */
 function TestimonialCard({ testimonial }: { testimonial: NonNullable<Project["testimonial"]> }) {
@@ -91,13 +91,11 @@ function PendingCard() {
 /* ─── Section ────────────────────────────────────────────────────────────── */
 export default function TemplatesSection() {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % projects.length), SLIDE_MS);
     return () => clearInterval(id);
-  }, [paused]);
+  }, []);
 
   const active = projects[index];
 
@@ -141,11 +139,7 @@ export default function TemplatesSection() {
           transition={{ duration: 0.8, delay: 0.1 }}
         >
           {/* Browser chrome + iframe stack */}
-          <div
-            style={{ flex: "1 1 auto", maxWidth: 680, width: "100%" }}
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
+          <div style={{ flex: "1 1 auto", maxWidth: 680, width: "100%" }}>
             <a
               href={active.url}
               target="_blank"
@@ -228,7 +222,7 @@ export default function TemplatesSection() {
                         pointerEvents: "none",
                         userSelect: "none",
                         opacity: i === index ? 1 : 0,
-                        transition: "opacity 0.9s ease",
+                        transition: "opacity 1.1s ease",
                       }}
                     />
                   ))}
