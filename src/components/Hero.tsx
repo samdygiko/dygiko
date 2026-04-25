@@ -126,18 +126,36 @@ export default function Hero() {
           </span>
         </motion.div>
 
-        {/* Headline */}
-        <motion.h1
+        {/* Headline — split-text reveal, char-by-char with blur+y */}
+        <h1
           className="font-heading font-black tracking-tight leading-[1.0] mb-8"
           style={{ fontSize: "clamp(3rem, 8vw, 7.5rem)" }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.25 }}
+          aria-label="Your business, finally online."
         >
-          Your business,
-          <br />
-          finally online.
-        </motion.h1>
+          {(["Your business,", "finally online."] as const).map((line, lineIdx) => (
+            <span key={lineIdx} className="block" aria-hidden="true">
+              {line.split("").map((ch, i) => {
+                const delay = 0.2 + lineIdx * 0.12 + i * 0.022;
+                return (
+                  <motion.span
+                    key={`${lineIdx}-${i}`}
+                    className="inline-block"
+                    initial={{ opacity: 0, y: "0.6em", filter: "blur(8px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                      duration: 0.85,
+                      delay,
+                      ease: [0.2, 0.8, 0.2, 1],
+                    }}
+                    style={{ whiteSpace: ch === " " ? "pre" : undefined }}
+                  >
+                    {ch}
+                  </motion.span>
+                );
+              })}
+            </span>
+          ))}
+        </h1>
 
         {/* Subtext */}
         <motion.p

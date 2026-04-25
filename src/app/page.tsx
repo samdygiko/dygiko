@@ -13,6 +13,9 @@ import FooterCTA from "@/components/FooterCTA";
 import FloatingButtons from "@/components/FloatingButtons";
 import ScrollProgress from "@/components/ScrollProgress";
 import SmoothScroll from "@/components/SmoothScroll";
+import Cursor from "@/components/Cursor";
+import CraftSection from "@/components/CraftSection";
+import CubeSection from "@/components/CubeSection";
 
 const orgJsonLd = {
   "@context": "https://schema.org",
@@ -58,6 +61,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SmoothScroll />
+      <Cursor />
       <ScrollProgress />
       <Nav />
       <main>
@@ -66,8 +70,10 @@ export default function HomePage() {
         <ServicesSection />
         <TemplatesSection />
         <ClientMarquee />
+        <CubeSection />
         <AboutSection />
         <AppDevSection />
+        <CraftSection />
         <HowItWorksSection />
         <PlatformsBar />
         <ContactSection />

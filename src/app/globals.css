@@ -134,6 +134,14 @@ body {
   .marquee-track { animation: none; }
 }
 
+/* ─── Custom cursor — hide native ────────────────────────── */
+html.custom-cursor,
+html.custom-cursor *,
+html.custom-cursor *::before,
+html.custom-cursor *::after {
+  cursor: none !important;
+}
+
 /* ─── Lenis smooth scroll ────────────────────────────────── */
 html.lenis,
 html.lenis body {
