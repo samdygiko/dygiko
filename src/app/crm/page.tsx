@@ -12,7 +12,7 @@ import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
 
-const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Design"] as const;
+const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = [
@@ -49,6 +49,7 @@ const TAB_ICONS: Record<Tab, string> = {
   Leads: "◎",
   Clients: "◈",
   Admin: "⚙",
+  Onboarding: "✧",
   Design: "✦",
 };
 
@@ -183,6 +184,7 @@ export default function CRMPage() {
           {tab === "Leads" && <LeadsTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Admin" && <AdminContent />}
+          {tab === "Onboarding" && <OnboardingContent />}
           {tab === "Design" && <DesignContent />}
         </main>
       </div>
@@ -1117,6 +1119,309 @@ function DesignContent() {
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{site.description}</p>
             </div>
           </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type OnboardingStep = {
+  title: string;
+  bullets?: string[];
+  code?: string;
+  note?: string;
+  warnings?: string[];
+};
+
+const DESIGNER_STEPS: OnboardingStep[] = [
+  {
+    title: "Install Homebrew",
+    code: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`,
+    note: `Run the three "Next steps" lines it prints at the end to add Homebrew to your PATH.`,
+  },
+  {
+    title: "Install Node + Git",
+    code: `brew install node git`,
+  },
+  {
+    title: "Install Claude Code + Vercel CLI",
+    code: `npm install -g @anthropic-ai/claude-code vercel`,
+  },
+  {
+    title: "Configure Git as yourself",
+    code: `git config --global user.name "Your Real Name"
+git config --global user.email "your@email.com"`,
+    note: `Then log into github.com in your browser with the samdygiko account (Sam will share the login).`,
+  },
+  {
+    title: "Log into Claude Code",
+    code: `claude`,
+    note: `Follow the browser prompt — use the Dygiko Claude account details Sam sends.`,
+  },
+  {
+    title: "Log into Vercel CLI (one-time)",
+    code: `vercel login`,
+    note: `Pick "Continue with GitHub". After this, Claude Code can deploy sites itself and reply with the live URL — no clicking around the Vercel dashboard.`,
+  },
+  {
+    title: "Building a new client site",
+    bullets: [
+      `Create a prompt (generated from the Dygiko CRM's "Claude Build Brief" template) plus a screenshot of the client's Google Business Profile.`,
+      `Open a new terminal tab, cd ~/Desktop, run claude.`,
+      `Paste the prompt into the chat.`,
+      `When Claude Code finishes, it will reply with just the live Vercel URL.`,
+    ],
+  },
+  {
+    title: "Edits after launch",
+    note: `Sam (or the client via Sam) will send change requests. Open Claude Code in the project folder, describe the change, and it'll commit + push + redeploy automatically. Don't push manually unless you know what you're doing.`,
+  },
+];
+
+const FOUNDER_STEPS: OnboardingStep[] = [
+  {
+    title: "Install Homebrew",
+    code: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`,
+    note: `Run the three "Next steps" lines it prints to add Homebrew to PATH.`,
+  },
+  {
+    title: "Install Node, Git, Claude Code, Vercel CLI, GitHub CLI",
+    code: `brew install node git gh
+npm install -g @anthropic-ai/claude-code vercel`,
+  },
+  {
+    title: "Configure Git",
+    code: `git config --global user.name "Your Name"
+git config --global user.email "you@dygiko.com"`,
+  },
+  {
+    title: "Log into GitHub (browser + CLI)",
+    bullets: [
+      `Browser: go to github.com, log in with samdygiko credentials (Sam shares).`,
+      `CLI: gh auth login → pick GitHub.com → HTTPS → "login with a web browser". This unblocks gh PR/repo commands.`,
+    ],
+  },
+  {
+    title: "Log into Claude Code",
+    code: `claude`,
+    note: `Authenticate via browser — use the Dygiko Claude account.`,
+  },
+  {
+    title: "Log into Vercel (browser + CLI)",
+    bullets: [
+      `Browser: vercel.com, sign in with the Dygiko Vercel account.`,
+      `CLI: vercel login → "Continue with GitHub". This is what lets Claude Code deploy without any dashboard clicks.`,
+    ],
+  },
+  {
+    title: "Clone the Dygiko monorepo",
+    code: `cd ~/Desktop
+git clone https://github.com/samdygiko/dygiko.git
+cd dygiko
+npm install`,
+  },
+  {
+    title: "Pull environment variables",
+    code: `vercel link
+vercel env pull .env.local`,
+    note: `Run from inside ~/Desktop/dygiko. The first command links this folder to the dygiko Vercel project; the second downloads all production env vars. If vercel link asks to scope, pick the samdygikos-projects team.`,
+  },
+  {
+    title: "Run the CRM dev server",
+    code: `npm run dev`,
+    note: `Visit http://localhost:3000/crm to confirm everything works. Leave this tab running.`,
+  },
+  {
+    title: "Open Claude Code for the CRM",
+    code: `cd ~/Desktop/dygiko
+claude`,
+    note: `New terminal tab. Inside Claude Code, run /init once — that creates / refreshes CLAUDE.md. Already exists in this repo via AGENTS.md, so just confirm.`,
+  },
+  {
+    title: "Hard rules — read before pushing anything",
+    warnings: [
+      `Dygiko's production branch is master. Never push to main. There was a live-site incident from this — git push origin main will not deploy and may break things.`,
+      `There's an OLD deal-sourcing/hayford-web repo on disk that mirrors the live Hayford CRM. Pushing to its main overwrites the real live app. Don't touch it unless you know which one you're in.`,
+      `The Hayford site at hayfordgroup.com/crm is a separate project served via Vercel rewrites + a basePath: "/crm" Next config + a postbuild script that moves out/crm. If something there breaks, that's the chain to debug.`,
+    ],
+  },
+  {
+    title: "The day-2 mental map",
+    bullets: [
+      `Dygiko (~/Desktop/dygiko, samdygiko/dygiko, master) — main marketing site at dygiko.com + the CRM at /crm.`,
+      `Hayford site (~/Desktop/deal-sourcing/hayford-web) — separate Vercel project, old code, careful pushes.`,
+      `Hayford CRM (separate Flutter app, deploys via GitHub Actions to Firebase) — not in the local toolchain unless you specifically open it.`,
+      `Each client demo site (e.g. hrai-constructions, akwabaetnicas) — its own repo under samdygiko, its own Vercel project, auto-deploys from main.`,
+    ],
+  },
+  {
+    title: "Building a new client site (the one-shot flow)",
+    bullets: [
+      `In CRM → Admin → Claude Build Brief, fill the fields, copy the brief.`,
+      `Paste into claude.ai (web app), drop in the GBP screenshot — it returns a Claude Code prompt.`,
+      `New terminal tab: cd ~/Desktop, claude, paste the prompt, attach the screenshot, hit go.`,
+      `Claude Code builds → pushes to GitHub → deploys to Vercel → replies with the live URL only.`,
+    ],
+  },
+  {
+    title: "External services to be aware of",
+    note: `JustCall (calling/SMS), Stripe (payments), Resend (transactional email), Google Places API (Business Finder), Companies House API (deal-sourcing), Firebase (auth + Firestore), IONOS (domains), Trustpilot Business.`,
+  },
+];
+
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="relative rounded-sm overflow-hidden" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <pre
+        style={{
+          padding: "14px 60px 14px 16px",
+          fontSize: "12.5px",
+          lineHeight: 1.7,
+          color: "#b0ff00",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          margin: 0,
+        }}
+      >
+        {code}
+      </pre>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(code);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          fontSize: "10.5px",
+          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: "2px",
+          background: copied ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.06)",
+          color: copied ? "#b0ff00" : "rgba(255,255,255,0.6)",
+          border: copied ? "1px solid rgba(176,255,0,0.3)" : "1px solid rgba(255,255,255,0.08)",
+          cursor: "pointer",
+          transition: "all 0.15s",
+        }}
+      >
+        {copied ? "✓ Copied" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
+function OnboardingContent() {
+  const [role, setRole] = useState<"Designer" | "Founder">("Designer");
+  const steps = role === "Designer" ? DESIGNER_STEPS : FOUNDER_STEPS;
+  const heading = role === "Designer" ? "🎨 Designer Onboarding" : "👑 Founder Onboarding — Full Access";
+  const subheading = role === "Designer"
+    ? "First-time setup for designers. Get the toolchain installed so Claude Code can build and deploy client sites for you."
+    : "Full keys to Dygiko + every client repo + production deploys. Work through these in order.";
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-1">Onboarding</h2>
+      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
+        New to the team? Pick your role and follow the steps top-to-bottom.
+      </p>
+
+      <div className="flex gap-2 mb-8">
+        {(["Designer", "Founder"] as const).map((r) => (
+          <button
+            key={r}
+            onClick={() => setRole(r)}
+            style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              padding: "8px 18px",
+              borderRadius: "2px",
+              background: role === r ? "#b0ff00" : "transparent",
+              color: role === r ? "#080808" : "rgba(255,255,255,0.55)",
+              border: role === r ? "none" : "1px solid rgba(255,255,255,0.1)",
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-sm p-6 mb-6" style={{ background: "rgba(176,255,0,0.03)", border: "1px solid rgba(176,255,0,0.1)" }}>
+        <h3 className="text-lg font-bold text-white mb-1">{heading}</h3>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{subheading}</p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {steps.map((step, i) => (
+          <div
+            key={i}
+            className="rounded-sm p-5"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="flex items-start gap-4 mb-3">
+              <span
+                className="shrink-0 flex items-center justify-center text-xs font-mono font-bold"
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  borderRadius: "50%",
+                  background: "rgba(176,255,0,0.1)",
+                  color: "#b0ff00",
+                  border: "1px solid rgba(176,255,0,0.25)",
+                }}
+              >
+                {i + 1}
+              </span>
+              <h4 className="text-base font-semibold text-white pt-0.5">{step.title}</h4>
+            </div>
+
+            {step.code && (
+              <div className="mb-3 ml-10">
+                <CodeBlock code={step.code} />
+              </div>
+            )}
+
+            {step.bullets && (
+              <ul className="ml-10 flex flex-col gap-2 mb-1">
+                {step.bullets.map((b, j) => (
+                  <li key={j} className="flex items-start gap-3 text-sm" style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>
+                    <span style={{ color: "#b0ff00", marginTop: "2px" }}>→</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {step.note && (
+              <p className="ml-10 text-sm" style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
+                {step.note}
+              </p>
+            )}
+
+            {step.warnings && (
+              <ul className="ml-10 flex flex-col gap-2.5">
+                {step.warnings.map((w, j) => (
+                  <li
+                    key={j}
+                    className="text-sm rounded-sm px-3 py-2"
+                    style={{
+                      color: "rgba(255,200,200,0.85)",
+                      background: "rgba(255,80,80,0.05)",
+                      border: "1px solid rgba(255,80,80,0.15)",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    ⚠ {w}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         ))}
       </div>
     </div>
