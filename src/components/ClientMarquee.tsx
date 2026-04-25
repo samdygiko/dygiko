@@ -1,9 +1,16 @@
 "use client";
 
 const items = [
-  "hayfordgroup.com",
-  "akwabaetnicas.com",
-  "hraiconstructions.co.uk",
+  "Live in 2 days",
+  "Built to be found",
+  "From £500",
+  "Honest pricing",
+  "Custom CRM",
+  "Built to last",
+  "iOS & Android Apps",
+  "Fully managed",
+  "Google Business Profile",
+  "UK-based",
 ];
 
 export default function ClientMarquee() {
