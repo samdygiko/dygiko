@@ -458,35 +458,6 @@ export default function LeadsTab() {
                   {saving ? "Saving…" : "Save changes"}
                 </button>
 
-                {/* Template tools */}
-                <div className="flex flex-col gap-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Template</p>
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Template link</label>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="url"
-                        value={panelTemplateLink}
-                        onChange={(e) => setPanelTemplateLink(e.target.value)}
-                        placeholder="Paste template URL…"
-                        className="flex-1 rounded-sm px-3 py-2 text-xs outline-none"
-                        style={inputSt}
-                      />
-                      {panelTemplateLink && (
-                        <a
-                          href={panelTemplateLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs px-2 py-2 rounded-sm font-medium"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", textDecoration: "none", whiteSpace: "nowrap" }}
-                        >
-                          ↗ Open
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
                 <button
                   onClick={() => { setMoveToClientsId(selectedLead.id); setMoveWebsiteUrl(""); }}
                   className="text-xs py-2 rounded-sm font-medium transition-opacity hover:opacity-80 mt-1"
