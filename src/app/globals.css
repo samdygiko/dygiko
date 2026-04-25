@@ -119,6 +119,28 @@ body {
   display: none;
 }
 
+/* ─── Client marquee ─────────────────────────────────────── */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.3333%); }
+}
+.marquee-track {
+  animation: marquee-scroll 38s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ─── Service card featured glow ─────────────────────────── */
+.service-card-featured {
+  box-shadow:
+    inset 0 0 0 1px rgba(176, 255, 0, 0.18),
+    0 0 60px -20px rgba(176, 255, 0, 0.4);
+}
+
 /* ─── Blog content ───────────────────────────────────────── */
 .blog-content {
   color: rgba(255, 255, 255, 0.75);

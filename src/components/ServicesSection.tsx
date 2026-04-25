@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Magnetic from "./Magnetic";
 
 type Package = {
   num: string;
@@ -124,7 +125,7 @@ export default function ServicesSection() {
           {PACKAGES.map((pkg, i) => (
             <motion.div
               key={pkg.num}
-              className="service-card group flex flex-col gap-7 p-8 py-12"
+              className={`service-card group flex flex-col gap-7 p-8 py-12 ${pkg.featured ? "service-card-featured" : ""}`}
               style={{
                 borderRight:
                   i < PACKAGES.length - 1
@@ -174,19 +175,21 @@ export default function ServicesSection() {
               </ul>
 
               {/* Buy now → Stripe */}
-              <a
-                href={pkg.stripeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
-                style={{
-                  background: pkg.featured ? "#b0ff00" : "transparent",
-                  color: pkg.featured ? "#080808" : "rgba(255,255,255,0.65)",
-                  border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
-                }}
-              >
-                Buy now →
-              </a>
+              <Magnetic strength={pkg.featured ? 0.28 : 0.18} className="self-start">
+                <a
+                  href={pkg.stripeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
+                  style={{
+                    background: pkg.featured ? "#b0ff00" : "transparent",
+                    color: pkg.featured ? "#080808" : "rgba(255,255,255,0.65)",
+                    border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  Buy now →
+                </a>
+              </Magnetic>
             </motion.div>
           ))}
         </div>

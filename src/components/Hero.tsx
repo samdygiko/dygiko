@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import Magnetic from "./Magnetic";
 
 /* ─── Animated pixel grid canvas ─────────────────────────────────────────── */
 function HeroCanvas() {
@@ -158,23 +159,27 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.55 }}
         >
           {/* Primary CTA → pricing section */}
-          <a
-            href="#services"
-            className="inline-flex items-center px-7 py-3.5 text-sm font-semibold text-black rounded-sm transition-opacity duration-200 hover:opacity-80"
-            style={{ background: "#b0ff00" }}
-          >
-            Get started →
-          </a>
-          <a
-            href="#work"
-            className="inline-flex items-center px-7 py-3.5 text-sm font-medium rounded-sm transition-colors duration-200"
-            style={{
-              border: "1px solid rgba(255,255,255,0.12)",
-              color: "rgba(255,255,255,0.7)",
-            }}
-          >
-            View our work
-          </a>
+          <Magnetic>
+            <a
+              href="#services"
+              className="inline-flex items-center px-7 py-3.5 text-sm font-semibold text-black rounded-sm transition-opacity duration-200 hover:opacity-80"
+              style={{ background: "#b0ff00" }}
+            >
+              Get started →
+            </a>
+          </Magnetic>
+          <Magnetic strength={0.22}>
+            <a
+              href="#work"
+              className="inline-flex items-center px-7 py-3.5 text-sm font-medium rounded-sm transition-colors duration-200"
+              style={{
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.7)",
+              }}
+            >
+              View our work
+            </a>
+          </Magnetic>
         </motion.div>
       </div>
 
