@@ -4,98 +4,99 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
-/* ─── Animated pixel grid canvas ─────────────────────────────────────────── */
-function HeroCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const CELL = 18;
-    const GAP = 1;
-    const STEP = CELL + GAP;
-
-    let width = 0;
-    let height = 0;
-    let cols = 0;
-    let rows = 0;
-
-    // Per-cell animation parameters
-    type Cell = { base: number; phase: number; speed: number };
-    let cells: Cell[] = [];
-
-    const init = () => {
-      width = canvas.offsetWidth;
-      height = canvas.offsetHeight;
-      canvas.width = width * devicePixelRatio;
-      canvas.height = height * devicePixelRatio;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      cols = Math.ceil(width / STEP);
-      rows = Math.ceil(height / STEP);
-      cells = [];
-      for (let i = 0; i < cols * rows; i++) {
-        cells.push({
-          base: Math.random(),          // base brightness 0–1
-          phase: Math.random() * Math.PI * 2,
-          speed: 0.25 + Math.random() * 0.8, // radians/second
-        });
-      }
-    };
-
-    let rafId: number;
-    const draw = (ts: number) => {
-      const t = ts / 1000;
-      ctx.clearRect(0, 0, width, height);
-
-      for (let r = 0; r < rows; r++) {
-        const yFrac = r / rows;
-        const yFade = Math.max(0, 1 - yFrac / 0.72);
-        if (yFade < 0.005) continue;
-
-        for (let c = 0; c < cols; c++) {
-          const cell = cells[r * cols + c];
-          // Pulse: oscillates between 30% and 100% of base
-          const pulse = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * cell.speed + cell.phase));
-          const opacity = cell.base * 0.22 * yFade * pulse;
-          if (opacity < 0.004) continue;
-
-          ctx.fillStyle = `rgba(176,255,0,${opacity.toFixed(3)})`;
-          ctx.fillRect(c * STEP, r * STEP, CELL, CELL);
-        }
-      }
-      rafId = requestAnimationFrame(draw);
-    };
-
-    const ro = new ResizeObserver(() => {
-      init();
-    });
-    ro.observe(canvas);
-    init();
-    rafId = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      ro.disconnect();
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="canvas-fade absolute inset-0 w-full h-full"
-      style={{ zIndex: 2 }}
-      aria-hidden="true"
-    />
-  );
-}
-
 /* ─── Hero section ───────────────────────────────────────────────────────── */
 const HERO_VIDEO =
   "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4";
+
+const VIDEO_FILTER =
+  "grayscale(0.35) contrast(1.05) brightness(0.6) saturate(0.95)";
+
+/**
+ * Two stacked <video> elements playing the same source, with B's currentTime
+ * offset by half-duration. Each is in its safe-middle when the other is near
+ * its loop point — opacity is crossfaded based on distance from loop, so the
+ * jump-cut becomes a smooth fade.
+ */
+function HeroVideoLoop() {
+  const aRef = useRef<HTMLVideoElement>(null);
+  const bRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const a = aRef.current;
+    const b = bRef.current;
+    if (!a || !b) return;
+
+    const FADE_WINDOW = 1.0; // seconds before / after loop point that crossfades
+    let synced = false;
+    let rafId: number;
+
+    const safety = (t: number, dur: number) => {
+      const dist = Math.min(t, dur - t);
+      return Math.max(0, Math.min(1, dist / FADE_WINDOW));
+    };
+
+    const tick = () => {
+      if (a.duration > 0) {
+        if (!synced && b.readyState >= 2) {
+          b.currentTime = a.duration / 2;
+          synced = true;
+        }
+        const sa = safety(a.currentTime, a.duration);
+        const sb = b.duration > 0 ? safety(b.currentTime, b.duration) : 0;
+        const total = sa + sb;
+        if (total > 0) {
+          a.style.opacity = String(sa / total);
+          b.style.opacity = String(sb / total);
+        } else {
+          a.style.opacity = "1";
+          b.style.opacity = "0";
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
+  const sharedStyle: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    filter: VIDEO_FILTER,
+    transition: "opacity 0.15s linear",
+    zIndex: 0,
+  };
+
+  return (
+    <>
+      <video
+        ref={aRef}
+        src={HERO_VIDEO}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        style={sharedStyle}
+      />
+      <video
+        ref={bRef}
+        src={HERO_VIDEO}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        style={{ ...sharedStyle, opacity: 0 }}
+      />
+    </>
+  );
+}
 
 export default function Hero() {
   return (
@@ -103,35 +104,20 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       id="hero"
     >
-      {/* Video layer — human warmth behind the brand pixel grid */}
-      <video
-        src={HERO_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{
-          filter: "grayscale(0.55) contrast(1.05) brightness(0.45) saturate(0.9)",
-          zIndex: 0,
-        }}
-        aria-hidden="true"
-      />
-      {/* Dark scrim — keeps headline readable, sets the brand tone */}
+      <HeroVideoLoop />
+
+      {/* Soft scrim — keeps headline punchy without burying her */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 1,
           background:
-            "radial-gradient(ellipse at center, rgba(8,8,8,0.55) 0%, rgba(8,8,8,0.85) 70%, #080808 100%)",
+            "radial-gradient(ellipse at center, rgba(8,8,8,0.35) 0%, rgba(8,8,8,0.7) 75%, #080808 100%)",
         }}
       />
 
-      <HeroCanvas />
-
       <div
-        className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
         style={{
           background: "linear-gradient(to bottom, transparent, #080808)",
           zIndex: 3,
