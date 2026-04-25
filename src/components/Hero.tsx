@@ -12,9 +12,9 @@ const HERO_VIDEOS = [
   "https://videos.pexels.com/video-files/6786265/6786265-uhd_2560_1440_25fps.mp4",  // woman busy using laptop
 ];
 
-const PLAYBACK_RATE = 0.55; // slowed for cinematic feel
-const SLIDE_MS = 9000;      // per-clip on-screen time
-const FADE_MS = 1400;       // crossfade duration
+const PLAYBACK_RATE = 1.0;  // normal speed
+const SLIDE_MS = 7000;      // per-clip on-screen time
+const FADE_MS = 1200;       // crossfade duration
 
 const VIDEO_FILTER =
   "grayscale(0.18) contrast(1.05) brightness(0.85) saturate(1.0)";
