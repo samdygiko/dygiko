@@ -152,10 +152,29 @@ export default function HowItWorksSection() {
   return (
     <section
       className="relative overflow-hidden py-32"
-      style={{ background: "#0a0a0a" }}
+      style={{ background: "#080808" }}
       id="process"
     >
       <ParticleCanvas />
+      {/* Top + bottom fades — particles taper into the page bg instead of cutting off */}
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-none"
+        style={{
+          height: "180px",
+          background:
+            "linear-gradient(to bottom, #080808 0%, rgba(8,8,8,0.6) 50%, rgba(8,8,8,0) 100%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
+        style={{
+          height: "220px",
+          background:
+            "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.6) 50%, rgba(8,8,8,0) 100%)",
+        }}
+        aria-hidden="true"
+      />
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div

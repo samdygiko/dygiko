@@ -7,22 +7,22 @@ import Magnetic from "./Magnetic";
 /* ─── Hero section ───────────────────────────────────────────────────────── */
 const HERO_VIDEOS = [
   "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4", // woman smiling at desk
-  "https://videos.pexels.com/video-files/5197241/5197241-uhd_2560_1440_25fps.mp4",  // man typing on laptop
-  "https://videos.pexels.com/video-files/5475136/5475136-hd_1920_1080_30fps.mp4",   // hands typing — high angle workspace
-  "https://videos.pexels.com/video-files/5083058/5083058-uhd_2732_1440_25fps.mp4",  // person at laptop
+  "https://videos.pexels.com/video-files/9033088/9033088-uhd_2560_1440_25fps.mp4",  // woman on video call
+  "https://videos.pexels.com/video-files/5197241/5197241-uhd_2560_1440_25fps.mp4",  // man typing on laptop keyboard
+  "https://videos.pexels.com/video-files/6786265/6786265-uhd_2560_1440_25fps.mp4",  // woman busy using laptop
 ];
 
-const SLIDE_MS = 7000; // each clip on screen for 7s — under the natural length so we never see a loop cut
-const FADE_MS = 1200;  // crossfade duration
+const PLAYBACK_RATE = 0.55; // slowed for cinematic feel
+const SLIDE_MS = 9000;      // per-clip on-screen time
+const FADE_MS = 1400;       // crossfade duration
 
 const VIDEO_FILTER =
   "grayscale(0.18) contrast(1.05) brightness(0.85) saturate(1.0)";
 
 /**
- * Crossfading slideshow of distinct clips. Each <video> element renders
- * continuously and only the active one is at opacity 1 — when `current`
- * advances, the old fades out and the new fades in (no jump-cut, no ghosting
- * because the underlying frames are now from different scenes).
+ * Crossfading slideshow of distinct clips. Each <video> renders continuously,
+ * but loop is disabled and playback is slowed — combined with the per-clip
+ * window being shorter than the slowed clip duration, we never hit the end.
  */
 function HeroSlideshow() {
   const [current, setCurrent] = useState(0);
@@ -39,9 +39,11 @@ function HeroSlideshow() {
       {HERO_VIDEOS.map((src, i) => (
         <video
           key={src}
+          ref={(el) => {
+            if (el) el.playbackRate = PLAYBACK_RATE;
+          }}
           src={src}
           autoPlay
-          loop
           muted
           playsInline
           preload="metadata"
