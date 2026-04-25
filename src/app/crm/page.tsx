@@ -542,34 +542,36 @@ function buildClaudeBrief(args: {
   const font = args.font.trim() || "[font inspiration site URL]";
   const notes = args.notes.trim();
 
-  return `Please check the memory of this project before starting — load any prior context you have on Dygiko, the client pipeline, and previous builds.
+  return `Hi Claude — I need you to write a complete prompt I can paste into Claude Code to build a marketing website. You are writing the prompt, not the site.
 
-I'm building a marketing website for ${business} — a ${industry} business.
+Before you start, please check the memory of this project — load any prior context you have on Dygiko, the client pipeline, design direction, and previous builds we've shipped together.
 
-I've attached a screenshot of the client's Google Business Profile. Please use it to read off the real business name, address, phone number, opening hours, photos, and any reviews.
+The client is ${business}, a ${industry} business.
 
-Design inspiration sites:
+I've attached a screenshot of their Google Business Profile. Read it carefully and pull the real business name, address, phone number, opening hours, photos and any reviews into the prompt you produce.
+
+Design inspiration sites (the prompt should reference these):
 ${inspirationBlock}
 
 Font / typography inspiration:
 - ${font}
 
-For imagery, please pull photos from the client's own Google Business Profile and from the inspiration sites above where appropriate, and fill any gaps using Unsplash with searches relevant to a ${industry} business. Use real, on-brand imagery — no placeholders, no lorem ipsum.
+The prompt you generate must instruct Claude Code to:
+  - Use Next.js 14 (App Router), TypeScript and Tailwind, matching the editorial style we've been using on previous Dygiko client builds.
+  - Pull imagery directly from the client's Google Business Profile and from the inspiration sites above where appropriate, then fill any gaps using Unsplash with searches relevant to a ${industry} business. No placeholders, no lorem ipsum.
+  - Run \`git init\` (or use the existing repo), make a clean initial commit, push the repo to GitHub under the samdygiko account, and deploy the project to Vercel.
+  - Reply at the end with the live Vercel URL and the GitHub repo URL so I can verify the site is live.
 
-When the build is finished, instruct Claude Code to:
-  1. Run \`git init\` (or use the existing repo) and make an initial commit.
-  2. Push the repo to GitHub under samdygiko.
-  3. Deploy the project to Vercel.
-  4. Reply with the live Vercel URL and the GitHub repo URL so I can verify the site is live.
-
-Please reference the full memory of all our previous conversations as context — branch discipline, deploy patterns, my preferences on tone, the editorial design direction we've been using, and anything else that's already been established.${
+Please reference the full memory of all our previous conversations as context — branch discipline, deploy patterns, my tone preferences, the editorial design direction, and anything else that's already been established between us.${
     notes
       ? `
 
-Additional notes from me:
+Extra notes from me to fold into the prompt:
 ${notes}`
       : ""
-  }`;
+  }
+
+Output: just the prompt — paste-ready for Claude Code. No commentary or preamble.`;
 }
 
 function AdminContent() {
@@ -584,6 +586,17 @@ function AdminContent() {
 
   const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
   const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
+
+  // Template takedown notice
+  const [takedownName, setTakedownName] = useState("");
+  const [takedownNumber, setTakedownNumber] = useState("");
+  const [copiedTakedown, setCopiedTakedown] = useState(false);
+
+  const takedownBody = `Hi ${takedownName || "[Name]"} hope you're well, it's Eden from Dygiko, just letting you know we'll be taking your website template down as we've been unable to reach you.
+
+Kind Regards,
+
+Eden`;
 
   // Claude build brief
   const [briefBusiness, setBriefBusiness] = useState("");
@@ -732,11 +745,80 @@ function AdminContent() {
         </div>
       </div>
 
+      {/* Template Takedown Notice */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Template Takedown Notice</h3>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          For prospects who&apos;ve gone cold — enter their name and number, then copy the message.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-5">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Prospect name
+            </label>
+            <input
+              type="text"
+              value={takedownName}
+              onChange={(e) => setTakedownName(e.target.value)}
+              placeholder="e.g. Sebastian"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Phone number
+            </label>
+            <input
+              type="tel"
+              value={takedownNumber}
+              onChange={(e) => setTakedownNumber(e.target.value)}
+              placeholder="e.g. 07700 900000"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center gap-3">
+              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message</p>
+              {takedownNumber && (
+                <a
+                  href={`sms:${takedownNumber.replace(/\s/g, "")}&body=${encodeURIComponent(takedownBody)}`}
+                  style={{ fontSize: "11px", fontWeight: 600, color: "rgba(176,255,0,0.8)", textDecoration: "none" }}
+                >
+                  Send as SMS →
+                </a>
+              )}
+            </div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(takedownBody); setCopiedTakedown(true); setTimeout(() => setCopiedTakedown(false), 2500); }}
+              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTakedown ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTakedown ? "#b0ff00" : "#080808", border: copiedTakedown ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+            >
+              {copiedTakedown ? "✓ Copied!" : "Copy message"}
+            </button>
+          </div>
+          <pre
+            style={{
+              padding: "16px",
+              fontSize: "12px",
+              lineHeight: 1.75,
+              color: "rgba(255,255,255,0.55)",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+            }}
+          >
+            {takedownBody}
+          </pre>
+        </div>
+      </div>
+
       {/* Claude Build Brief */}
       <div>
         <h3 className="text-base font-semibold text-white mb-1">Claude Build Brief</h3>
         <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Generate a paste-ready message for Claude (web app). Attach the client&apos;s Google Business Profile screenshot in the chat manually.
+          Paste this into the Claude web app (claude.ai) along with the client&apos;s Google Business Profile screenshot. Claude will reply with a complete prompt you can paste straight into Claude Code to build the site.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -775,7 +857,7 @@ function AdminContent() {
             style={{ background: "rgba(176,255,0,0.04)", border: "1px dashed rgba(176,255,0,0.2)", borderRadius: "2px" }}
           >
             <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
-              Drag the screenshot directly into the Claude chat after pasting this message. The brief will tell Claude to read the GBP image for the real address, phone, hours, photos and reviews.
+              Drag the GBP screenshot into the same Claude chat after pasting this brief. Claude (web) will read the image and use the real business name, address, phone, hours, photos and reviews when it writes the Claude Code prompt.
             </p>
           </div>
         </div>
