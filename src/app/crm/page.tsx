@@ -550,6 +550,12 @@ The client is ${business}, a ${industry} business.
 
 I've attached a screenshot of their Google Business Profile. Read it carefully and pull the real business name, address, phone number, opening hours, photos and any reviews into the prompt you produce.
 
+IMPORTANT — this site must feel visually distinct from every Dygiko site we've built before. The prompt you write should:
+  - Pick a fresh typography pairing we have NOT used on a previous Dygiko build. Avoid the Playfair Display + DM Sans combination — find a different display + body pairing on Google Fonts that matches this client's vibe.
+  - Specify a colour palette and section vocabulary that is clearly different from prior builds (no recycling the same hero-then-pull-quote-then-services rhythm if it doesn't fit).
+  - Lean on the inspiration sites below for layout cues, but the result should be its own thing — not a clone of any one reference.
+  - When in doubt, choose the more unusual option.
+
 Design inspiration sites (the prompt should reference these):
 ${inspirationBlock}
 
