@@ -593,6 +593,12 @@ function AdminContent() {
   const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
   const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
 
+  // Template SMS message
+  const [smsName, setSmsName] = useState("");
+  const [smsUrl, setSmsUrl] = useState("");
+  const [copiedSms, setCopiedSms] = useState(false);
+  const smsBody = `Hi ${smsName || "[Name]"}, here's your website template ${smsUrl || "[Template URL]"} 👍`;
+
   // Template takedown notice
   const [takedownName, setTakedownName] = useState("");
   const [takedownNumber, setTakedownNumber] = useState("");
@@ -747,6 +753,65 @@ Eden`;
             }}
           >
             {tmplBody}
+          </pre>
+        </div>
+      </div>
+
+      {/* Template Text Message */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Template Text Message</h3>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          Enter the prospect&apos;s name and the template URL, then copy the SMS body and paste it into JustCall.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-5">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Prospect name
+            </label>
+            <input
+              type="text"
+              value={smsName}
+              onChange={(e) => setSmsName(e.target.value)}
+              placeholder="e.g. Keith"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Website template URL
+            </label>
+            <input
+              type="url"
+              value={smsUrl}
+              onChange={(e) => setSmsUrl(e.target.value)}
+              placeholder="e.g. https://hrai-constructions.vercel.app"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>SMS body</p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(smsBody); setCopiedSms(true); setTimeout(() => setCopiedSms(false), 2500); }}
+              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedSms ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedSms ? "#b0ff00" : "#080808", border: copiedSms ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+            >
+              {copiedSms ? "✓ Copied!" : "Copy message"}
+            </button>
+          </div>
+          <pre
+            style={{
+              padding: "16px",
+              fontSize: "12px",
+              lineHeight: 1.75,
+              color: "rgba(255,255,255,0.55)",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+            }}
+          >
+            {smsBody}
           </pre>
         </div>
       </div>

@@ -30,6 +30,12 @@ const projects: Project[] = [
     domain: "akwabaetnicas.com",
     label: "Akwaba Etnicas — African Fashion & Art",
   },
+  {
+    name: "HRAI Constructions",
+    url: "https://hrai-constructions.vercel.app",
+    domain: "hraiconstructions.co.uk",
+    label: "HRAI Constructions — Landscaping & Construction",
+  },
 ];
 
 const SLIDE_MS = 7000;
@@ -67,45 +73,23 @@ function TestimonialCard({ testimonial }: { testimonial: NonNullable<Project["te
 }
 
 /* ─── Pending review placeholder ─────────────────────────────────────────── */
-function PendingCard({ name }: { name: string }) {
+function PendingCard() {
   return (
     <div
-      className="flex flex-col justify-between"
+      className="flex items-center justify-center"
       style={{
         border: "1px dashed rgba(255,255,255,0.12)",
         borderRadius: 8,
-        padding: "28px 24px",
+        padding: "32px 24px",
         background: "rgba(255,255,255,0.015)",
         maxWidth: 320,
         width: "100%",
+        minHeight: 200,
       }}
     >
-      <div>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: "rgba(176,255,0,0.08)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 16,
-            color: "#b0ff00",
-            fontSize: 14,
-          }}
-        >
-          ✓
-        </div>
-        <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-          Recently launched. {name} is live and trading — review coming soon.
-        </p>
-      </div>
-      <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="text-xs uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.3)" }}>
-          New client
-        </p>
-      </div>
+      <p className="text-xs uppercase tracking-[0.22em]" style={{ color: "rgba(255,255,255,0.4)" }}>
+        Recent launch
+      </p>
     </div>
   );
 }
@@ -295,7 +279,7 @@ export default function TemplatesSection() {
             {active.testimonial ? (
               <TestimonialCard testimonial={active.testimonial} />
             ) : (
-              <PendingCard name={active.name} />
+              <PendingCard />
             )}
           </div>
         </motion.div>
