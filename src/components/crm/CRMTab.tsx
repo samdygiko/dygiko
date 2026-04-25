@@ -200,6 +200,21 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
 
   const filteredList = visibleList;
 
+  const nextUncalled = visibleList.find(
+    (e) => (e.callCount ?? 0) === 0 && !/not.?interested/i.test(e.status ?? "")
+  );
+
+  function jumpToNextUncalled() {
+    if (!nextUncalled) return;
+    const el = document.getElementById(`crm-entry-${nextUncalled.id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 1.4s ease";
+      el.style.boxShadow = "0 0 0 2px rgba(176,255,0,0.45)";
+      setTimeout(() => { el.style.boxShadow = ""; }, 1500);
+    }
+  }
+
   // Active count excludes not-interested and movedToLeads (for header display)
   const activeCount = callList.filter(
     (e) => !e.movedToLeads && !/not.?interested/i.test(e.status ?? "")
@@ -279,11 +294,31 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
             </div>
           ) : (
             <>
-              {/* Search input */}
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
+              {/* Search input + jump-to-next-uncalled */}
+              <div className="flex items-stretch gap-2 flex-wrap">
+                <div className="flex-1 min-w-[240px]">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                  />
+                </div>
+                <button
+                  onClick={jumpToNextUncalled}
+                  disabled={!nextUncalled}
+                  className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  style={{
+                    background: "rgba(176,255,0,0.1)",
+                    color: "#b0ff00",
+                    border: "1px solid rgba(176,255,0,0.25)",
+                    maxWidth: 280,
+                  }}
+                  title={nextUncalled ? `Jump to ${nextUncalled.businessName}` : "No uncalled businesses"}
+                >
+                  {nextUncalled
+                    ? `→ Next uncalled: ${nextUncalled.businessName.length > 24 ? nextUncalled.businessName.slice(0, 22) + "…" : nextUncalled.businessName}`
+                    : "All called"}
+                </button>
+              </div>
 
               {/* Match count */}
               {searchQ && (
@@ -589,7 +624,8 @@ function CRMCard({
 
   return (
     <div
-      className="rounded-sm p-4 flex flex-col gap-3 shrink-0"
+      id={`crm-entry-${entry.id}`}
+      className="rounded-sm p-4 flex flex-col gap-3 shrink-0 scroll-mt-24"
       style={{
         border: `1px solid ${isNotInterested ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)"}`,
         background: "rgba(255,255,255,0.02)",
