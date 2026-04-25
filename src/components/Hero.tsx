@@ -1,99 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
 /* ─── Hero section ───────────────────────────────────────────────────────── */
-const HERO_VIDEO =
-  "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4";
+const HERO_VIDEOS = [
+  "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4", // woman smiling at desk
+  "https://videos.pexels.com/video-files/5197241/5197241-uhd_2560_1440_25fps.mp4",  // man typing on laptop
+  "https://videos.pexels.com/video-files/5475136/5475136-hd_1920_1080_30fps.mp4",   // hands typing — high angle workspace
+  "https://videos.pexels.com/video-files/5083058/5083058-uhd_2732_1440_25fps.mp4",  // person at laptop
+];
+
+const SLIDE_MS = 7000; // each clip on screen for 7s — under the natural length so we never see a loop cut
+const FADE_MS = 1200;  // crossfade duration
 
 const VIDEO_FILTER =
-  "grayscale(0.35) contrast(1.05) brightness(0.6) saturate(0.95)";
+  "grayscale(0.18) contrast(1.05) brightness(0.85) saturate(1.0)";
 
 /**
- * Two stacked <video> elements playing the same source, with B's currentTime
- * offset by half-duration. Each is in its safe-middle when the other is near
- * its loop point — opacity is crossfaded based on distance from loop, so the
- * jump-cut becomes a smooth fade.
+ * Crossfading slideshow of distinct clips. Each <video> element renders
+ * continuously and only the active one is at opacity 1 — when `current`
+ * advances, the old fades out and the new fades in (no jump-cut, no ghosting
+ * because the underlying frames are now from different scenes).
  */
-function HeroVideoLoop() {
-  const aRef = useRef<HTMLVideoElement>(null);
-  const bRef = useRef<HTMLVideoElement>(null);
+function HeroSlideshow() {
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    const a = aRef.current;
-    const b = bRef.current;
-    if (!a || !b) return;
-
-    const FADE_WINDOW = 1.0; // seconds before / after loop point that crossfades
-    let synced = false;
-    let rafId: number;
-
-    const safety = (t: number, dur: number) => {
-      const dist = Math.min(t, dur - t);
-      return Math.max(0, Math.min(1, dist / FADE_WINDOW));
-    };
-
-    const tick = () => {
-      if (a.duration > 0) {
-        if (!synced && b.readyState >= 2) {
-          b.currentTime = a.duration / 2;
-          synced = true;
-        }
-        const sa = safety(a.currentTime, a.duration);
-        const sb = b.duration > 0 ? safety(b.currentTime, b.duration) : 0;
-        const total = sa + sb;
-        if (total > 0) {
-          a.style.opacity = String(sa / total);
-          b.style.opacity = String(sb / total);
-        } else {
-          a.style.opacity = "1";
-          b.style.opacity = "0";
-        }
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
+    const id = setInterval(() => {
+      setCurrent((c) => (c + 1) % HERO_VIDEOS.length);
+    }, SLIDE_MS);
+    return () => clearInterval(id);
   }, []);
-
-  const sharedStyle: React.CSSProperties = {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    filter: VIDEO_FILTER,
-    transition: "opacity 0.15s linear",
-    zIndex: 0,
-  };
 
   return (
     <>
-      <video
-        ref={aRef}
-        src={HERO_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-        style={sharedStyle}
-      />
-      <video
-        ref={bRef}
-        src={HERO_VIDEO}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-        style={{ ...sharedStyle, opacity: 0 }}
-      />
+      {HERO_VIDEOS.map((src, i) => (
+        <video
+          key={src}
+          src={src}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: VIDEO_FILTER,
+            opacity: i === current ? 1 : 0,
+            transition: `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            zIndex: 0,
+          }}
+        />
+      ))}
     </>
   );
 }
@@ -104,15 +69,15 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       id="hero"
     >
-      <HeroVideoLoop />
+      <HeroSlideshow />
 
-      {/* Soft scrim — keeps headline punchy without burying her */}
+      {/* Light scrim — just enough to keep the headline crisp */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 1,
           background:
-            "radial-gradient(ellipse at center, rgba(8,8,8,0.35) 0%, rgba(8,8,8,0.7) 75%, #080808 100%)",
+            "radial-gradient(ellipse at center, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.55) 80%, #080808 100%)",
         }}
       />
 
