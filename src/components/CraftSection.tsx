@@ -3,49 +3,10 @@
 import { motion } from "framer-motion";
 import Reveal from "./Reveal";
 
-type Photo = {
-  src: string;
-  alt: string;
-  caption: string;
-  span?: "tall" | "wide" | "default";
-};
-
-const PHOTOS: Photo[] = [
-  {
-    src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1400&q=80",
-    alt: "Code on a developer's screen",
-    caption: "Hand-built — no template stitching",
-    span: "tall",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1559028012-481c04fa702d?w=1400&q=80",
-    alt: "Design system in progress",
-    caption: "Design system before pixel one",
-    span: "wide",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=1400&q=80",
-    alt: "Designer at desk with laptop",
-    caption: "Editorial layouts, not corporate templates",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=1400&q=80",
-    alt: "Design tablet showing UI mockup",
-    caption: "Pixel-perfect on every screen",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80",
-    alt: "Laptop with web work on desk",
-    caption: "Performance & SEO baked in from day one",
-    span: "wide",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1400&q=80",
-    alt: "Analytics dashboard on screen",
-    caption: "Built to be measured — and to convert",
-    span: "tall",
-  },
-];
+const VIDEO_SRC =
+  "https://videos.pexels.com/video-files/7278614/7278614-uhd_2732_1440_24fps.mp4";
+const POSTER =
+  "https://images.pexels.com/videos/7278614/pexels-photo-7278614.jpeg?auto=compress&cs=tinysrgb&w=1600";
 
 export default function CraftSection() {
   return (
@@ -82,71 +43,55 @@ export default function CraftSection() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[180px] md:auto-rows-[220px] gap-3 p-3">
-          {PHOTOS.map((p, i) => {
-            const span =
-              p.span === "tall"
-                ? "row-span-2"
-                : p.span === "wide"
-                ? "col-span-2"
-                : "";
-            return (
-              <motion.figure
-                key={p.src}
-                className={`group relative overflow-hidden ${span}`}
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: "2px",
-                }}
-                initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{
-                  duration: 0.85,
-                  delay: i * 0.06,
-                  ease: [0.2, 0.8, 0.2, 1],
-                }}
-                data-cursor="hover"
-              >
-                <img
-                  src={p.src}
-                  alt={p.alt}
-                  loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-[1.06]"
-                  style={{
-                    filter: "grayscale(0.3) contrast(1.05) brightness(0.85)",
-                  }}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(8,8,8,0) 40%, rgba(8,8,8,0.85) 100%)",
-                  }}
-                />
-                <figcaption
-                  className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-xs md:text-sm font-medium"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  <span
-                    className="inline-block mr-2 align-middle"
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#b0ff00",
-                    }}
-                  />
-                  {p.caption}
-                </figcaption>
-              </motion.figure>
-            );
-          })}
-        </div>
+        <motion.div
+          className="relative mx-3 md:mx-6 my-3 md:my-6 overflow-hidden"
+          style={{
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: "2px",
+            aspectRatio: "16 / 9",
+            background: "rgba(255,255,255,0.02)",
+          }}
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <video
+            src={VIDEO_SRC}
+            poster={POSTER}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: "grayscale(0.25) contrast(1.05) brightness(0.85)" }}
+            aria-label="A designer working on a laptop"
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(8,8,8,0.15) 0%, rgba(8,8,8,0) 30%, rgba(8,8,8,0) 60%, rgba(8,8,8,0.55) 100%)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 p-5 md:p-8 flex items-center gap-3 text-xs md:text-sm font-medium"
+            style={{ color: "rgba(255,255,255,0.85)" }}
+          >
+            <span
+              className="inline-block"
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#b0ff00",
+                boxShadow: "0 0 12px rgba(176,255,0,0.55)",
+              }}
+            />
+            Designed and shipped by hand — never templated.
+          </div>
+        </motion.div>
       </div>
     </section>
   );
