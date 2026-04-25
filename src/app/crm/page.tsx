@@ -566,7 +566,7 @@ The prompt you generate must instruct Claude Code to:
   - Use Next.js 14 (App Router), TypeScript and Tailwind, matching the editorial style we've been using on previous Dygiko client builds.
   - Pull imagery directly from the client's Google Business Profile and from the inspiration sites above where appropriate, then fill any gaps using Unsplash with searches relevant to a ${industry} business. No placeholders, no lorem ipsum.
   - Run \`git init\` (or use the existing repo), make a clean initial commit, push the repo to GitHub under the samdygiko account, and deploy the project to Vercel.
-  - Reply at the end with the live Vercel URL and the GitHub repo URL so I can verify the site is live.
+  - When everything is live, reply with the live Vercel URL only — nothing else, no commentary, no GitHub link, no summary. Just the URL on a single line.
 
 Please reference the full memory of all our previous conversations as context — branch discipline, deploy patterns, my tone preferences, the editorial design direction, and anything else that's already been established between us.${
     notes
