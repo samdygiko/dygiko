@@ -1,9 +1,41 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+
+type Project = {
+  name: string;
+  url: string;
+  domain: string;
+  label: string;
+  testimonial?: { quote: string; author: string; title: string };
+};
+
+const projects: Project[] = [
+  {
+    name: "Hayford Group",
+    url: "https://hayfordgroup.com",
+    domain: "hayfordgroup.com",
+    label: "Hayford Group — Corporate Finance",
+    testimonial: {
+      quote:
+        "Amazing experience with Sam he was able to make all the changes and do everything I asked for, price is also fantastic for what you get, would definitely recommend!",
+      author: "Eden",
+      title: "Director, Hayford Group",
+    },
+  },
+  {
+    name: "Akwaba Etnicas",
+    url: "https://www.akwabaetnicas.com",
+    domain: "akwabaetnicas.com",
+    label: "Akwaba Etnicas — African Fashion & Art",
+  },
+];
+
+const SLIDE_MS = 7000;
 
 /* ─── Testimonial card ───────────────────────────────────────────────────── */
-function TestimonialCard() {
+function TestimonialCard({ testimonial }: { testimonial: NonNullable<Project["testimonial"]> }) {
   return (
     <div
       className="flex flex-col justify-between"
@@ -21,13 +53,57 @@ function TestimonialCard() {
           <path d="M0 18V10.8C0 7.8 .8 5.3 2.4 3.3 4 1.1 6.4 0 9.6 0L10.8 2.4C8.8 2.8 7.2 3.7 6 5.1 5 6.3 4.5 7.7 4.6 9H9.6V18H0ZM14.4 18V10.8C14.4 7.8 15.2 5.3 16.8 3.3 18.4 1.1 20.8 0 24 0L25.2 2.4C23.2 2.8 21.6 3.7 20.4 5.1 19.4 6.3 18.9 7.7 19 9H24V18H14.4Z" />
         </svg>
         <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-          &ldquo;Amazing experience with Sam he was able to make all the changes and do everything I asked for, price is also fantastic for what you get, would definitely recommend!&rdquo;
+          &ldquo;{testimonial.quote}&rdquo;
         </p>
       </div>
       <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-        <p className="text-sm font-semibold text-white">Eden</p>
+        <p className="text-sm font-semibold text-white">{testimonial.author}</p>
         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Director, Hayford Group
+          {testimonial.title}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Pending review placeholder ─────────────────────────────────────────── */
+function PendingCard({ name }: { name: string }) {
+  return (
+    <div
+      className="flex flex-col justify-between"
+      style={{
+        border: "1px dashed rgba(255,255,255,0.12)",
+        borderRadius: 8,
+        padding: "28px 24px",
+        background: "rgba(255,255,255,0.015)",
+        maxWidth: 320,
+        width: "100%",
+      }}
+    >
+      <div>
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "rgba(176,255,0,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 16,
+            color: "#b0ff00",
+            fontSize: 14,
+          }}
+        >
+          ✓
+        </div>
+        <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+          Recently launched. {name} is live and trading — review coming soon.
+        </p>
+      </div>
+      <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <p className="text-xs uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.3)" }}>
+          New client
         </p>
       </div>
     </div>
@@ -36,6 +112,17 @@ function TestimonialCard() {
 
 /* ─── Section ────────────────────────────────────────────────────────────── */
 export default function TemplatesSection() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % projects.length), SLIDE_MS);
+    return () => clearInterval(id);
+  }, [paused]);
+
+  const active = projects[index];
+
   return (
     <section
       className="py-24 md:py-32 border-b"
@@ -67,7 +154,7 @@ export default function TemplatesSection() {
           </div>
         </motion.div>
 
-        {/* Hayford card + testimonial */}
+        {/* Slideshow + testimonial */}
         <motion.div
           className="flex flex-col lg:flex-row items-start gap-8"
           initial={{ opacity: 0, y: 32 }}
@@ -75,66 +162,141 @@ export default function TemplatesSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, delay: 0.1 }}
         >
-          {/* Browser chrome + iframe */}
-          <a
-            href="https://hayfordgroup.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-col group"
-            style={{ textDecoration: "none", flex: "1 1 auto", maxWidth: 680 }}
+          {/* Browser chrome + iframe stack */}
+          <div
+            style={{ flex: "1 1 auto", maxWidth: 680, width: "100%" }}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
           >
-            <div
-              style={{
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 8,
-                overflow: "hidden",
-                background: "#0e0e0e",
-                transition: "border-color 0.2s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)")}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
+            <a
+              href={active.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col group"
+              style={{ textDecoration: "none" }}
+              key={active.url}
             >
-              {/* Chrome bar */}
-              <div style={{ background: "#1a1a1a", height: 32, display: "flex", alignItems: "center", padding: "0 12px", gap: 10, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                <div style={{ display: "flex", gap: 5 }}>
-                  {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-                    <span key={c} style={{ width: 8, height: 8, borderRadius: "50%", background: c, display: "block" }} />
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  background: "#0e0e0e",
+                  transition: "border-color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
+              >
+                {/* Chrome bar */}
+                <div
+                  style={{
+                    background: "#1a1a1a",
+                    height: 32,
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 12px",
+                    gap: 10,
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 5 }}>
+                    {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+                      <span key={c} style={{ width: 8, height: 8, borderRadius: "50%", background: c, display: "block" }} />
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: "rgba(255,255,255,0.07)",
+                      borderRadius: 4,
+                      height: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      paddingLeft: 10,
+                      transition: "background 0.4s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "rgba(255,255,255,0.35)",
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                        transition: "color 0.4s",
+                      }}
+                    >
+                      {active.domain}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Iframe stack (cross-fade) */}
+                <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
+                  {projects.map((p, i) => (
+                    <iframe
+                      key={p.url}
+                      src={p.url}
+                      title={`${p.name} website`}
+                      loading="lazy"
+                      scrolling="no"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "200%",
+                        height: "200%",
+                        border: "none",
+                        transform: "scale(0.5)",
+                        transformOrigin: "top left",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                        opacity: i === index ? 1 : 0,
+                        transition: "opacity 0.9s ease",
+                      }}
+                    />
                   ))}
                 </div>
-                <div style={{ flex: 1, background: "rgba(255,255,255,0.07)", borderRadius: 4, height: 20, display: "flex", alignItems: "center", paddingLeft: 10 }}>
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, fontFamily: "monospace" }}>hayfordgroup.com</span>
-                </div>
               </div>
-              {/* Live iframe */}
-              <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
-                <iframe
-                  src="https://hayfordgroup.com"
-                  title="Hayford Group website"
-                  loading="lazy"
-                  style={{
-                    width: "200%",
-                    height: "200%",
-                    border: "none",
-                    transform: "scale(0.5)",
-                    transformOrigin: "top left",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                    display: "block",
-                  }}
-                  scrolling="no"
-                />
-              </div>
-            </div>
-            <div className="mt-3 px-1">
-              <span className="text-sm font-medium group-hover:text-[#b0ff00] transition-colors duration-200" style={{ color: "rgba(255,255,255,0.7)" }}>
-                Hayford Group — Corporate Finance ↗
-              </span>
-            </div>
-          </a>
 
-          {/* Testimonial */}
+              {/* Caption */}
+              <div className="mt-3 px-1 flex items-center justify-between gap-4">
+                <span
+                  className="text-sm font-medium group-hover:text-[#b0ff00] transition-colors duration-200"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                >
+                  {active.label} ↗
+                </span>
+              </div>
+            </a>
+
+            {/* Dots */}
+            <div className="mt-3 px-1 flex items-center gap-2">
+              {projects.map((p, i) => (
+                <button
+                  key={p.url}
+                  onClick={() => setIndex(i)}
+                  aria-label={`Show ${p.name}`}
+                  style={{
+                    width: i === index ? 20 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    background: i === index ? "#b0ff00" : "rgba(255,255,255,0.2)",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    transition: "all 0.35s ease",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Testimonial / pending card */}
           <div className="lg:pt-0 lg:self-center" style={{ flexShrink: 0 }}>
-            <TestimonialCard />
+            {active.testimonial ? (
+              <TestimonialCard testimonial={active.testimonial} />
+            ) : (
+              <PendingCard name={active.name} />
+            )}
           </div>
         </motion.div>
       </div>
