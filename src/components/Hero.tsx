@@ -87,23 +87,55 @@ function HeroCanvas() {
     <canvas
       ref={canvasRef}
       className="canvas-fade absolute inset-0 w-full h-full"
+      style={{ zIndex: 2 }}
       aria-hidden="true"
     />
   );
 }
 
 /* ─── Hero section ───────────────────────────────────────────────────────── */
+const HERO_VIDEO =
+  "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4";
+
 export default function Hero() {
   return (
     <section
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       id="hero"
     >
+      {/* Video layer — human warmth behind the brand pixel grid */}
+      <video
+        src={HERO_VIDEO}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{
+          filter: "grayscale(0.55) contrast(1.05) brightness(0.45) saturate(0.9)",
+          zIndex: 0,
+        }}
+        aria-hidden="true"
+      />
+      {/* Dark scrim — keeps headline readable, sets the brand tone */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 1,
+          background:
+            "radial-gradient(ellipse at center, rgba(8,8,8,0.55) 0%, rgba(8,8,8,0.85) 70%, #080808 100%)",
+        }}
+      />
+
       <HeroCanvas />
 
       <div
         className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent, #080808)" }}
+        style={{
+          background: "linear-gradient(to bottom, transparent, #080808)",
+          zIndex: 3,
+        }}
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center flex flex-col items-center">
