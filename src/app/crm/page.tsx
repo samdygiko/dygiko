@@ -602,7 +602,7 @@ function AdminContent() {
   // Trustpilot review request
   const [tpName, setTpName] = useState("");
   const [copiedTp, setCopiedTp] = useState(false);
-  const tpBody = `Hi ${tpName || "[Name]"}, hope you're loving the new website! If you've got a spare minute, a quick Trustpilot review would mean a lot — it helps other small businesses find us.
+  const tpBody = `Hi ${tpName || "[Name]"}, hope you're loving the new website! If you've got a spare minute, a quick Trustpilot review would mean a lot — it helps other businesses find us.
 
 https://au.trustpilot.com/review/dygiko.com
 
