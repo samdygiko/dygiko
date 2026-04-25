@@ -523,6 +523,55 @@ Full Business Package — £1,500 + £29/month
 ✓ Monthly hosting & support (£29/mo)`;
 }
 
+function buildClaudeBrief(args: {
+  business: string;
+  industry: string;
+  inspiration: string;
+  font: string;
+  notes: string;
+}) {
+  const business = args.business.trim() || "[Business name]";
+  const industry = args.industry.trim() || "[business type / industry]";
+  const inspirationLines = args.inspiration
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const inspirationBlock = inspirationLines.length
+    ? inspirationLines.map((u) => `- ${u}`).join("\n")
+    : "- [paste one or more inspiration site URLs]";
+  const font = args.font.trim() || "[font inspiration site URL]";
+  const notes = args.notes.trim();
+
+  return `Please check the memory of this project before starting — load any prior context you have on Dygiko, the client pipeline, and previous builds.
+
+I'm building a marketing website for ${business} — a ${industry} business.
+
+I've attached a screenshot of the client's Google Business Profile. Please use it to read off the real business name, address, phone number, opening hours, photos, and any reviews.
+
+Design inspiration sites:
+${inspirationBlock}
+
+Font / typography inspiration:
+- ${font}
+
+For imagery, please pull photos from the client's own Google Business Profile and from the inspiration sites above where appropriate, and fill any gaps using Unsplash with searches relevant to a ${industry} business. Use real, on-brand imagery — no placeholders, no lorem ipsum.
+
+When the build is finished, instruct Claude Code to:
+  1. Run \`git init\` (or use the existing repo) and make an initial commit.
+  2. Push the repo to GitHub under samdygiko.
+  3. Deploy the project to Vercel.
+  4. Reply with the live Vercel URL and the GitHub repo URL so I can verify the site is live.
+
+Please reference the full memory of all our previous conversations as context — branch discipline, deploy patterns, my preferences on tone, the editorial design direction we've been using, and anything else that's already been established.${
+    notes
+      ? `
+
+Additional notes from me:
+${notes}`
+      : ""
+  }`;
+}
+
 function AdminContent() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [openQuotePkg, setOpenQuotePkg] = useState<typeof QUOTE_TEMPLATES[0] | null>(null);
@@ -535,6 +584,21 @@ function AdminContent() {
 
   const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
   const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
+
+  // Claude build brief
+  const [briefBusiness, setBriefBusiness] = useState("");
+  const [briefIndustry, setBriefIndustry] = useState("");
+  const [briefInspiration, setBriefInspiration] = useState("");
+  const [briefFont, setBriefFont] = useState("");
+  const [briefNotes, setBriefNotes] = useState("");
+  const [copiedBrief, setCopiedBrief] = useState(false);
+  const briefBody = buildClaudeBrief({
+    business: briefBusiness,
+    industry: briefIndustry,
+    inspiration: briefInspiration,
+    font: briefFont,
+    notes: briefNotes,
+  });
 
   return (
     <div className="flex flex-col gap-14 max-w-4xl">
@@ -664,6 +728,120 @@ function AdminContent() {
             }}
           >
             {tmplBody}
+          </pre>
+        </div>
+      </div>
+
+      {/* Claude Build Brief */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Claude Build Brief</h3>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          Generate a paste-ready message for Claude (web app). Attach the client&apos;s Google Business Profile screenshot in the chat manually.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1.5">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Business name
+            </label>
+            <input
+              type="text"
+              value={briefBusiness}
+              onChange={(e) => setBriefBusiness(e.target.value)}
+              placeholder="e.g. HRAI Constructions Limited"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+              Business type / industry
+            </label>
+            <input
+              type="text"
+              value={briefIndustry}
+              onChange={(e) => setBriefIndustry(e.target.value)}
+              placeholder="e.g. landscaping & construction"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+            Google Business Profile screenshot
+          </label>
+          <div
+            className="px-4 py-3"
+            style={{ background: "rgba(176,255,0,0.04)", border: "1px dashed rgba(176,255,0,0.2)", borderRadius: "2px" }}
+          >
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+              Drag the screenshot directly into the Claude chat after pasting this message. The brief will tell Claude to read the GBP image for the real address, phone, hours, photos and reviews.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+            Inspiration site URLs (one per line)
+          </label>
+          <textarea
+            value={briefInspiration}
+            onChange={(e) => setBriefInspiration(e.target.value)}
+            placeholder={"https://omaivillas.com\nhttps://farmform.be\nhttps://villas-tamarindo.com"}
+            rows={4}
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none", resize: "vertical", fontFamily: "inherit" }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+            Font / typography inspiration URL
+          </label>
+          <input
+            type="url"
+            value={briefFont}
+            onChange={(e) => setBriefFont(e.target.value)}
+            placeholder="e.g. https://fonts.google.com/specimen/Playfair+Display"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-5">
+          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+            Extra notes (optional)
+          </label>
+          <textarea
+            value={briefNotes}
+            onChange={(e) => setBriefNotes(e.target.value)}
+            placeholder="Anything else Claude should know — colour preferences, must-have sections, deadlines…"
+            rows={3}
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none", resize: "vertical", fontFamily: "inherit" }}
+          />
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message preview</p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(briefBody); setCopiedBrief(true); setTimeout(() => setCopiedBrief(false), 2500); }}
+              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBrief ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedBrief ? "#b0ff00" : "#080808", border: copiedBrief ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+            >
+              {copiedBrief ? "✓ Copied!" : "Copy brief"}
+            </button>
+          </div>
+          <pre
+            style={{
+              padding: "16px",
+              fontSize: "12px",
+              lineHeight: 1.75,
+              color: "rgba(255,255,255,0.55)",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+              maxHeight: "420px",
+              overflowY: "auto",
+            }}
+          >
+            {briefBody}
           </pre>
         </div>
       </div>
