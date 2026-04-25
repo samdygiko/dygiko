@@ -30,12 +30,6 @@ const projects: Project[] = [
     domain: "akwabaetnicas.com",
     label: "Akwaba Etnicas — African Fashion & Art",
   },
-  {
-    name: "HRAI Constructions",
-    url: "https://hrai-constructions.vercel.app",
-    domain: "hraiconstructions.co.uk",
-    label: "HRAI Constructions — Landscaping & Construction",
-  },
 ];
 
 const SLIDE_MS = 7000;
