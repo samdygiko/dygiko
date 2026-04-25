@@ -599,6 +599,16 @@ function AdminContent() {
   const [copiedSms, setCopiedSms] = useState(false);
   const smsBody = `Hi ${smsName || "[Name]"}, here's your website template ${smsUrl || "[Template URL]"} 👍`;
 
+  // Trustpilot review request
+  const [tpName, setTpName] = useState("");
+  const [copiedTp, setCopiedTp] = useState(false);
+  const tpBody = `Hi ${tpName || "[Name]"}, hope you're loving the new website! If you've got a spare minute, a quick Trustpilot review would mean a lot — it helps other small businesses find us.
+
+https://au.trustpilot.com/review/dygiko.com
+
+Thanks again,
+Eden — Dygiko`;
+
   // Template takedown notice
   const [takedownName, setTakedownName] = useState("");
   const [takedownNumber, setTakedownNumber] = useState("");
@@ -812,6 +822,51 @@ Eden`;
             }}
           >
             {smsBody}
+          </pre>
+        </div>
+      </div>
+
+      {/* Trustpilot Review Request */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Trustpilot Review Request</h3>
+        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          For happy clients — enter their name and copy the message asking for a Trustpilot review.
+        </p>
+
+        <div className="flex flex-col gap-1.5 mb-5 max-w-sm">
+          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
+            Client name
+          </label>
+          <input
+            type="text"
+            value={tpName}
+            onChange={(e) => setTpName(e.target.value)}
+            placeholder="e.g. James"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
+          />
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message</p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(tpBody); setCopiedTp(true); setTimeout(() => setCopiedTp(false), 2500); }}
+              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTp ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTp ? "#b0ff00" : "#080808", border: copiedTp ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+            >
+              {copiedTp ? "✓ Copied!" : "Copy message"}
+            </button>
+          </div>
+          <pre
+            style={{
+              padding: "16px",
+              fontSize: "12px",
+              lineHeight: 1.75,
+              color: "rgba(255,255,255,0.55)",
+              whiteSpace: "pre-wrap",
+              fontFamily: "inherit",
+            }}
+          >
+            {tpBody}
           </pre>
         </div>
       </div>

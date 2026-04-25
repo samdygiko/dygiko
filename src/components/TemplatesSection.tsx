@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 type Project = {
@@ -185,90 +185,183 @@ export default function TemplatesSection() {
                       display: "flex",
                       alignItems: "center",
                       paddingLeft: 10,
-                      transition: "background 0.4s",
+                      overflow: "hidden",
                     }}
                   >
-                    <span
-                      style={{
-                        color: "rgba(255,255,255,0.35)",
-                        fontSize: 11,
-                        fontFamily: "monospace",
-                        transition: "color 0.4s",
-                      }}
-                    >
-                      {active.domain}
-                    </span>
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={active.domain}
+                        initial={{ y: 8, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -8, opacity: 0 }}
+                        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                        style={{
+                          color: "rgba(255,255,255,0.55)",
+                          fontSize: 11,
+                          fontFamily: "monospace",
+                          display: "inline-block",
+                        }}
+                      >
+                        {active.domain}
+                      </motion.span>
+                    </AnimatePresence>
                   </div>
                 </div>
 
-                {/* Iframe stack (cross-fade) */}
-                <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
-                  {projects.map((p, i) => (
-                    <iframe
-                      key={p.url}
-                      src={p.url}
-                      title={`${p.name} website`}
-                      loading="lazy"
-                      scrolling="no"
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "200%",
-                        height: "200%",
-                        border: "none",
-                        transform: "scale(0.5)",
-                        transformOrigin: "top left",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                        opacity: i === index ? 1 : 0,
-                        transition: "opacity 1.1s ease",
-                      }}
-                    />
-                  ))}
+                {/* Iframe stack — cross-fade + Ken Burns drift */}
+                <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", position: "relative", background: "#0a0a0a" }}>
+                  {projects.map((p, i) => {
+                    const isActive = i === index;
+                    return (
+                      <motion.div
+                        key={p.url}
+                        initial={false}
+                        animate={{
+                          opacity: isActive ? 1 : 0,
+                        }}
+                        transition={{ duration: 1.6, ease: [0.4, 0, 0.2, 1] }}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          pointerEvents: "none",
+                          willChange: "opacity",
+                        }}
+                      >
+                        <motion.div
+                          key={`kb-${p.url}-${index}`}
+                          initial={{ scale: 1, x: 0 }}
+                          animate={isActive ? { scale: 1.045, x: -6 } : { scale: 1, x: 0 }}
+                          transition={{ duration: SLIDE_MS / 1000 + 1.6, ease: "linear" }}
+                          style={{ position: "absolute", inset: 0, transformOrigin: "center center" }}
+                        >
+                          <iframe
+                            src={p.url}
+                            title={`${p.name} website`}
+                            loading="lazy"
+                            scrolling="no"
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "200%",
+                              height: "200%",
+                              border: "none",
+                              transform: "scale(0.5)",
+                              transformOrigin: "top left",
+                              pointerEvents: "none",
+                              userSelect: "none",
+                            }}
+                          />
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* Subtle vignette to anchor the iframe edges during the zoom */}
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      pointerEvents: "none",
+                      boxShadow: "inset 0 0 80px rgba(0,0,0,0.35)",
+                    }}
+                  />
                 </div>
               </div>
 
-              {/* Caption */}
-              <div className="mt-3 px-1 flex items-center justify-between gap-4">
+              {/* Caption — animated label */}
+              <div className="mt-4 px-1 flex items-baseline justify-between gap-4 min-h-[24px]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={active.label}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-sm font-medium group-hover:text-[#b0ff00] transition-colors duration-200"
+                    style={{ color: "rgba(255,255,255,0.75)", display: "inline-block" }}
+                  >
+                    {active.label} ↗
+                  </motion.span>
+                </AnimatePresence>
                 <span
-                  className="text-sm font-medium group-hover:text-[#b0ff00] transition-colors duration-200"
-                  style={{ color: "rgba(255,255,255,0.7)" }}
+                  className="text-[10px] uppercase tracking-[0.22em]"
+                  style={{ color: "rgba(255,255,255,0.3)" }}
                 >
-                  {active.label} ↗
+                  {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
                 </span>
               </div>
             </a>
 
-            {/* Dots */}
-            <div className="mt-3 px-1 flex items-center gap-2">
-              {projects.map((p, i) => (
-                <button
-                  key={p.url}
-                  onClick={() => setIndex(i)}
-                  aria-label={`Show ${p.name}`}
-                  style={{
-                    width: i === index ? 20 : 6,
-                    height: 6,
-                    borderRadius: 3,
-                    background: i === index ? "#b0ff00" : "rgba(255,255,255,0.2)",
-                    border: "none",
-                    padding: 0,
-                    cursor: "pointer",
-                    transition: "all 0.35s ease",
-                  }}
-                />
-              ))}
+            {/* Progress bar indicator — fills over the slide duration */}
+            <div className="mt-4 px-1 flex items-center gap-3">
+              {projects.map((p, i) => {
+                const isActive = i === index;
+                return (
+                  <button
+                    key={p.url}
+                    onClick={() => setIndex(i)}
+                    aria-label={`Show ${p.name}`}
+                    style={{
+                      flex: 1,
+                      height: 2,
+                      borderRadius: 1,
+                      background: "rgba(255,255,255,0.1)",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {isActive ? (
+                      <motion.span
+                        key={`bar-${index}-${p.url}`}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: SLIDE_MS / 1000, ease: "linear" }}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "#b0ff00",
+                          transformOrigin: "left center",
+                          display: "block",
+                        }}
+                      />
+                    ) : i < index ? (
+                      <span
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "rgba(176,255,0,0.35)",
+                          display: "block",
+                        }}
+                      />
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Testimonial / pending card */}
-          <div className="lg:pt-0 lg:self-center" style={{ flexShrink: 0 }}>
-            {active.testimonial ? (
-              <TestimonialCard testimonial={active.testimonial} />
-            ) : (
-              <PendingCard />
-            )}
+          <div className="lg:pt-0 lg:self-center" style={{ flexShrink: 0, minWidth: 280 }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active.url}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {active.testimonial ? (
+                  <TestimonialCard testimonial={active.testimonial} />
+                ) : (
+                  <PendingCard />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
