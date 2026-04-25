@@ -11,16 +11,14 @@ const POSTER =
 export default function CraftSection() {
   return (
     <section
-      className="border-b"
+      className="border-b relative"
       style={{ borderColor: "rgba(255,255,255,0.06)" }}
       id="craft"
     >
+      {/* Headline (constrained to grid) */}
       <div className="max-w-7xl mx-auto">
         <Reveal>
-          <div
-            className="px-8 py-16 border-b"
-            style={{ borderColor: "rgba(255,255,255,0.06)" }}
-          >
+          <div className="px-8 pt-16 pb-12">
             <p
               className="text-xs uppercase tracking-[0.2em] mb-4"
               style={{ color: "rgba(255,255,255,0.35)" }}
@@ -42,43 +40,68 @@ export default function CraftSection() {
             </p>
           </div>
         </Reveal>
+      </div>
 
-        <motion.div
-          className="relative mx-3 md:mx-6 my-3 md:my-6 overflow-hidden"
+      {/* Full-bleed video that bleeds into the page bg via top + bottom fades */}
+      <motion.div
+        className="relative w-full overflow-hidden"
+        style={{ aspectRatio: "21 / 9" }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 1.1, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <video
+          src={VIDEO_SRC}
+          poster={POSTER}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: "grayscale(0.3) contrast(1.05) brightness(0.78)" }}
+          aria-label="A designer working on a laptop"
+        />
+        {/* Top fade — blends from page bg into video */}
+        <div
+          className="absolute inset-x-0 top-0 pointer-events-none"
           style={{
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: "2px",
-            aspectRatio: "16 / 9",
-            background: "rgba(255,255,255,0.02)",
+            height: "30%",
+            background:
+              "linear-gradient(180deg, #080808 0%, rgba(8,8,8,0.7) 35%, rgba(8,8,8,0) 100%)",
           }}
-          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
-        >
-          <video
-            src={VIDEO_SRC}
-            poster={POSTER}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter: "grayscale(0.25) contrast(1.05) brightness(0.85)" }}
-            aria-label="A designer working on a laptop"
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(8,8,8,0.15) 0%, rgba(8,8,8,0) 30%, rgba(8,8,8,0) 60%, rgba(8,8,8,0.55) 100%)",
-            }}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 p-5 md:p-8 flex items-center gap-3 text-xs md:text-sm font-medium"
-            style={{ color: "rgba(255,255,255,0.85)" }}
-          >
+        />
+        {/* Bottom fade — blends video into page bg / next section */}
+        <div
+          className="absolute inset-x-0 bottom-0 pointer-events-none"
+          style={{
+            height: "45%",
+            background:
+              "linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.65) 55%, #080808 100%)",
+          }}
+        />
+        {/* Side vignettes — subtle, to make the video feel atmospheric not framed */}
+        <div
+          className="absolute inset-y-0 left-0 pointer-events-none"
+          style={{
+            width: "12%",
+            background:
+              "linear-gradient(90deg, rgba(8,8,8,0.65) 0%, rgba(8,8,8,0) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-y-0 right-0 pointer-events-none"
+          style={{
+            width: "12%",
+            background:
+              "linear-gradient(270deg, rgba(8,8,8,0.65) 0%, rgba(8,8,8,0) 100%)",
+          }}
+        />
+
+        {/* Floating caption — no card, just text on the video */}
+        <div className="absolute inset-x-0 bottom-0 z-10">
+          <div className="max-w-7xl mx-auto px-8 pb-10 md:pb-14 flex items-center gap-3">
             <span
               className="inline-block"
               style={{
@@ -89,10 +112,15 @@ export default function CraftSection() {
                 boxShadow: "0 0 12px rgba(176,255,0,0.55)",
               }}
             />
-            Designed and shipped by hand — never templated.
+            <span
+              className="text-xs md:text-sm font-medium tracking-wide"
+              style={{ color: "rgba(255,255,255,0.75)" }}
+            >
+              Designed and shipped by hand — never templated.
+            </span>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </section>
   );
 }
