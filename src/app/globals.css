@@ -134,6 +134,24 @@ body {
   .marquee-track { animation: none; }
 }
 
+/* ─── Lenis smooth scroll ────────────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 /* ─── Service card featured glow ─────────────────────────── */
 .service-card-featured {
   box-shadow:

@@ -12,6 +12,7 @@ import ContactSection from "@/components/ContactSection";
 import FooterCTA from "@/components/FooterCTA";
 import FloatingButtons from "@/components/FloatingButtons";
 import ScrollProgress from "@/components/ScrollProgress";
+import SmoothScroll from "@/components/SmoothScroll";
 
 const orgJsonLd = {
   "@context": "https://schema.org",
@@ -56,6 +57,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <SmoothScroll />
       <ScrollProgress />
       <Nav />
       <main>
