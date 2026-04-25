@@ -1,69 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
 /* ─── Hero section ───────────────────────────────────────────────────────── */
-const HERO_VIDEOS = [
-  "https://videos.pexels.com/video-files/10375458/10375458-hd_1920_1080_30fps.mp4", // woman smiling at desk
-  "https://videos.pexels.com/video-files/9033088/9033088-uhd_2560_1440_25fps.mp4",  // woman on video call
-  "https://videos.pexels.com/video-files/5197241/5197241-uhd_2560_1440_25fps.mp4",  // man typing on laptop keyboard
-  "https://videos.pexels.com/video-files/6786265/6786265-uhd_2560_1440_25fps.mp4",  // woman busy using laptop
-];
+// Swap this to your Adobe Stock URL (image or video) when you have it.
+// For a video, change the <img> below to <video src=... autoPlay loop muted playsInline>.
+const HERO_MEDIA =
+  "https://images.unsplash.com/photo-1542330952-bffc55e812b2?w=2400&q=80&auto=format&fit=crop";
 
-const PLAYBACK_RATE = 1.0;  // normal speed
-const SLIDE_MS = 7000;      // per-clip on-screen time
-const FADE_MS = 1200;       // crossfade duration
-
-const VIDEO_FILTER =
+const HERO_FILTER =
   "grayscale(0.18) contrast(1.05) brightness(0.85) saturate(1.0)";
-
-/**
- * Crossfading slideshow of distinct clips. Each <video> renders continuously,
- * but loop is disabled and playback is slowed — combined with the per-clip
- * window being shorter than the slowed clip duration, we never hit the end.
- */
-function HeroSlideshow() {
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrent((c) => (c + 1) % HERO_VIDEOS.length);
-    }, SLIDE_MS);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <>
-      {HERO_VIDEOS.map((src, i) => (
-        <video
-          key={src}
-          ref={(el) => {
-            if (el) el.playbackRate = PLAYBACK_RATE;
-          }}
-          src={src}
-          autoPlay
-          muted
-          playsInline
-          preload="metadata"
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: VIDEO_FILTER,
-            opacity: i === current ? 1 : 0,
-            transition: `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
-            zIndex: 0,
-          }}
-        />
-      ))}
-    </>
-  );
-}
 
 export default function Hero() {
   return (
@@ -71,7 +18,13 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       id="hero"
     >
-      <HeroSlideshow />
+      <img
+        src={HERO_MEDIA}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: HERO_FILTER, zIndex: 0 }}
+      />
 
       {/* Light scrim — just enough to keep the headline crisp */}
       <div
