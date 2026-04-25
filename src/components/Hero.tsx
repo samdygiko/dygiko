@@ -4,13 +4,10 @@ import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
 /* ─── Hero section ───────────────────────────────────────────────────────── */
-// Swap this to your Adobe Stock URL (image or video) when you have it.
-// For a video, change the <img> below to <video src=... autoPlay loop muted playsInline>.
-const HERO_MEDIA =
-  "https://images.unsplash.com/photo-1542330952-bffc55e812b2?w=2400&q=80&auto=format&fit=crop";
+const HERO_MEDIA = "/hero.mp4";
 
 const HERO_FILTER =
-  "grayscale(0.18) contrast(1.05) brightness(0.85) saturate(1.0)";
+  "grayscale(0.18) contrast(1.05) brightness(0.9) saturate(1.0)";
 
 export default function Hero() {
   return (
@@ -18,9 +15,12 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       id="hero"
     >
-      <img
+      <video
         src={HERO_MEDIA}
-        alt=""
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover"
         style={{ filter: HERO_FILTER, zIndex: 0 }}
