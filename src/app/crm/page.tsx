@@ -1145,8 +1145,8 @@ const DESIGNER_STEPS: OnboardingStep[] = [
   {
     title: "Configure Git as yourself",
     code: `git config --global user.name "Your Real Name"
-git config --global user.email "your@email.com"`,
-    note: `Then log into github.com in your browser with the samdygiko account (Sam will share the login).`,
+git config --global user.email "your-github-email@example.com"`,
+    note: `Use the email tied to the GitHub account you'll push from. If you skip this, Git falls back to your Mac's username + a fake "@your-laptop.local" email — every commit will go up looking like a stranger, won't link to the GitHub account, and won't show on the contributions graph. One-time setup per device. Then log into github.com in your browser with the samdygiko account (Sam will share the login).`,
   },
   {
     title: "Log into Claude Code",
@@ -1216,6 +1216,7 @@ npm install -g @anthropic-ai/claude-code vercel`,
     title: "Configure Git",
     code: `git config --global user.name "Your Name"
 git config --global user.email "you@dygiko.com"`,
+    note: `Use the email tied to your GitHub account. If you skip this, Git falls back to your Mac's username + a fake "@your-laptop.local" email — commits won't link to GitHub, won't show on the contributions graph, and git blame will show your macOS username forever. One-time setup per device.`,
   },
   {
     title: "Log into GitHub (browser + CLI)",
