@@ -606,21 +606,16 @@ function AdminContent() {
   const [copiedTp, setCopiedTp] = useState(false);
   const tpBody = `Hi ${tpName || "[Name]"}, hope you're loving the new website! If you've got a spare minute, a quick Trustpilot review would mean a lot — it helps other businesses find us.
 
-https://au.trustpilot.com/review/dygiko.com
-
-Thanks again,
-Eden — Dygiko`;
+https://au.trustpilot.com/review/dygiko.com`;
 
   // Template takedown notice
   const [takedownName, setTakedownName] = useState("");
   const [takedownNumber, setTakedownNumber] = useState("");
   const [copiedTakedown, setCopiedTakedown] = useState(false);
 
-  const takedownBody = `Hi ${takedownName || "[Name]"} hope you're well, it's Eden from Dygiko, just letting you know we'll be taking your website template down as we've been unable to reach you.
+  const takedownBody = `Hi ${takedownName || "[Name]"} hope you're well, it's Dygiko, just letting you know we'll be taking your website template down as we've been unable to reach you.
 
-Kind Regards,
-
-Eden`;
+Kind Regards,`;
 
   // Claude build brief
   const [briefBusiness, setBriefBusiness] = useState("");
@@ -1159,6 +1154,26 @@ git config --global user.email "your@email.com"`,
     note: `Follow the browser prompt — use the Dygiko Claude account details Sam sends.`,
   },
   {
+    title: "Give Claude Code context about you (~/.claude/CLAUDE.md)",
+    code: `mkdir -p ~/.claude
+open -e ~/.claude/CLAUDE.md`,
+    bullets: [
+      `This is your personal context file — Claude Code reads it at the start of every session, on every project, on this device.`,
+      `It lives outside any git repo, so it travels with you (you set it up once per new device).`,
+      `Paste the template below, fill in your name, save, close. Claude Code now knows who you are and the Dygiko house rules without you re-typing them every time.`,
+    ],
+    note: `Template to paste:
+
+# About me
+- I'm a designer at Dygiko (dygiko.com). My job is building client websites with Claude Code, not editing the Dygiko CRM itself.
+- Production sites I work on live under the samdygiko GitHub org.
+
+# House rules
+- Each client site is its own repo and deploys from its main branch via Vercel. Don't push to main without testing locally first.
+- The Dygiko monorepo at ~/Desktop/dygiko is Sam's territory — don't push there unless asked. (And if you ever do, its production branch is master, NOT main.)
+- If a folder on my Desktop disappears, it's still on GitHub — clone it back, don't panic.`,
+  },
+  {
     title: "Log into Vercel CLI (one-time)",
     code: `vercel login`,
     note: `Pick "Continue with GitHub". After this, Claude Code can deploy sites itself and reply with the live URL — no clicking around the Vercel dashboard.`,
@@ -1175,6 +1190,14 @@ git config --global user.email "your@email.com"`,
   {
     title: "Edits after launch",
     note: `Sam (or the client via Sam) will send change requests. Open Claude Code in the project folder, describe the change, and it'll commit + push + redeploy automatically. Don't push manually unless you know what you're doing.`,
+  },
+  {
+    title: "If your local copy ever goes missing",
+    code: `cd ~/Desktop
+git clone https://github.com/samdygiko/dygiko.git
+cd dygiko
+npm install`,
+    note: `Nothing is lost — everything's on GitHub. Done in 30 seconds. Same applies to any client repo — the URL just changes.`,
   },
 ];
 
@@ -1205,6 +1228,37 @@ git config --global user.email "you@dygiko.com"`,
     title: "Log into Claude Code",
     code: `claude`,
     note: `Authenticate via browser — use the Dygiko Claude account.`,
+  },
+  {
+    title: "Give Claude Code context about you (~/.claude/CLAUDE.md)",
+    code: `mkdir -p ~/.claude
+open -e ~/.claude/CLAUDE.md`,
+    bullets: [
+      `This is your personal context file — Claude Code reads it at the start of every session, on every project, on this device.`,
+      `It lives outside any git repo, so it travels with you (you set it up once per new device).`,
+      `Paste the template below, fill in the gaps, save, close. From now on every Claude Code session already knows who you are, what you ship, and the production rules.`,
+    ],
+    note: `Template to paste (edit anything in [brackets]):
+
+# About me
+- I'm Eden, founder of Dygiko (dygiko.com).
+- Primary working machine — repos sit under ~/Desktop/.
+
+# Repos & where they deploy
+- ~/Desktop/dygiko (samdygiko/dygiko) → dygiko.com + /crm. Production branch is master, NOT main. Pushing to main has broken the live site before — don't.
+- ~/Desktop/deal-sourcing (hayford-web) → live Hayford app. Deploys from main, so any push there hits prod. Treat carefully.
+- ~/Desktop/hayford-website → hayfordgroup.com/crm via Vercel rewrites + basePath "/crm".
+- Per-client demo sites (e.g. hrai-constructions) → own repo under samdygiko, own Vercel project, auto-deploy from main.
+
+# House rules
+- Always confirm which directory + branch before pushing.
+- If a Desktop folder disappears, nothing is lost — clone it back from GitHub. Don't panic, don't recreate from scratch.
+- This Next.js (in dygiko monorepo) has breaking changes from defaults — read node_modules/next/dist/docs/ before writing Next.js code. AGENTS.md in that repo says the same.
+
+# How I like to work
+- Terse responses, no preamble.
+- Don't add comments to code unless the WHY is non-obvious.
+- Show me the diff, don't re-summarise it.`,
   },
   {
     title: "Log into Vercel (browser + CLI)",
@@ -1267,6 +1321,14 @@ claude`,
     title: "External services to be aware of",
     note: `JustCall (calling/SMS), Stripe (payments), Resend (transactional email), Google Places API (Business Finder), Companies House API (deal-sourcing), Firebase (auth + Firestore), IONOS (domains), Trustpilot Business.`,
   },
+  {
+    title: "If your local copy ever goes missing",
+    code: `cd ~/Desktop
+git clone https://github.com/samdygiko/dygiko.git
+cd dygiko
+npm install`,
+    note: `Nothing is lost — everything's on GitHub. Done in 30 seconds. Same applies to any client repo — the URL just changes.`,
+  },
 ];
 
 function CodeBlock({ code }: { code: string }) {
@@ -1325,9 +1387,37 @@ function OnboardingContent() {
   return (
     <div>
       <h2 className="text-2xl font-bold text-white mb-1">Onboarding</h2>
-      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
+      <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>
         New to the team? Pick your role and follow the steps top-to-bottom.
       </p>
+
+      {/* Quick-resume helper — for when you've already onboarded and just closed your laptop / Terminal */}
+      <div
+        className="rounded-sm p-5 mb-8"
+        style={{ background: "rgba(176,255,0,0.04)", border: "1px solid rgba(176,255,0,0.18)" }}
+      >
+        <h3 className="text-sm font-semibold mb-1" style={{ color: "#b0ff00" }}>
+          ⚡ Closed your laptop or quit Terminal? Pick up where you left off
+        </h3>
+        <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
+          Already onboarded — just need to get the dev server + Claude Code running again. Open Terminal and run:
+        </p>
+        <CodeBlock
+          code={`cd ~/Desktop/dygiko
+git pull
+npm run dev`}
+        />
+        <p className="text-xs mt-3 mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+          Then in a new tab, reopen Claude Code in the project (use <code style={{ color: "#b0ff00" }}>--resume</code> to keep your last session):
+        </p>
+        <CodeBlock
+          code={`cd ~/Desktop/dygiko
+claude --resume`}
+        />
+        <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.4)" }}>
+          Folder gone? See <strong style={{ color: "rgba(255,255,255,0.6)" }}>"If your local copy ever goes missing"</strong> at the bottom of the steps.
+        </p>
+      </div>
 
       <div className="flex gap-2 mb-8">
         {(["Designer", "Founder"] as const).map((r) => (
