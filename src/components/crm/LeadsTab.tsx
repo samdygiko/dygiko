@@ -11,6 +11,8 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  arrayUnion,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
@@ -51,6 +53,7 @@ type Lead = {
   templateSent: boolean;
   templateLink: string;
   dateAdded: { toDate?: () => Date } | null;
+  updates?: { text: string; at: Timestamp }[];
 };
 
 const inputSt = {
@@ -73,6 +76,7 @@ export default function LeadsTab() {
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelTemplateLink, setPanelTemplateLink] = useState("");
+  const [currentUpdate, setCurrentUpdate] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -93,8 +97,10 @@ export default function LeadsTab() {
         setPanelName(updated.contactName ?? "");
         setPanelTemplateLink(updated.templateLink ?? "");
       }
+    } else {
+      setCurrentUpdate("");
     }
-  }, [leads]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [leads, selectedLead?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function updateStage(id: string, stage: Stage) {
     await updateDoc(doc(db, "leads", id), { stage });
@@ -107,12 +113,18 @@ export default function LeadsTab() {
   async function savePanelChanges() {
     if (!selectedLead) return;
     setSaving(true);
-    await updateDoc(doc(db, "leads", selectedLead.id), {
+    const trimmedUpdate = currentUpdate.trim();
+    const payload: Record<string, unknown> = {
       notes: panelNotes,
       email: panelEmail,
       contactName: panelName,
       templateLink: panelTemplateLink,
-    });
+    };
+    if (trimmedUpdate) {
+      payload.updates = arrayUnion({ text: trimmedUpdate, at: Timestamp.now() });
+    }
+    await updateDoc(doc(db, "leads", selectedLead.id), payload);
+    if (trimmedUpdate) setCurrentUpdate("");
     setSaving(false);
   }
 
@@ -440,14 +452,14 @@ export default function LeadsTab() {
               </div>
 
               <div className="flex flex-col gap-1.5 flex-1">
-                <label className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Notes</label>
+                <label className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Current update</label>
                 <textarea
-                  value={panelNotes}
-                  onChange={(e) => setPanelNotes(e.target.value)}
-                  rows={5}
-                  placeholder="Add notes…"
-                  className="w-full rounded-sm px-3 py-2 text-xs outline-none resize-none"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                  value={currentUpdate}
+                  onChange={(e) => setCurrentUpdate(e.target.value)}
+                  rows={3}
+                  placeholder="What's the latest? (e.g. 'cb monday 28/04 3pm')"
+                  className="w-full rounded-sm px-3 py-2 text-sm outline-none resize-none"
+                  style={{ background: "rgba(176,255,0,0.05)", border: "1px solid rgba(176,255,0,0.25)", color: "#fff" }}
                 />
                 <button
                   onClick={savePanelChanges}
@@ -457,6 +469,54 @@ export default function LeadsTab() {
                 >
                   {saving ? "Saving…" : "Save changes"}
                 </button>
+
+                {/* Updates timeline — newest first */}
+                {(() => {
+                  const sorted = [...(selectedLead.updates ?? [])].sort((a, b) => {
+                    const ta = a.at?.toMillis?.() ?? 0;
+                    const tb = b.at?.toMillis?.() ?? 0;
+                    return tb - ta;
+                  });
+                  if (sorted.length === 0) return null;
+                  const fmt = (t: Timestamp) => {
+                    try {
+                      return t.toDate().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+                    } catch { return ""; }
+                  };
+                  return (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="rounded-sm px-3 py-2.5" style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.2)" }}>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#b0ff00" }}>Latest</div>
+                        <p className="text-sm whitespace-pre-wrap" style={{ color: "#fff" }}>{sorted[0].text}</p>
+                        <div className="text-[10px] mt-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>{fmt(sorted[0].at)}</div>
+                      </div>
+                      {sorted.length > 1 && (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>Earlier updates</div>
+                          {sorted.slice(1).map((u, i) => (
+                            <div key={i} className="rounded-sm px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                              <p className="text-xs whitespace-pre-wrap" style={{ color: "rgba(255,255,255,0.6)" }}>{u.text}</p>
+                              <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>{fmt(u.at)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Legacy notes — collapsed by default */}
+                <details className="mt-2">
+                  <summary className="text-xs cursor-pointer" style={{ color: "rgba(255,255,255,0.3)" }}>Earlier notes (legacy)</summary>
+                  <textarea
+                    value={panelNotes}
+                    onChange={(e) => setPanelNotes(e.target.value)}
+                    rows={4}
+                    placeholder="Older free-form notes live here…"
+                    className="w-full rounded-sm px-3 py-2 text-xs outline-none resize-none mt-1.5"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+                  />
+                </details>
 
                 <button
                   onClick={() => { setMoveToClientsId(selectedLead.id); setMoveWebsiteUrl(""); }}
