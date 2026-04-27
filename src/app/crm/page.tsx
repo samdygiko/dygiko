@@ -558,6 +558,29 @@ IMPORTANT — this site must feel visually distinct from every Dygiko site we've
   - Lean on the inspiration sites below for layout cues, but the result should be its own thing — not a clone of any one reference.
   - When in doubt, choose the more unusual option.
 
+Every site you ship MUST feel meaningfully different from the last one. The brief, the hero, the section rhythm and the colour story should not echo prior Dygiko builds — if you find yourself reaching for a layout you already used, deliberately pick a different one. Repetition across client sites is the failure mode here.
+
+To enforce that, the prompt you generate must instruct Claude Code to pick exactly ONE signature feature from the curated menu below — and only one — that fits the client's business. Do not invent your own outside this list, do not stack two of them, and do not skip this step. Pick whichever genuinely suits the brand:
+
+  1. Live "Open now · closes in X" status pill in the nav, driven by the real opening hours from the Google Business Profile. Updates by the minute.
+  2. A custom 404 page that riffs on the business in a single witty line (e.g. for a barber: "you've found a bad hair day").
+  3. An oversized editorial pull-quote of a real Google review — one quote, display-size serif, lots of whitespace. Picked from the highest-rated review in the GBP screenshot.
+  4. A subtle colour-palette inversion as the user scrolls past the hero — same site, different mood in the lower half. Must remain accessible.
+  5. A morphing / typewriter tagline in the hero, cycling through 3–4 phrases specific to the business (no generic copy).
+  6. A "Today at [Business]" line in the nav that's day-of-week aware (e.g. "Friday · curry night until 9pm" for a pub, "Saturdays book out fast" for a salon). Use real opening hours.
+  7. An animated SVG monogram or logo reveal on first paint — pure SVG, no third-party libs, must complete in under a second.
+  8. Hand-drawn or illustrated section dividers in place of standard borders — themed to the business (scissors for a barber, knife strokes for a butcher, espresso cup rings for a café). Inline SVG only.
+  9. A photo grid that subtly Ken-Burns-cycles through the real GBP photos. No fast crossfades, no parallax — just slow, editorial drift.
+ 10. A sticky low-profile "call us" pill at the bottom edge that gently morphs (size, copy, or colour) as the user scrolls toward the contact section.
+
+Hard constraints on whichever feature is chosen:
+  - Must work cleanly on mobile. If it breaks responsive, drop it.
+  - Must not slow the first paint by more than ~150ms.
+  - Must feel editorial, not gimmicky. If it would look at home on a SaaS landing page rather than a thoughtful local-business site, it's the wrong pick.
+  - Must use real client data wherever possible (real reviews, real opening hours, real photos), never lorem ipsum or placeholder values.
+
+In the prompt you generate, name the chosen signature feature explicitly and explain why it suits this particular client — so Claude Code knows which one to build, and so the human reviewing the prompt can sanity-check the pick before pasting.
+
 Design inspiration sites (the prompt should reference these):
 ${inspirationBlock}
 
