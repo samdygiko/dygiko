@@ -70,8 +70,6 @@ export default function CRMTab() {
   const [callList, setCallList] = useState<CallEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [scriptOpen, setScriptOpen] = useState(false);
-  const [callerName, setCallerName] = useState("");
-  const [copiedPkg, setCopiedPkg] = useState<string | null>(null);
 const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
@@ -263,7 +261,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
         style={{
           position: 'fixed',
           top: 16,
-          right: scriptOpen ? 'calc(40% + 8px)' : 8,
+          right: scriptOpen ? 'calc(30% + 8px)' : 8,
           zIndex: 51,
           background: scriptOpen ? "rgba(176,255,0,0.12)" : "rgba(255,255,255,0.05)",
           color: scriptOpen ? "#b0ff00" : "rgba(255,255,255,0.6)",
@@ -283,7 +281,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
         {/* Call list — adjusts width when script panel is open */}
         <div
           className="flex flex-col gap-3 min-w-0"
-          style={{ marginRight: scriptOpen ? '40%' : 0, flex: 1 }}
+          style={{ marginRight: scriptOpen ? '30%' : 0, flex: 1 }}
         >
           {callList.length === 0 ? (
             <div
@@ -359,7 +357,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
               position: 'fixed',
               top: 0,
               right: 0,
-              width: '40%',
+              width: '30%',
               height: '100vh',
               overflowY: 'auto',
               zIndex: 50,
@@ -370,23 +368,11 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
             <div style={{ padding: '24px', fontFamily: 'var(--font-geist), system-ui, sans-serif' }}>
               <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Cold Call Script</p>
 
-              {/* Caller name */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '8px' }}>Your name</label>
-                <input
-                  type="text"
-                  value={callerName}
-                  onChange={(e) => setCallerName(e.target.value)}
-                  placeholder="e.g. Sam"
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '4px', padding: '8px 12px', fontSize: '14px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                />
-              </div>
-
               {/* Opening */}
               <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px', marginBottom: '28px' }}>
                 <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0ff00', marginBottom: '10px' }}>Opening</p>
                 <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#ffffff' }}>
-                  {`"Hi, how's it going? My name's ${callerName || '[X]'} from Dygiko — we noticed you didn't have a website, so we wanted to offer you a free template. If you liked it, we could get you on one of our packages."`}
+                  {`"Hi, how's it going? My name's Sam from Dygiko — we noticed you didn't have a website, so we wanted to offer you a free template. If you liked it, we could get you on one of our packages."`}
                 </p>
               </div>
 
@@ -394,9 +380,9 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
               <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '14px' }}>Packages</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
                 {[
-                  { name: 'Basic', price: '£500', extra: '+ £29/mo', desc: 'Custom website + domain + hosting + basic SEO. Live in 2 days.', link: 'https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00' },
-                  { name: 'Growth', price: '£750', extra: '+ £29/mo', desc: 'Everything in Basic + advanced SEO + blog + contact form + company email', link: 'https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01' },
-                  { name: 'Full Business', price: '£1,500', extra: '+ £29/mo', desc: 'Everything in Growth + Google Business Profile + custom CRM + WhatsApp & call button integration', link: 'https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02' },
+                  { name: 'Basic', price: '£500', extra: '+ £29/mo', desc: 'Custom website + domain + hosting + basic SEO. Live in 2 days.' },
+                  { name: 'Growth', price: '£750', extra: '+ £29/mo', desc: 'Everything in Basic + advanced SEO + blog + contact form + company email' },
+                  { name: 'Full Business', price: '£1,500', extra: '+ £29/mo', desc: 'Everything in Growth + Google Business Profile + custom CRM + WhatsApp & call button integration' },
                 ].map((pkg) => (
                   <div key={pkg.name} style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '6px' }}>
@@ -404,13 +390,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                       <span style={{ fontWeight: 700, fontSize: '15px', color: '#b0ff00' }}>{pkg.price}</span>
                       <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>{pkg.extra}</span>
                     </div>
-                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginBottom: '10px' }}>{pkg.desc}</p>
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(pkg.link); setCopiedPkg(pkg.name); setTimeout(() => setCopiedPkg(null), 2000); }}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: copiedPkg === pkg.name ? '#6aff00' : '#b0ff00', color: '#080808', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
-                    >
-                      {copiedPkg === pkg.name ? '✓ Copied!' : 'Copy payment link'}
-                    </button>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{pkg.desc}</p>
                   </div>
                 ))}
               </div>
