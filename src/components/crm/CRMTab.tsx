@@ -369,30 +369,11 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
               <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Cold Call Script</p>
 
               {/* Opening */}
-              <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px', marginBottom: '28px' }}>
+              <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px' }}>
                 <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0ff00', marginBottom: '10px' }}>Opening</p>
                 <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#ffffff' }}>
-                  {`"Hi, how's it going? My name's Sam from Dygiko — we noticed you didn't have a website, so we wanted to offer you a free template. If you liked it, we could get you on one of our packages."`}
+                  {`"Hi, how's it going? My name's Sam from Dygiko — the reason I was calling is we noticed that you didn't have a website currently, so we wanted to offer to build you one."`}
                 </p>
-              </div>
-
-              {/* Packages */}
-              <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '14px' }}>Packages</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
-                {[
-                  { name: 'Basic', price: '£500', extra: '+ £29/mo', desc: 'Custom website + domain + hosting + basic SEO. Live in 2 days.' },
-                  { name: 'Growth', price: '£750', extra: '+ £29/mo', desc: 'Everything in Basic + advanced SEO + blog + contact form + company email' },
-                  { name: 'Full Business', price: '£1,500', extra: '+ £29/mo', desc: 'Everything in Growth + Google Business Profile + custom CRM + WhatsApp & call button integration' },
-                ].map((pkg) => (
-                  <div key={pkg.name} style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '15px', color: '#ffffff' }}>{pkg.name}</span>
-                      <span style={{ fontWeight: 700, fontSize: '15px', color: '#b0ff00' }}>{pkg.price}</span>
-                      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>{pkg.extra}</span>
-                    </div>
-                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{pkg.desc}</p>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
