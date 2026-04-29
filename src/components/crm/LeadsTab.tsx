@@ -17,14 +17,14 @@ import {
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
-type Stage = "Pending/Callback" | "Template Made & Sent" | "Dead";
+type Stage = "Pending/Callback" | "Template Sent" | "Dead";
 type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
 
-const STAGES: Stage[] = ["Pending/Callback", "Template Made & Sent", "Dead"];
+const STAGES: Stage[] = ["Pending/Callback", "Template Sent", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending/Callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
-  "Template Made & Sent": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
+  "Template Sent": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
@@ -81,7 +81,14 @@ export default function LeadsTab() {
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Lead)));
+      setLeads(snap.docs.map((d) => {
+        const data = d.data();
+        if (data.stage === "Template Made & Sent") {
+          data.stage = "Template Sent";
+          updateDoc(doc(db, "leads", d.id), { stage: "Template Sent" }).catch(() => {});
+        }
+        return { id: d.id, ...data } as Lead;
+      }));
       setLoading(false);
     });
     return unsub;
@@ -220,7 +227,7 @@ export default function LeadsTab() {
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {activeLeads.length} total · {leads.filter((l) => l.stage === "Template Made & Sent").length} templated
+            {activeLeads.length} total · {leads.filter((l) => l.stage === "Template Sent").length} templated
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
