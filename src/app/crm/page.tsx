@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -54,6 +54,14 @@ const TAB_ICONS: Record<Tab, string> = {
 };
 
 export default function CRMPage() {
+  return (
+    <Suspense fallback={null}>
+      <CRMPageInner />
+    </Suspense>
+  );
+}
+
+function CRMPageInner() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
