@@ -76,7 +76,18 @@ export default function LeadsTab() {
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelTemplateLink, setPanelTemplateLink] = useState("");
+  const [templateLinkCopied, setTemplateLinkCopied] = useState(false);
   const [currentUpdate, setCurrentUpdate] = useState("");
+
+  const copyTemplateLink = async () => {
+    const link = panelTemplateLink.trim();
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setTemplateLinkCopied(true);
+      setTimeout(() => setTemplateLinkCopied(false), 1500);
+    } catch { /* clipboard blocked — silently ignore */ }
+  };
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -456,6 +467,42 @@ export default function LeadsTab() {
                     <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Template link</label>
+                <div className="rounded-sm p-2.5 flex flex-col gap-2" style={{ background: "rgba(176,255,0,0.04)", border: "1px solid rgba(176,255,0,0.2)" }}>
+                  <input
+                    value={panelTemplateLink}
+                    onChange={(e) => setPanelTemplateLink(e.target.value)}
+                    placeholder="https://template.dygiko.com/…"
+                    className="w-full rounded-sm px-2.5 py-1.5 text-xs outline-none"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#fff" }}
+                  />
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={copyTemplateLink}
+                      disabled={!panelTemplateLink.trim()}
+                      className="flex-1 text-xs py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+                      style={{ background: templateLinkCopied ? "rgba(176,255,0,0.25)" : "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.3)" }}
+                    >
+                      {templateLinkCopied ? "Copied ✓" : "Copy link"}
+                    </button>
+                    {panelTemplateLink.trim() && (
+                      <a
+                        href={panelTemplateLink.trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs py-1.5 px-3 rounded-sm font-medium transition-opacity hover:opacity-80"
+                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      >
+                        Open ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Saved when you click &ldquo;Save changes&rdquo; below.</p>
               </div>
 
               <div className="flex flex-col gap-1.5 flex-1">
