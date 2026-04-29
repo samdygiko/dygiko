@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -56,7 +56,11 @@ const TAB_ICONS: Record<Tab, string> = {
 export default function CRMPage() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("Business Finder");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams?.get("tab");
+    return (TABS as readonly string[]).includes(t || "") ? (t as Tab) : "Business Finder";
+  });
   const [callCount, setCallCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
@@ -66,6 +70,11 @@ export default function CRMPage() {
   useEffect(() => {
     if (!loading && !user) router.replace("/crm/login");
   }, [loading, user, router]);
+
+  useEffect(() => {
+    const t = searchParams?.get("tab");
+    if (t && (TABS as readonly string[]).includes(t)) setTab(t as Tab);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -606,12 +615,16 @@ Output: just the prompt — paste-ready for Claude Code. No commentary or preamb
 }
 
 function AdminContent() {
+  const searchParams = useSearchParams();
+  const prefillName = searchParams?.get("prefillName") ?? "";
+  const prefillUrl = searchParams?.get("prefillUrl") ?? "";
+
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [openQuotePkg, setOpenQuotePkg] = useState<typeof QUOTE_TEMPLATES[0] | null>(null);
 
   // Template follow-up email
-  const [tmplName, setTmplName] = useState("");
-  const [tmplUrl, setTmplUrl] = useState("");
+  const [tmplName, setTmplName] = useState(prefillName);
+  const [tmplUrl, setTmplUrl] = useState(prefillUrl);
   const [copiedTmplSubject, setCopiedTmplSubject] = useState(false);
   const [copiedTmplBody, setCopiedTmplBody] = useState(false);
 
@@ -619,9 +632,14 @@ function AdminContent() {
   const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
 
   // Template SMS message
-  const [smsName, setSmsName] = useState("");
-  const [smsUrl, setSmsUrl] = useState("");
+  const [smsName, setSmsName] = useState(prefillName);
+  const [smsUrl, setSmsUrl] = useState(prefillUrl);
   const [copiedSms, setCopiedSms] = useState(false);
+
+  useEffect(() => {
+    if (prefillName) { setSmsName(prefillName); setTmplName(prefillName); }
+    if (prefillUrl)  { setSmsUrl(prefillUrl);   setTmplUrl(prefillUrl);  }
+  }, [prefillName, prefillUrl]);
   const smsBody = `Hi ${smsName || "[Name]"}, here's your website template ${smsUrl || "[Template URL]"} 👍`;
 
   // Trustpilot review request

@@ -14,6 +14,7 @@ import {
   arrayUnion,
   Timestamp,
 } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
@@ -76,17 +77,19 @@ export default function LeadsTab() {
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelTemplateLink, setPanelTemplateLink] = useState("");
-  const [templateLinkCopied, setTemplateLinkCopied] = useState(false);
   const [currentUpdate, setCurrentUpdate] = useState("");
+  const router = useRouter();
 
-  const copyTemplateLink = async () => {
-    const link = panelTemplateLink.trim();
-    if (!link) return;
-    try {
-      await navigator.clipboard.writeText(link);
-      setTemplateLinkCopied(true);
-      setTimeout(() => setTemplateLinkCopied(false), 1500);
-    } catch { /* clipboard blocked — silently ignore */ }
+  const sendTemplateToAdmin = async () => {
+    const url = panelTemplateLink.trim();
+    if (!url || !selectedLead) return;
+    try { await savePanelChanges(); } catch { /* keep going even if save fails */ }
+    const params = new URLSearchParams({
+      tab: "Admin",
+      prefillName: panelName.trim(),
+      prefillUrl: url,
+    });
+    router.push(`/crm?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -482,12 +485,12 @@ export default function LeadsTab() {
                   <div className="flex gap-1.5">
                     <button
                       type="button"
-                      onClick={copyTemplateLink}
+                      onClick={sendTemplateToAdmin}
                       disabled={!panelTemplateLink.trim()}
                       className="flex-1 text-xs py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
-                      style={{ background: templateLinkCopied ? "rgba(176,255,0,0.25)" : "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.3)" }}
+                      style={{ background: "#b0ff00", color: "#000", border: "1px solid rgba(176,255,0,0.3)" }}
                     >
-                      {templateLinkCopied ? "Copied ✓" : "Copy link"}
+                      Send template via SMS →
                     </button>
                     {panelTemplateLink.trim() && (
                       <a
@@ -502,7 +505,7 @@ export default function LeadsTab() {
                     )}
                   </div>
                 </div>
-                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Saved when you click &ldquo;Save changes&rdquo; below.</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Opens the Admin SMS template with name and URL pre-filled. Auto-saves the link to this lead.</p>
               </div>
 
               <div className="flex flex-col gap-1.5 flex-1">
