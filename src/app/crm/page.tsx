@@ -988,7 +988,15 @@ Kind Regards,`;
 
       {/* Claude Build Brief */}
       <div>
-        <h3 className="text-base font-semibold text-white mb-1">Claude Build Brief</h3>
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <h3 className="text-base font-semibold text-white">Claude Build Brief</h3>
+          <button
+            onClick={() => { navigator.clipboard.writeText(briefBody); setCopiedBrief(true); setTimeout(() => setCopiedBrief(false), 2500); }}
+            style={{ fontSize: "11px", fontWeight: 600, padding: "8px 18px", borderRadius: "2px", background: copiedBrief ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedBrief ? "#b0ff00" : "#080808", border: copiedBrief ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            {copiedBrief ? "✓ Copied!" : "Copy entire brief"}
+          </button>
+        </div>
         <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
           Paste this into the Claude web app (claude.ai) along with the client&apos;s Google Business Profile screenshot. Claude will reply with a complete prompt you can paste straight into Claude Code to build the site.
         </p>
