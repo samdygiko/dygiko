@@ -18,14 +18,15 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
-type Stage = "Pending/Callback" | "Template Made" | "Dead";
+type Stage = "Pending/Callback" | "Template Made" | "Sent" | "Dead";
 type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
 
-const STAGES: Stage[] = ["Pending/Callback", "Template Made", "Dead"];
+const STAGES: Stage[] = ["Pending/Callback", "Template Made", "Sent", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending/Callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
   "Template Made": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
+  "Sent": { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
