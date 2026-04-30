@@ -49,7 +49,7 @@ const PACKAGES: Package[] = [
     num: "01",
     icon: <IconMonitor />,
     name: "Basic Website",
-    price: "£500",
+    price: "£49",
     stripeUrl: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
     includes: [
       "Custom website design",
@@ -63,7 +63,7 @@ const PACKAGES: Package[] = [
     num: "02",
     icon: <IconSearch />,
     name: "Growth Website",
-    price: "£750",
+    price: "£69",
     stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
     includes: [
       "Everything in Basic",
@@ -77,7 +77,7 @@ const PACKAGES: Package[] = [
     num: "03",
     icon: <IconRocket />,
     name: "Full Business Package",
-    price: "£1,500",
+    price: "£99",
     stripeUrl: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
     featured: true,
     includes: [
@@ -156,9 +156,10 @@ export default function ServicesSection() {
                   style={{ color: pkg.featured ? "#b0ff00" : "#ffffff" }}
                 >
                   {pkg.price}
+                  <span className="text-base font-medium" style={{ color: "rgba(255,255,255,0.45)" }}> /month</span>
                 </p>
-                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  + £29/month
+                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  No upfront cost · cancel anytime
                 </p>
               </div>
 

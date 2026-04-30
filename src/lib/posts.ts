@@ -20,7 +20,7 @@ export const posts: Post[] = [
       "Website prices in the UK range from a few hundred pounds to tens of thousands. Here's what drives that difference — and how to pick the right option for your business.",
     metaTitle: "How Much Does a Website Cost in the UK? (2025 Guide) — Dygiko",
     metaDescription:
-      "Website costs in the UK explained. From DIY builders to professional agencies — price ranges, what's included, and why cheap isn't always best. Packages from £500.",
+      "Website costs in the UK explained. From DIY builders to professional agencies — price ranges, what's included, and why cheap isn't always best. Packages from £49/month.",
     keywords: [
       "website cost UK",
       "how much does a website cost",
@@ -68,11 +68,11 @@ export const posts: Post[] = [
 <h2>What Dygiko Offers</h2>
 <p>At <a href="/">Dygiko</a>, we've structured our packages to give businesses access to professional web design at transparent, fair prices:</p>
 <ul>
-  <li><strong>Basic Website — £500:</strong> Custom design, mobile-first build, domain and hosting setup, basic SEO. Live in 2 days.</li>
-  <li><strong>Growth Website — £750:</strong> Everything in Basic, plus advanced SEO, blog setup, contact form, and company email.</li>
-  <li><strong>Full Business Package — £1,500:</strong> Everything in Growth, plus Google Business Profile setup, custom CRM, and WhatsApp integration.</li>
+  <li><strong>Basic Website — £49/month:</strong> Custom design, mobile-first build, domain and hosting setup, basic SEO. Live in 2 days.</li>
+  <li><strong>Growth Website — £69/month:</strong> Everything in Basic, plus advanced SEO, blog setup, contact form, and company email.</li>
+  <li><strong>Full Business Package — £99/month:</strong> Everything in Growth, plus Google Business Profile setup, custom CRM, and WhatsApp integration.</li>
 </ul>
-<p>Every site we build is custom — no templates, no shortcuts. We believe a professional website should be accessible to any business, not just those with large marketing budgets.</p>
+<p>Every site we build is custom — no templates, no shortcuts. All plans are monthly subscriptions with no upfront cost — cancel anytime. We believe a professional website should be accessible to any business, not just those with large marketing budgets.</p>
 
 <h2>How to Compare Quotes Properly</h2>
 <p>When reviewing web design quotes, look beyond the headline price. Ask: what platform is the site built on? Who owns it once it's delivered? What happens when you need changes? Do they have a process for SEO? Ask for examples of previous work and check whether those sites actually rank on Google.</p>
@@ -109,7 +109,7 @@ export const posts: Post[] = [
 
 <h2>Your Competitors Are Already Online</h2>
 <p>Whatever your industry, the businesses in your area getting the most calls and the best reviews are almost certainly backed by a strong digital presence. Being offline in a world where business is increasingly won online puts you at a structural disadvantage — not just today, but compounding over time as your competitors' online authority grows while yours doesn't.</p>
-<p>The cost of getting online has never been lower. At <a href="/">Dygiko</a>, a professional custom website starts from £500 and can be live in 2 days. There's no compelling reason to stay invisible.</p>
+<p>The cost of getting online has never been lower. At <a href="/">Dygiko</a>, a professional custom website starts from £49/month — no upfront cost, cancel anytime, and live in 2 days. There's no compelling reason to stay invisible.</p>
 
 <h2>Social Media Isn't a Substitute</h2>
 <p>Many small businesses rely solely on Facebook or Instagram as their online presence. This is better than nothing, but it has serious drawbacks:</p>
@@ -292,7 +292,7 @@ export const posts: Post[] = [
 
 <h2>What Dygiko Offers for Trades Businesses</h2>
 <p>We've built websites for plumbers, electricians, roofers, decorators, and landscapers. We understand what trades customers look for and what makes a trades website actually convert enquiries into booked jobs.</p>
-<p>Our packages start from <a href="/#services">£500 for a Basic Website</a> — custom design, mobile-first, SEO-optimised, with your phone number and contact form front and centre. Live in 2 days. Our Full Business Package at £1,500 goes further, adding Google Business Profile setup, a custom CRM to track leads and follow up automatically, and WhatsApp integration so you never miss an out-of-hours enquiry.</p>
+<p>Our packages start from <a href="/#services">£49/month for a Basic Website</a> — custom design, mobile-first, SEO-optimised, with your phone number and contact form front and centre. Live in 2 days. Our Full Business Package at £99/month goes further, adding Google Business Profile setup, a custom CRM to track leads and follow up automatically, and WhatsApp integration so you never miss an out-of-hours enquiry. All plans are monthly with no upfront cost — cancel anytime.</p>
 <p>If you're a tradesperson who's been putting off getting online, there's never been an easier or more affordable time to do it properly.</p>
     `,
   },

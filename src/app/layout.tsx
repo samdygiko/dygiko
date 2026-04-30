@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s — Dygiko",
   },
   description:
-    "Dygiko builds fast, professional websites for businesses globally. Web design, SEO, Google Business Profile, custom CRM and mobile apps. Live in 2 days from £500.",
+    "Dygiko builds fast, professional websites for businesses globally. Web design, SEO, Google Business Profile, custom CRM and mobile apps. Live in 2 days from £49/month, no upfront cost.",
   keywords: [
     "web design UK",
     "affordable websites",
@@ -49,14 +49,14 @@ export const metadata: Metadata = {
     siteName: "Dygiko",
     title: "Dygiko — Professional Web Design for Businesses Globally",
     description:
-      "Fast, professional websites for businesses globally. Web design, SEO, CRM and apps — live in 2 days from £500.",
+      "Fast, professional websites for businesses globally. Web design, SEO, CRM and apps — live in 2 days from £49/month, no upfront cost.",
     images: [{ url: "/dygiko-logo-400.png", width: 400, height: 400, alt: "Dygiko" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Dygiko — Professional Web Design for Businesses Globally",
     description:
-      "Custom websites for businesses globally. From £500. Live in 2 days.",
+      "Custom websites for businesses globally. From £49/month, no upfront cost. Live in 2 days.",
     images: ["/dygiko-logo-400.png"],
   },
   robots: {

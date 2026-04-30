@@ -16,9 +16,9 @@ const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Onboarding
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = [
-  { label: "Basic Website", price: "£500", url: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00" },
-  { label: "Growth Website", price: "£750", url: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" },
-  { label: "Full Business Package", price: "£1,500", url: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" },
+  { label: "Basic Website", price: "£49/mo", url: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00" },
+  { label: "Growth Website", price: "£69/mo", url: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" },
+  { label: "Full Business Package", price: "£99/mo", url: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" },
 ];
 
 const QUICK_LINKS = [
@@ -216,8 +216,8 @@ const QUOTE_TEMPLATES = [
     key: "quote-basic",
     label: "01 — Basic",
     name: "Basic Website",
-    price: "£500",
-    recur: "+ £29/month",
+    price: "£49",
+    recur: "/month",
     stripeUrl: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
     includes: [
       "Custom website design",
@@ -225,15 +225,16 @@ const QUOTE_TEMPLATES = [
       "Mobile-responsive build",
       "Basic on-page SEO",
       "Live within 2 business days",
-      "Monthly hosting & support (£29/mo)",
+      "Hosting & support included",
+      "No upfront cost · cancel anytime",
     ],
   },
   {
     key: "quote-growth",
     label: "02 — Growth",
     name: "Growth Website",
-    price: "£750",
-    recur: "+ £29/month",
+    price: "£69",
+    recur: "/month",
     stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
     includes: [
       "Everything in Basic",
@@ -242,15 +243,16 @@ const QUOTE_TEMPLATES = [
       "Contact form integration",
       "Professional company email address",
       "Live within 2 business days",
-      "Monthly hosting & support (£29/mo)",
+      "Hosting & support included",
+      "No upfront cost · cancel anytime",
     ],
   },
   {
     key: "quote-full-business",
     label: "03 — Full Business",
     name: "Full Business Package",
-    price: "£1,500",
-    recur: "+ £29/month",
+    price: "£99",
+    recur: "/month",
     stripeUrl: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
     includes: [
       "Everything in Growth",
@@ -258,7 +260,8 @@ const QUOTE_TEMPLATES = [
       "Custom CRM system",
       "WhatsApp & click-to-call button integration",
       "Live within 2 business days",
-      "Monthly hosting & support (£29/mo)",
+      "Hosting & support included",
+      "No upfront cost · cancel anytime",
     ],
   },
 ];
@@ -516,30 +519,33 @@ All our websites are fully compatible with mobile and desktop.
 
 Here's a quick overview of our packages:
 
-Basic Website — £500 + £29/month
+Basic Website — £49/month
 ✓ Custom website design
 ✓ Domain registration & hosting setup
 ✓ Mobile-responsive build
 ✓ Basic on-page SEO
 ✓ Live within 2 business days
-✓ Monthly hosting & support (£29/mo)
+✓ Hosting & support included
+✓ No upfront cost · cancel anytime
 
-Growth Website — £750 + £29/month
+Growth Website — £69/month
 ✓ Everything in Basic
 ✓ Advanced SEO configuration
 ✓ Blog setup with 3 starter posts
 ✓ Contact form integration
 ✓ Professional company email address
 ✓ Live within 2 business days
-✓ Monthly hosting & support (£29/mo)
+✓ Hosting & support included
+✓ No upfront cost · cancel anytime
 
-Full Business Package — £1,500 + £29/month
+Full Business Package — £99/month
 ✓ Everything in Growth
 ✓ Google Business Profile setup & optimisation
 ✓ Custom CRM system
 ✓ WhatsApp & click-to-call button integration
 ✓ Live within 2 business days
-✓ Monthly hosting & support (£29/mo)`;
+✓ Hosting & support included
+✓ No upfront cost · cancel anytime`;
 }
 
 function buildClaudeBrief(args: {

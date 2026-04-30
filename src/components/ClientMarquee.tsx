@@ -3,8 +3,9 @@
 const items = [
   "Live in 2 days",
   "Built to be found",
-  "From £500",
-  "Honest pricing",
+  "From £49/month",
+  "No upfront cost",
+  "Cancel anytime",
   "Custom CRM",
   "Built to last",
   "iOS & Android Apps",

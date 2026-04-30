@@ -58,7 +58,7 @@ type LeadsForm = {
   notes: string;
 };
 
-const PACKAGES = ["", "Basic £500", "Growth £750", "Full Business £1,500"];
+const PACKAGES = ["", "Basic £49/mo", "Growth £69/mo", "Full Business £99/mo"];
 
 const inputSt = {
   background: "rgba(255,255,255,0.04)",

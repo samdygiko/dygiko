@@ -19,7 +19,7 @@ import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 type Stage = "Pending/Callback" | "Template Made" | "Sent" | "Dead";
-type Package = "" | "Basic £500" | "Growth £750" | "Full Business £1,500";
+type Package = "" | "Basic £49/mo" | "Growth £69/mo" | "Full Business £99/mo";
 
 const STAGES: Stage[] = ["Pending/Callback", "Template Made", "Sent", "Dead"];
 
@@ -30,7 +30,7 @@ const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
-const PACKAGES: Package[] = ["", "Basic £500", "Growth £750", "Full Business £1,500"];
+const PACKAGES: Package[] = ["", "Basic £49/mo", "Growth £69/mo", "Full Business £99/mo"];
 
 const FALLBACK_STAGE_COLOR = { bg: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)" };
 function stageColor(stage: string) {
@@ -165,8 +165,11 @@ export default function LeadsTab() {
     if (!lead) return;
     setMovingToClients(true);
 
-    // Map "Basic £500" → "Basic" etc.
+    // Map labelled package → name. Accepts both new (£49/mo) and legacy (£500) labels.
     const pkgMap: Record<string, string> = {
+      "Basic £49/mo": "Basic",
+      "Growth £69/mo": "Growth",
+      "Full Business £99/mo": "Full Business",
       "Basic £500": "Basic",
       "Growth £750": "Growth",
       "Full Business £1,500": "Full Business",

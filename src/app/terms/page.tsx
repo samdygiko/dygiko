@@ -62,17 +62,18 @@ export default function TermsPage() {
 
           <Section num="02" title="Services &amp; Packages">
             <p>
-              We offer three service packages. All packages include a custom website build delivered
-              within 2 business days of payment, with domain registration, hosting setup, and monthly
-              support included in the monthly retainer.
+              We offer three monthly subscription packages. All packages include a custom website build
+              delivered within 2 business days of subscription start, with domain registration, hosting,
+              and ongoing support included in the monthly fee. There is no upfront build cost — the
+              subscription covers everything.
             </p>
             <div
               className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6"
             >
               {[
-                { name: "Basic", price: "£500", recur: "+ £29/month" },
-                { name: "Growth", price: "£750", recur: "+ £29/month" },
-                { name: "Full Business", price: "£1,500", recur: "+ £29/month" },
+                { name: "Basic", price: "£49", recur: "/month" },
+                { name: "Growth", price: "£69", recur: "/month" },
+                { name: "Full Business", price: "£99", recur: "/month" },
               ].map((pkg) => (
                 <div
                   key={pkg.name}
@@ -86,36 +87,37 @@ export default function TermsPage() {
               ))}
             </div>
             <p>
-              <strong className="text-white">Basic Website (£500 + £29/month):</strong> Custom website
+              <strong className="text-white">Basic Website (£49/month):</strong> Custom website
               design, domain registration, hosting setup, mobile-responsive build, basic on-page SEO.
               Live within 2 business days.
             </p>
             <p>
-              <strong className="text-white">Growth Website (£750 + £29/month):</strong> Everything
+              <strong className="text-white">Growth Website (£69/month):</strong> Everything
               in Basic, plus advanced SEO configuration, blog setup with 3 starter posts, contact form
               integration, and a professional company email address.
             </p>
             <p>
-              <strong className="text-white">Full Business Package (£1,500 + £29/month):</strong>{" "}
+              <strong className="text-white">Full Business Package (£99/month):</strong>{" "}
               Everything in Growth, plus Google Business Profile setup and optimisation, custom CRM
               system, WhatsApp and click-to-call button integration.
             </p>
             <p>
-              The monthly retainer of <strong className="text-white">£29/month</strong> covers
-              continued hosting, security monitoring, software updates, and ongoing technical support
-              for all packages.
+              The monthly subscription covers the website build, continued hosting, security
+              monitoring, software updates, and ongoing technical support. You can cancel anytime;
+              billing stops at the end of the current period.
             </p>
           </Section>
 
           <Section num="03" title="Payment Terms">
             <p>
-              The one-time setup fee is due in full prior to commencement of work. Payment is
-              processed securely via Stripe. Work will not begin until payment has been received
-              and confirmed.
+              The monthly subscription begins on the date payment is taken and is billed monthly in
+              advance via Stripe. There is no upfront build cost — the subscription covers everything.
+              Work on your custom website begins once your first payment has been received and confirmed.
             </p>
             <p>
-              The monthly retainer (£29/month) begins on the date your website goes live and is billed
-              monthly in advance. Payments are processed automatically via the payment method on file.
+              You may cancel your subscription at any time. Billing stops at the end of the current
+              billing period and your website is taken offline within 30 days of cancellation
+              (see Hosting &amp; Ownership).
             </p>
             <p>
               All prices are quoted in GBP and are inclusive of any applicable VAT unless otherwise

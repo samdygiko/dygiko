@@ -106,7 +106,7 @@ export default async function BlogPostPage({ params }: Props) {
               Ready to get your business online?
             </p>
             <p className="text-white/50 text-sm mb-5">
-              Professional websites from £500. Live in 2 days.
+              Professional websites from £49/month. No upfront cost. Live in 2 days.
             </p>
             <a
               href="/#services"
