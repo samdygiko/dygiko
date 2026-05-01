@@ -224,6 +224,7 @@ const QUOTE_TEMPLATES = [
       "Domain registration & hosting setup",
       "Mobile-responsive build",
       "Basic on-page SEO",
+      "Unlimited revisions to your site",
       "Live within 2 business days",
       "Hosting & support included",
       "No upfront cost · cancel anytime",
@@ -242,6 +243,7 @@ const QUOTE_TEMPLATES = [
       "Blog setup with 3 starter posts",
       "Contact form integration",
       "Professional company email address",
+      "Unlimited revisions to your site",
       "Live within 2 business days",
       "Hosting & support included",
       "No upfront cost · cancel anytime",
@@ -259,6 +261,7 @@ const QUOTE_TEMPLATES = [
       "Google Business Profile setup & optimisation",
       "Custom CRM system",
       "WhatsApp & click-to-call button integration",
+      "Unlimited revisions to your site & CRM",
       "Live within 2 business days",
       "Hosting & support included",
       "No upfront cost · cancel anytime",
@@ -524,6 +527,7 @@ Basic Website — £49/month
 ✓ Domain registration & hosting setup
 ✓ Mobile-responsive build
 ✓ Basic on-page SEO
+✓ Unlimited revisions to your site
 ✓ Live within 2 business days
 ✓ Hosting & support included
 ✓ No upfront cost · cancel anytime
@@ -534,6 +538,7 @@ Growth Website — £69/month
 ✓ Blog setup with 3 starter posts
 ✓ Contact form integration
 ✓ Professional company email address
+✓ Unlimited revisions to your site
 ✓ Live within 2 business days
 ✓ Hosting & support included
 ✓ No upfront cost · cancel anytime
@@ -543,6 +548,7 @@ Full Business Package — £99/month
 ✓ Google Business Profile setup & optimisation
 ✓ Custom CRM system
 ✓ WhatsApp & click-to-call button integration
+✓ Unlimited revisions to your site & CRM
 ✓ Live within 2 business days
 ✓ Hosting & support included
 ✓ No upfront cost · cancel anytime`;

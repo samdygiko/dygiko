@@ -43,7 +43,7 @@ export default function TermsPage() {
             Terms &amp; Conditions
           </h1>
           <p className="mb-16 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-            Last updated: April 2026
+            Last updated: May 2026
           </p>
 
           <Section num="01" title="Overview">
@@ -145,14 +145,18 @@ export default function TermsPage() {
 
           <Section num="05" title="Cancellation Policy">
             <p>
-              You may cancel the monthly retainer at any time with{" "}
-              <strong className="text-white">30 days&apos; written notice</strong> sent to
-              sam@dygiko.com. Your website will remain live for the duration of the notice period,
-              after which it will be permanently taken offline.
+              You may <strong className="text-white">cancel anytime</strong> from within your Stripe
+              billing portal or by emailing sam@dygiko.com. Billing stops at the end of your current
+              billing period — no further charges will be taken.
             </p>
             <p>
-              The one-time design fee is strictly non-refundable under any circumstances, including
-              cancellation before work begins.
+              Your website will remain live for the remainder of the billing period you have already
+              paid for. After that, the site will be taken offline within 30 days of cancellation
+              (see Hosting &amp; Ownership).
+            </p>
+            <p>
+              Subscription payments already taken are non-refundable. Because there is no upfront
+              build cost, you only ever pay for the months you have used the service.
             </p>
             <p>
               Dygiko reserves the right to terminate the agreement with immediate effect in cases
@@ -160,7 +164,27 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section num="06" title="Client Responsibilities">
+          <Section num="06" title="Revisions &amp; Ongoing Changes">
+            <p>
+              Every active subscription includes <strong className="text-white">unlimited revisions</strong>{" "}
+              to your website (and, on the Full Business Package, to your custom CRM). This covers
+              copy edits, layout adjustments, image swaps, new sections, SEO tweaks, and CRM
+              configuration changes — for as long as your subscription is active.
+            </p>
+            <p>
+              Submit revision requests by replying to any Dygiko email or messaging sam@dygiko.com.
+              Standard turnaround is 1–2 business days per request. Larger structural changes
+              (e.g. adding a full new page or new CRM workflow) may take longer; we will confirm
+              expected timelines on request.
+            </p>
+            <p>
+              &quot;Unlimited&quot; means we will not cap the number of requests, but does not extend
+              to entirely new product builds (e.g. a second website on a separate domain, a mobile
+              app), which are quoted separately.
+            </p>
+          </Section>
+
+          <Section num="07" title="Client Responsibilities">
             <p>To ensure timely delivery, you agree to:</p>
             <ul className="list-none space-y-2 mt-2">
               {[
@@ -182,7 +206,7 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section num="07" title="Data &amp; Privacy">
+          <Section num="08" title="Data &amp; Privacy">
             <p>
               Dygiko collects and processes personal data in accordance with the UK General Data
               Protection Regulation (UK GDPR) and the Data Protection Act 2018. We collect only
@@ -200,7 +224,7 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section num="08" title="Liability">
+          <Section num="09" title="Liability">
             <p>
               Dygiko will use reasonable skill and care in delivering all services. However, we do
               not guarantee specific outcomes such as search engine rankings, revenue increases,
@@ -217,7 +241,7 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section num="09" title="Governing Law">
+          <Section num="10" title="Governing Law">
             <p>
               These Terms and Conditions are governed by and construed in accordance with the laws
               of <strong className="text-white">England and Wales</strong>. Any disputes arising
@@ -230,7 +254,7 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section num="10" title="Contact">
+          <Section num="11" title="Contact">
             <p>
               If you have any questions about these Terms and Conditions or wish to discuss your
               agreement with us, please contact:

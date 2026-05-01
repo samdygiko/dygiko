@@ -19,6 +19,12 @@ const SUB_STATUSES = ["Active", "Paused", "Cancelled"] as const;
 type Package = (typeof PACKAGES)[number];
 type SubStatus = (typeof SUB_STATUSES)[number];
 
+const PACKAGE_PRICE: Record<Package, number> = {
+  Basic: 49,
+  Growth: 69,
+  "Full Business": 99,
+};
+
 type Client = {
   id: string;
   businessName: string;
@@ -26,8 +32,12 @@ type Client = {
   package: Package;
   subscriptionStatus: SubStatus;
   websiteUrl: string;
+  monthlyPrice?: number;
   dateAdded: { toDate?: () => Date } | null;
 };
+
+const monthlyFor = (c: Client): number =>
+  typeof c.monthlyPrice === "number" ? c.monthlyPrice : (PACKAGE_PRICE[c.package] ?? 0);
 
 const SUB_STATUS_COLORS: Record<SubStatus, { bg: string; color: string }> = {
   Active: { bg: "rgba(176,255,0,0.1)", color: "#b0ff00" },
@@ -56,6 +66,7 @@ const emptyForm = {
   package: "Basic" as Package,
   subscriptionStatus: "Active" as SubStatus,
   websiteUrl: "",
+  monthlyPrice: PACKAGE_PRICE.Basic,
 };
 
 export default function ClientsTab() {
@@ -82,6 +93,7 @@ export default function ClientsTab() {
       businessName: form.businessName.trim(),
       email: form.email.trim(),
       websiteUrl: form.websiteUrl.trim(),
+      monthlyPrice: Number(form.monthlyPrice) || PACKAGE_PRICE[form.package],
       dateAdded: serverTimestamp(),
     });
     setForm(emptyForm);
@@ -96,6 +108,7 @@ export default function ClientsTab() {
       package: editForm.package,
       subscriptionStatus: editForm.subscriptionStatus,
       websiteUrl: editForm.websiteUrl.trim(),
+      monthlyPrice: Number(editForm.monthlyPrice) || PACKAGE_PRICE[editForm.package],
     });
     setEditId(null);
   }
@@ -106,10 +119,40 @@ export default function ClientsTab() {
     setDeleteConfirm(null);
   }
 
-  const activeCount = clients.filter((c) => c.subscriptionStatus === "Active").length;
+  const activeClients = clients.filter((c) => c.subscriptionStatus === "Active");
+  const activeCount = activeClients.length;
+  const monthlyIncome = activeClients.reduce((sum, c) => sum + monthlyFor(c), 0);
+  const annualIncome = monthlyIncome * 12;
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
+      {/* Monthly passive income callout */}
+      <div
+        className="rounded-sm px-6 py-5 flex items-center justify-between gap-4 flex-wrap"
+        style={{ background: "rgba(176,255,0,0.06)", border: "1px solid rgba(176,255,0,0.25)" }}
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "#b0ff00" }}>
+            Monthly passive income
+          </p>
+          <p className="text-4xl font-black text-white mt-1" style={{ letterSpacing: "-0.02em" }}>
+            £{monthlyIncome.toLocaleString("en-GB")}
+            <span className="text-base font-medium ml-1" style={{ color: "rgba(255,255,255,0.45)" }}>/ month</span>
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.35)" }}>
+            Annual run rate
+          </p>
+          <p className="text-lg font-semibold text-white mt-1">
+            £{annualIncome.toLocaleString("en-GB")}<span className="text-xs font-medium ml-1" style={{ color: "rgba(255,255,255,0.4)" }}>/ year</span>
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+            from {activeCount} active subscription{activeCount !== 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -184,7 +227,10 @@ export default function ClientsTab() {
                 <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
                 <select
                   value={form.package}
-                  onChange={(e) => setForm((f) => ({ ...f, package: e.target.value as Package }))}
+                  onChange={(e) => {
+                    const pkg = e.target.value as Package;
+                    setForm((f) => ({ ...f, package: pkg, monthlyPrice: PACKAGE_PRICE[pkg] }));
+                  }}
                   className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
                   style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
                 >
@@ -201,6 +247,18 @@ export default function ClientsTab() {
                 >
                   {SUB_STATUSES.map((s) => <option key={s} value={s} style={{ background: "#121212" }}>{s}</option>)}
                 </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly £ (override)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.monthlyPrice}
+                  onChange={(e) => setForm((f) => ({ ...f, monthlyPrice: Number(e.target.value) }))}
+                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                  style={inputSt}
+                />
               </div>
             </div>
           </div>
@@ -252,7 +310,10 @@ export default function ClientsTab() {
                     <div className="flex gap-3">
                       <div className="flex-1">
                         <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
-                        <select value={editForm.package} onChange={(e) => setEditForm((f) => ({ ...f, package: e.target.value as Package }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
+                        <select value={editForm.package} onChange={(e) => {
+                          const pkg = e.target.value as Package;
+                          setEditForm((f) => ({ ...f, package: pkg, monthlyPrice: PACKAGE_PRICE[pkg] }));
+                        }} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
                           {PACKAGES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
                         </select>
                       </div>
@@ -261,6 +322,10 @@ export default function ClientsTab() {
                         <select value={editForm.subscriptionStatus} onChange={(e) => setEditForm((f) => ({ ...f, subscriptionStatus: e.target.value as SubStatus }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
                           {SUB_STATUSES.map((s) => <option key={s} value={s} style={{ background: "#121212" }}>{s}</option>)}
                         </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly £ (override)</label>
+                        <input type="number" min={0} step={1} value={editForm.monthlyPrice} onChange={(e) => setEditForm((f) => ({ ...f, monthlyPrice: Number(e.target.value) }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
                       </div>
                     </div>
                   </div>
@@ -288,6 +353,12 @@ export default function ClientsTab() {
                         >
                           {client.subscriptionStatus}
                         </span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-medium"
+                          style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}
+                        >
+                          £{monthlyFor(client)}/mo
+                        </span>
                       </div>
                       {client.email && (
                         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{client.email}</p>
@@ -295,7 +366,7 @@ export default function ClientsTab() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => { setEditId(client.id); setEditForm({ businessName: client.businessName, email: client.email, package: client.package, subscriptionStatus: client.subscriptionStatus, websiteUrl: client.websiteUrl }); }}
+                        onClick={() => { setEditId(client.id); setEditForm({ businessName: client.businessName, email: client.email, package: client.package, subscriptionStatus: client.subscriptionStatus, websiteUrl: client.websiteUrl, monthlyPrice: monthlyFor(client) }); }}
                         className="text-xs px-2.5 py-1 rounded-sm transition-opacity hover:opacity-80"
                         style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}
                       >

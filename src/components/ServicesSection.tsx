@@ -61,6 +61,7 @@ const PACKAGES: Package[] = [
       "Domain & hosting setup",
       "Mobile responsive",
       "Basic SEO",
+      "Unlimited revisions to your site",
       "Live in 2 days",
     ],
   },
@@ -78,6 +79,7 @@ const PACKAGES: Package[] = [
       "Blog setup + 3 starter posts",
       "Contact form integration",
       "Company email address",
+      "Unlimited revisions to your site",
     ],
   },
   {
@@ -94,6 +96,7 @@ const PACKAGES: Package[] = [
       "Google Business Profile setup",
       "Custom CRM system",
       "WhatsApp & call button integration",
+      "Unlimited revisions to your site & CRM",
     ],
   },
 ];

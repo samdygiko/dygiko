@@ -1,0 +1,121 @@
+<!--
+  Dygiko email template — Growth Subscription (£69/month)
+  Paste into Zoho Mail's HTML editor for the saved template.
+  Replace [First name] and [Business name] with merge tags Zoho supports
+  (e.g. ${FirstName}) or just type names manually before sending.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Your Dygiko quote — Growth Website</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0D0D0D; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .wrapper { max-width: 600px; margin: 0 auto; background: #0D0D0D; }
+  .top-bar { background: #CCFF00; height: 4px; }
+  .header { padding: 32px 40px 24px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-text { font-size: 18px; font-weight: 700; color: #CCFF00; letter-spacing: -0.02em; }
+  .body { padding: 36px 40px; color: #D0D0D0; }
+  .greeting { font-size: 15px; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+  .intro { font-size: 15px; color: #D0D0D0; line-height: 1.7; margin-bottom: 24px; }
+  .package-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); border-radius: 6px; padding: 24px 28px; margin-bottom: 28px; }
+  .package-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px; }
+  .package-name { font-size: 22px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .package-price { font-size: 28px; font-weight: 700; color: #CCFF00; letter-spacing: -0.02em; margin-bottom: 2px; }
+  .package-recur { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 20px; }
+  .divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 16px 0; }
+  .includes-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 12px; }
+  .includes-list { list-style: none; padding: 0; }
+  .includes-list li { font-size: 14px; color: #C0C0C0; padding: 4px 0; padding-left: 20px; position: relative; line-height: 1.5; }
+  .includes-list li::before { content: "✓"; position: absolute; left: 0; color: #CCFF00; font-weight: 700; font-size: 13px; }
+  .cta-section { text-align: center; margin-bottom: 28px; }
+  .cta-btn { display: inline-block; background: #CCFF00; color: #080808; font-size: 14px; font-weight: 700; padding: 14px 36px; border-radius: 4px; text-decoration: none; letter-spacing: -0.01em; }
+  .cta-note { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 10px; }
+  .tc-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 4px; padding: 16px 20px; margin-bottom: 28px; }
+  .tc-text { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6; }
+  .tc-link { color: #CCFF00; text-decoration: none; }
+  .signoff { font-size: 14px; color: #D0D0D0; line-height: 1.8; margin-bottom: 8px; }
+  .signoff-name { font-size: 14px; font-weight: 600; color: #FFFFFF; }
+  .signoff-role { font-size: 13px; color: rgba(255,255,255,0.4); }
+  .footer { padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
+  .footer-brand { font-size: 13px; font-weight: 700; color: #CCFF00; }
+  .footer-links { font-size: 11px; color: rgba(255,255,255,0.3); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="top-bar"></div>
+
+  <div class="header">
+    <div class="logo">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="12" height="12" rx="1.5" fill="#CCFF00"/>
+        <rect x="18" y="2" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.6"/>
+        <rect x="2" y="18" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.6"/>
+        <rect x="18" y="18" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.3"/>
+      </svg>
+      <span class="logo-text">dygiko</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <p class="greeting">Hi [First name],</p>
+    <p class="intro">
+      It was great speaking with you! As discussed, here's your personalised quote for
+      [Business name]. Everything you need to get your business online — live within 2 days, no upfront cost.
+    </p>
+
+    <div class="package-card">
+      <div class="package-label">Package 02 — Growth</div>
+      <div class="package-name">Growth Website</div>
+      <div class="package-price">£69</div>
+      <div class="package-recur">per month · cancel anytime</div>
+      <hr class="divider"/>
+      <div class="includes-title">What's included</div>
+      <ul class="includes-list">
+        <li>Everything in Basic</li>
+        <li>Advanced SEO configuration</li>
+        <li>Blog setup with 3 starter posts</li>
+        <li>Contact form integration</li>
+        <li>Professional company email address</li>
+        <li>Unlimited revisions to your site</li>
+        <li>Live within 2 business days</li>
+        <li>Hosting &amp; support included</li>
+        <li>No upfront cost · cancel anytime</li>
+      </ul>
+    </div>
+
+    <div class="cta-section">
+      <a href="https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" class="cta-btn">Subscribe securely →</a>
+      <p class="cta-note">Secure payment via Stripe · Work starts on your first payment</p>
+    </div>
+
+    <div class="tc-section">
+      <p class="tc-text">
+        By subscribing you agree to our
+        <a href="https://www.dygiko.com/terms" class="tc-link">Terms &amp; Conditions of Service</a>.
+        Your monthly subscription covers your custom website build, hosting, security
+        updates, and ongoing support — no upfront cost, cancel anytime.
+      </p>
+    </div>
+
+    <p class="signoff">
+      Any questions at all, just reply to this email or give me a call.<br/>
+      Looking forward to building something great for [Business name]!
+    </p>
+    <br/>
+    <p class="signoff-name">Sam</p>
+    <p class="signoff-role">Dygiko · sam@dygiko.com · 07723396306</p>
+  </div>
+
+  <div class="footer">
+    <span class="footer-brand">dygiko</span>
+    <span class="footer-links">dygiko.com · sam@dygiko.com</span>
+  </div>
+</div>
+</body>
+</html>
