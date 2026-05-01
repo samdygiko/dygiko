@@ -1,28 +1,54 @@
 <!--
   Dygiko email template — Full Business Subscription (£99/month)
-  Inline styles + table layout for reliable rendering in Zoho, Gmail, Outlook
-  (including dark mode). Replace [First name] / [Business name] before sending.
+  Dark by default; auto-flips to light when the recipient's device is in
+  light mode (via prefers-color-scheme media query).
+  Replace [First name] / [Business name] before sending.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="color-scheme" content="dark only"/>
-<meta name="supported-color-schemes" content="dark only"/>
+<meta name="color-scheme" content="light dark"/>
+<meta name="supported-color-schemes" content="light dark"/>
 <title>Your Dygiko quote — Full Business Package</title>
-<style>:root { color-scheme: dark; supported-color-schemes: dark; }</style>
-</head>
-<body style="margin:0;padding:0;background:#0D0D0D;background-color:#0D0D0D;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0D0D0D" style="background:#0D0D0D;background-color:#0D0D0D;width:100%;">
-  <tr>
-    <td align="center" style="padding:0;background:#0D0D0D;background-color:#0D0D0D;">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#0D0D0D" style="background:#0D0D0D;background-color:#0D0D0D;max-width:600px;width:100%;">
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  body, .bg-page { background-color: #0D0D0D !important; }
+  .bg-card { background-color: #171717 !important; }
+  .bg-soft { background-color: #121212 !important; }
+  .text-strong { color: #FFFFFF !important; }
+  .text-body { color: #D0D0D0 !important; }
+  .text-mute { color: #999999 !important; }
+  .text-faint { color: #777777 !important; }
+  .text-dim { color: #555555 !important; }
+  .border-soft { border-color: #262626 !important; }
+  .border-faint { border-color: #1A1A1A !important; }
 
-        <tr><td bgcolor="#CCFF00" style="background:#CCFF00;background-color:#CCFF00;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+  @media (prefers-color-scheme: light) {
+    body, .bg-page { background-color: #FFFFFF !important; }
+    .bg-card { background-color: #F8F8F6 !important; }
+    .bg-soft { background-color: #F2F2EE !important; }
+    .text-strong { color: #0A0A0A !important; }
+    .text-body { color: #2A2A2A !important; }
+    .text-mute { color: #666666 !important; }
+    .text-faint { color: #888888 !important; }
+    .text-dim { color: #AAAAAA !important; }
+    .border-soft { border-color: #E5E5E5 !important; }
+    .border-faint { border-color: #EEEEEE !important; }
+  }
+</style>
+</head>
+<body class="bg-page" style="margin:0;padding:0;background-color:#0D0D0D;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-page" bgcolor="#0D0D0D" style="background-color:#0D0D0D;width:100%;">
+  <tr>
+    <td align="center" class="bg-page" style="padding:0;background-color:#0D0D0D;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="bg-page" bgcolor="#0D0D0D" style="background-color:#0D0D0D;max-width:600px;width:100%;">
+
+        <tr><td bgcolor="#CCFF00" style="background-color:#CCFF00;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
 
         <tr>
-          <td style="padding:32px 40px 24px 40px;border-bottom:1px solid rgba(255,255,255,0.07);">
+          <td class="border-faint" style="padding:32px 40px 24px 40px;border-bottom:1px solid #1A1A1A;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td style="padding-right:8px;line-height:0;">
@@ -40,31 +66,31 @@
         </tr>
 
         <tr>
-          <td style="padding:36px 40px;background:#0D0D0D;background-color:#0D0D0D;">
-            <p style="margin:0 0 20px 0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#999999;">Hi [First name],</p>
-            <p style="margin:0 0 24px 0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#D0D0D0;line-height:1.7;">
+          <td class="bg-page" style="padding:36px 40px;background-color:#0D0D0D;">
+            <p class="text-mute" style="margin:0 0 20px 0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#999999;">Hi [First name],</p>
+            <p class="text-body" style="margin:0 0 24px 0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#D0D0D0;line-height:1.7;">
               It was great speaking with you! As discussed, here's your personalised quote for
               [Business name]. Everything you need to get your business online — live within 2 days, no upfront cost.
             </p>
 
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#171717" style="background:#171717;background-color:#171717;border:1px solid #262626;border-radius:6px;margin-bottom:28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-card border-soft" bgcolor="#171717" style="background-color:#171717;border:1px solid #262626;border-radius:6px;margin-bottom:28px;">
               <tr>
-                <td style="padding:24px 28px;background:#171717;background-color:#171717;">
-                  <p style="margin:0 0 6px 0;font-family:'DM Sans',Arial,sans-serif;font-size:10px;font-weight:600;color:#666666;text-transform:uppercase;letter-spacing:0.15em;">Package 03 — Full Business</p>
-                  <p style="margin:0 0 4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:22px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;">Full Business Package</p>
+                <td class="bg-card" style="padding:24px 28px;background-color:#171717;">
+                  <p class="text-faint" style="margin:0 0 6px 0;font-family:'DM Sans',Arial,sans-serif;font-size:10px;font-weight:600;color:#777777;text-transform:uppercase;letter-spacing:0.15em;">Package 03 — Full Business</p>
+                  <p class="text-strong" style="margin:0 0 4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:22px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;">Full Business Package</p>
                   <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:28px;font-weight:700;color:#CCFF00;letter-spacing:-0.02em;">£99</p>
-                  <p style="margin:2px 0 20px 0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#777777;">per month · cancel anytime</p>
-                  <hr style="border:none;border-top:1px solid #262626;margin:16px 0;"/>
-                  <p style="margin:0 0 12px 0;font-family:'DM Sans',Arial,sans-serif;font-size:11px;font-weight:600;color:#888888;text-transform:uppercase;letter-spacing:0.12em;">What's included</p>
+                  <p class="text-faint" style="margin:2px 0 20px 0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#777777;">per month · cancel anytime</p>
+                  <hr class="border-soft" style="border:none;border-top:1px solid #262626;margin:16px 0;"/>
+                  <p class="text-faint" style="margin:0 0 12px 0;font-family:'DM Sans',Arial,sans-serif;font-size:11px;font-weight:600;color:#777777;text-transform:uppercase;letter-spacing:0.12em;">What's included</p>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Everything in Growth</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Google Business Profile setup &amp; optimisation</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Custom CRM system</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;WhatsApp &amp; click-to-call button integration</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Unlimited revisions to your site &amp; CRM</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Live within 2 business days</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Hosting &amp; support included</td></tr>
-                    <tr><td style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;No upfront cost · cancel anytime</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Everything in Growth</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Google Business Profile setup &amp; optimisation</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Custom CRM system</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;WhatsApp &amp; click-to-call button integration</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Unlimited revisions to your site &amp; CRM</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Live within 2 business days</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;Hosting &amp; support included</td></tr>
+                    <tr><td class="text-body" style="padding:4px 0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#C0C0C0;line-height:1.5;"><span style="color:#CCFF00;font-weight:700;">✓</span>&nbsp;&nbsp;No upfront cost · cancel anytime</td></tr>
                   </table>
                 </td>
               </tr>
@@ -73,15 +99,15 @@
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
               <tr>
                 <td align="center">
-                  <a href="https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" style="display:inline-block;background:#CCFF00;background-color:#CCFF00;color:#080808;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:700;padding:14px 36px;border-radius:4px;text-decoration:none;letter-spacing:-0.01em;">Subscribe securely →</a>
-                  <p style="margin:10px 0 0 0;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#666666;">Secure payment via Stripe · Work starts on your first payment</p>
+                  <a href="https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" style="display:inline-block;background-color:#CCFF00;color:#080808;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:700;padding:14px 36px;border-radius:4px;text-decoration:none;letter-spacing:-0.01em;">Subscribe securely →</a>
+                  <p class="text-dim" style="margin:10px 0 0 0;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#666666;">Secure payment via Stripe · Work starts on your first payment</p>
                 </td>
               </tr>
             </table>
 
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#121212" style="background:#121212;background-color:#121212;border:1px solid #262626;border-radius:4px;margin-bottom:28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg-soft border-soft" bgcolor="#121212" style="background-color:#121212;border:1px solid #262626;border-radius:4px;margin-bottom:28px;">
               <tr>
-                <td style="padding:16px 20px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#888888;line-height:1.6;">
+                <td class="text-mute bg-soft" style="padding:16px 20px;background-color:#121212;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#888888;line-height:1.6;">
                   By subscribing you agree to our
                   <a href="https://www.dygiko.com/terms" style="color:#CCFF00;text-decoration:none;">Terms &amp; Conditions of Service</a>.
                   Your monthly subscription covers your custom website build, hosting, security
@@ -90,22 +116,22 @@
               </tr>
             </table>
 
-            <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#D0D0D0;line-height:1.8;">
+            <p class="text-body" style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#D0D0D0;line-height:1.8;">
               Any questions at all, just reply to this email or give me a call.<br/>
               Looking forward to building something great for [Business name]!
             </p>
             <br/>
-            <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;">Sam</p>
-            <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#666666;">Dygiko · sam@dygiko.com · 07723396306</p>
+            <p class="text-strong" style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;">Sam</p>
+            <p class="text-dim" style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#666666;">Dygiko · sam@dygiko.com · 07723396306</p>
           </td>
         </tr>
 
         <tr>
-          <td style="padding:20px 40px;border-top:1px solid #1A1A1A;background:#0D0D0D;background-color:#0D0D0D;">
+          <td class="bg-page border-faint" style="padding:20px 40px;border-top:1px solid #1A1A1A;background-color:#0D0D0D;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:700;color:#CCFF00;">dygiko</td>
-                <td align="right" style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#555555;">dygiko.com · sam@dygiko.com</td>
+                <td align="right" class="text-dim" style="font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#555555;">dygiko.com · sam@dygiko.com</td>
               </tr>
             </table>
           </td>
