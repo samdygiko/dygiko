@@ -84,7 +84,7 @@ function buildEmail({
     <p class="greeting">Hi ${firstName},</p>
     <p class="intro">
       It was great speaking with you! As discussed, here's your personalised quote for
-      ${businessName}. Everything you need to get your business online — live within 2 days of payment.
+      ${businessName}. Everything you need to get your business online — live within 2 days, no upfront cost.
     </p>
 
     <div class="package-card">
@@ -100,16 +100,16 @@ function buildEmail({
     </div>
 
     <div class="cta-section">
-      <a href="${stripeUrl}" class="cta-btn">Pay securely →</a>
-      <p class="cta-note">Secure payment via Stripe · Work starts immediately on receipt</p>
+      <a href="${stripeUrl}" class="cta-btn">Subscribe securely →</a>
+      <p class="cta-note">Secure payment via Stripe · Work starts on your first payment</p>
     </div>
 
     <div class="tc-section">
       <p class="tc-text">
-        By proceeding with payment you agree to our
+        By subscribing you agree to our
         <a href="${TC_URL}" class="tc-link">Terms &amp; Conditions of Service</a>.
-        You can download and review the full document before paying.
-        Monthly retainer of ${recur.split(" ")[0]} covers hosting, security updates, and ongoing support — cancel anytime with 30 days' notice.
+        Your monthly subscription covers your custom website build, hosting, security
+        updates, and ongoing support — no upfront cost, cancel anytime.
       </p>
     </div>
 
@@ -142,7 +142,7 @@ export const PACKAGE_EMAILS = {
         packageLabel: "Package 01 — Basic",
         packageName: "Basic Website",
         price: "£49",
-        recur: "/month · cancel anytime",
+        recur: "per month · cancel anytime",
         stripeUrl: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
         includes: [
           "Custom website design",
@@ -166,7 +166,7 @@ export const PACKAGE_EMAILS = {
         packageLabel: "Package 02 — Growth",
         packageName: "Growth Website",
         price: "£69",
-        recur: "/month · cancel anytime",
+        recur: "per month · cancel anytime",
         stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
         includes: [
           "Everything in Basic",
@@ -191,7 +191,7 @@ export const PACKAGE_EMAILS = {
         packageLabel: "Package 03 — Full Business",
         packageName: "Full Business Package",
         price: "£99",
-        recur: "/month · cancel anytime",
+        recur: "per month · cancel anytime",
         stripeUrl: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
         includes: [
           "Everything in Growth",

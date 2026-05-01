@@ -217,7 +217,7 @@ const QUOTE_TEMPLATES = [
     label: "01 — Basic",
     name: "Basic Website",
     price: "£49",
-    recur: "/month",
+    recur: "per month · cancel anytime",
     stripeUrl: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
     includes: [
       "Custom website design",
@@ -234,7 +234,7 @@ const QUOTE_TEMPLATES = [
     label: "02 — Growth",
     name: "Growth Website",
     price: "£69",
-    recur: "/month",
+    recur: "per month · cancel anytime",
     stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
     includes: [
       "Everything in Basic",
@@ -252,7 +252,7 @@ const QUOTE_TEMPLATES = [
     label: "03 — Full Business",
     name: "Full Business Package",
     price: "£99",
-    recur: "/month",
+    recur: "per month · cancel anytime",
     stripeUrl: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
     includes: [
       "Everything in Growth",
@@ -314,7 +314,7 @@ hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:14px 0;}
   </div>
   <div class="body">
     <p class="greeting">Hi ${name},</p>
-    <p class="intro">It was great speaking with you! Here's your personalised quote for <strong style="color:#fff">${biz}</strong>. Everything you need to get your business online — live within 2 days of payment.</p>
+    <p class="intro">It was great speaking with you! Here's your personalised quote for <strong style="color:#fff">${biz}</strong>. Everything you need to get your business online — live within 2 days, no upfront cost.</p>
     <div class="card">
       <div class="pkg-label">${pkg.label}</div>
       <div class="pkg-name">${pkg.name}</div>
@@ -325,11 +325,11 @@ hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:14px 0;}
       ${pkg.includes.map(i => `<div class="inc-item">${i}</div>`).join("")}
     </div>
     <div class="cta">
-      <a href="${pkg.stripeUrl}" target="_blank" rel="noopener noreferrer">Pay securely →</a>
-      <p class="cta-note">Secure payment via Stripe · Work starts immediately on receipt</p>
+      <a href="${pkg.stripeUrl}" target="_blank" rel="noopener noreferrer">Subscribe securely →</a>
+      <p class="cta-note">Secure payment via Stripe · Work starts on your first payment</p>
     </div>
     <div class="tc-box">
-      <p>By proceeding with payment you agree to our <a href="${TC_URL}">Terms &amp; Conditions of Service</a>. You can download and review the full document before paying. Monthly retainer covers hosting, security updates, and ongoing support — cancel anytime with 30 days' notice.</p>
+      <p>By subscribing you agree to our <a href="${TC_URL}">Terms &amp; Conditions of Service</a>. Your monthly subscription covers your custom website build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.</p>
     </div>
     <p class="signoff">Any questions at all, just reply to this email or give me a call.<br/>Looking forward to building something great for ${biz}!</p>
   </div>
@@ -371,7 +371,7 @@ function QuoteEmailModal({ pkg, onClose }: { pkg: typeof QUOTE_TEMPLATES[0]; onC
 
 Hi ${name},
 
-It was great speaking with you! Here's your personalised quote for ${biz}. Everything you need to get your business online — live within 2 days of payment.
+It was great speaking with you! Here's your personalised quote for ${biz}. Everything you need to get your business online — live within 2 days, no upfront cost.
 
 PACKAGE: ${pkg.name}
 PRICE: ${pkg.price} ${pkg.recur}
@@ -379,13 +379,13 @@ PRICE: ${pkg.price} ${pkg.recur}
 What's included:
 ${pkg.includes.map(i => `✓ ${i}`).join("\n")}
 
-PAY SECURELY:
+SUBSCRIBE SECURELY:
 ${pkg.stripeUrl}
 
 TERMS & CONDITIONS:
 ${window.location.origin}${TC_URL}
 
-By proceeding with payment you agree to our Terms & Conditions of Service. Monthly retainer covers hosting, security updates, and ongoing support — cancel anytime with 30 days' notice.
+By subscribing you agree to our Terms & Conditions of Service. Your monthly subscription covers your custom website build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.
 
 Any questions, just reply to this email or give me a call.
 Looking forward to building something great for ${biz}!`;
