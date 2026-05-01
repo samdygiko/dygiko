@@ -15,11 +15,18 @@ import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
 const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
-const PAYMENT_LINKS = [
-  { label: "Basic Website", price: "£49/mo", url: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00" },
-  { label: "Growth Website", price: "£69/mo", url: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" },
-  { label: "Full Business Package", price: "£99/mo", url: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" },
-];
+const PAYMENT_LINKS = {
+  monthly: [
+    { label: "Basic Website (mo)", price: "£49/mo", url: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00" },
+    { label: "Growth Website (mo)", price: "£69/mo", url: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" },
+    { label: "Full Business (mo)", price: "£99/mo", url: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02" },
+  ],
+  annual: [
+    { label: "Basic Website (yr)", price: "£490/yr", url: "https://buy.stripe.com/eVq5kD4rS4J9gVC8pgfjG09" },
+    { label: "Growth Website (yr)", price: "£690/yr", url: "https://buy.stripe.com/4gM28r7E4ejJgVCeNEfjG0a" },
+    { label: "Full Business (yr)", price: "£990/yr", url: "https://buy.stripe.com/6oU7sL1fG8Zp48Q0WOfjG0b" },
+  ],
+};
 
 const QUICK_LINKS = [
   { label: "Vercel Dashboard", url: "https://vercel.com/samdygikos-projects" },
@@ -704,13 +711,31 @@ Kind Regards,`;
         </p>
 
         <h3 className="text-base font-semibold text-white mb-4">Payment Links</h3>
-        <div className="flex flex-col sm:flex-row gap-4">
-          {PAYMENT_LINKS.map((item) => (
+
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly</p>
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {PAYMENT_LINKS.monthly.map((item) => (
             <button
               key={item.label}
               onClick={() => { navigator.clipboard.writeText(item.url); setCopiedLink(item.label); setTimeout(() => setCopiedLink(null), 2000); }}
               className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80 text-left"
               style={{ background: copiedLink === item.label ? "rgba(176,255,0,0.12)" : "#b0ff00", flex: "1 1 0", border: copiedLink === item.label ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer" }}
+            >
+              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "rgba(176,255,0,0.6)" : "rgba(0,0,0,0.55)" }}>{item.label}</span>
+              <span className="text-xl font-black" style={{ color: copiedLink === item.label ? "#b0ff00" : "#000" }}>{item.price}</span>
+              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "#b0ff00" : "rgba(0,0,0,0.45)" }}>{copiedLink === item.label ? "✓ Link copied!" : "Copy payment link"}</span>
+            </button>
+          ))}
+        </div>
+
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>Annual <span style={{ color: "#b0ff00" }}>· save 17%</span></p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          {PAYMENT_LINKS.annual.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => { navigator.clipboard.writeText(item.url); setCopiedLink(item.label); setTimeout(() => setCopiedLink(null), 2000); }}
+              className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80 text-left"
+              style={{ background: copiedLink === item.label ? "rgba(176,255,0,0.12)" : "rgba(176,255,0,0.85)", flex: "1 1 0", border: copiedLink === item.label ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer" }}
             >
               <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "rgba(176,255,0,0.6)" : "rgba(0,0,0,0.55)" }}>{item.label}</span>
               <span className="text-xl font-black" style={{ color: copiedLink === item.label ? "#b0ff00" : "#000" }}>{item.price}</span>
