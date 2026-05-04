@@ -87,6 +87,16 @@ export default function FooterCTA() {
             </svg>
             LinkedIn
           </a>
+          <a
+            href="https://au.trustpilot.com/review/dygiko.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Leave a Trustpilot review for Dygiko"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span style={{ color: "#00b67a", fontSize: 12, lineHeight: 1 }}>★</span>
+            Trustpilot
+          </a>
           <a href="/privacy" className="hover:text-white transition-colors duration-200">
             Privacy
           </a>

@@ -3,12 +3,21 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+const TRUSTPILOT_URL = "https://au.trustpilot.com/review/dygiko.com";
+
 type Project = {
   name: string;
   url: string;
   domain: string;
   label: string;
-  testimonial?: { quote: string; author: string; title: string };
+  testimonial?: {
+    quote: string;
+    quoteTranslation?: string;
+    author: string;
+    title: string;
+    source?: "trustpilot";
+    rating?: number;
+  };
 };
 
 const projects: Project[] = [
@@ -29,6 +38,15 @@ const projects: Project[] = [
     url: "https://www.akwabaetnicas.com",
     domain: "akwabaetnicas.com",
     label: "Akwaba Etnicas — African Fashion & Art",
+    testimonial: {
+      quote: "Me gustó su trabajo, fue muy rápido en realizar el sitio web!",
+      quoteTranslation:
+        "I loved their work — they were very quick at building the website!",
+      author: "Akwaba Etnicas",
+      title: "Verified Trustpilot review",
+      source: "trustpilot",
+      rating: 5,
+    },
   },
 ];
 
@@ -49,18 +67,49 @@ function TestimonialCard({ testimonial }: { testimonial: NonNullable<Project["te
       }}
     >
       <div>
+        {testimonial.rating && (
+          <div className="flex items-center gap-0.5 mb-3" aria-label={`${testimonial.rating} out of 5 stars`}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  color: i < testimonial.rating! ? "#00b67a" : "rgba(255,255,255,0.15)",
+                  fontSize: 14,
+                  lineHeight: 1,
+                }}
+              >★</span>
+            ))}
+          </div>
+        )}
         <svg width="24" height="18" viewBox="0 0 24 18" fill="#b0ff00" opacity="0.5" style={{ marginBottom: 16 }}>
           <path d="M0 18V10.8C0 7.8 .8 5.3 2.4 3.3 4 1.1 6.4 0 9.6 0L10.8 2.4C8.8 2.8 7.2 3.7 6 5.1 5 6.3 4.5 7.7 4.6 9H9.6V18H0ZM14.4 18V10.8C14.4 7.8 15.2 5.3 16.8 3.3 18.4 1.1 20.8 0 24 0L25.2 2.4C23.2 2.8 21.6 3.7 20.4 5.1 19.4 6.3 18.9 7.7 19 9H24V18H14.4Z" />
         </svg>
         <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
           &ldquo;{testimonial.quote}&rdquo;
         </p>
+        {testimonial.quoteTranslation && (
+          <p className="text-xs mt-2 italic leading-relaxed" style={{ color: "rgba(255,255,255,0.35)" }}>
+            &ldquo;{testimonial.quoteTranslation}&rdquo;
+          </p>
+        )}
       </div>
       <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         <p className="text-sm font-semibold text-white">{testimonial.author}</p>
-        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          {testimonial.title}
-        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+            {testimonial.title}
+          </p>
+          {testimonial.source === "trustpilot" && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "#00b67a", fontWeight: 600 }}>
+              <span style={{ display: "inline-block", width: 8, height: 8, background: "#00b67a", borderRadius: 1 }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="white" style={{ display: "block" }}>
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+              </span>
+              Trustpilot
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -346,7 +395,7 @@ export default function TemplatesSection() {
           </div>
 
           {/* Testimonial / pending card */}
-          <div className="lg:pt-0 lg:self-center" style={{ flexShrink: 0, minWidth: 280 }}>
+          <div className="lg:pt-0 lg:self-center flex flex-col gap-3" style={{ flexShrink: 0, minWidth: 280 }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.url}
@@ -362,6 +411,23 @@ export default function TemplatesSection() {
                 )}
               </motion.div>
             </AnimatePresence>
+
+            <a
+              href={TRUSTPILOT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-sm transition-colors duration-200"
+              style={{
+                color: "rgba(255,255,255,0.55)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                alignSelf: "flex-start",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#00b67a"; e.currentTarget.style.borderColor = "rgba(0,182,122,0.4)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.55)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+            >
+              <span style={{ color: "#00b67a", fontSize: 11 }}>★</span>
+              Leave us a review on Trustpilot →
+            </a>
           </div>
         </motion.div>
       </div>
