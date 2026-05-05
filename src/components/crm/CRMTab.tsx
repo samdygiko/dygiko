@@ -569,6 +569,8 @@ function CRMCard({
 }) {
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [smsState, setSmsState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setNotes(entry.notes ?? "");
@@ -578,6 +580,36 @@ function CRMCard({
     setSavingNotes(true);
     await onNotesChange(entry.id, notes);
     setSavingNotes(false);
+  }
+
+  async function sendText() {
+    if (smsState === "sending" || !entry.phone) return;
+    const msg = `Hi, this is Sam from Dygiko. We noticed you didn't have a website for ${entry.businessName} — we wanted to offer you a free template. If you like it, you can sign up to one of our subscriptions. Reply STOP to opt out.`;
+    if (!confirm(`Send this SMS to ${entry.phone}?\n\n${msg}`)) return;
+    setSmsState("sending");
+    try {
+      const res = await fetch("/api/justcall-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: entry.phone, body: msg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setSmsState("sent");
+      setTimeout(() => setSmsState("idle"), 2500);
+    } catch (err) {
+      console.error("SMS send failed:", err);
+      alert(`SMS failed: ${err instanceof Error ? err.message : "unknown error"}`);
+      setSmsState("error");
+      setTimeout(() => setSmsState("idle"), 2500);
+    }
+  }
+
+  async function copyNumber() {
+    if (!entry.phone) return;
+    try { await navigator.clipboard.writeText(entry.phone.replace(/\s/g, "")); } catch { /* ignore */ }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   }
 
   const callCount = entry.callCount ?? 0;
@@ -631,6 +663,33 @@ function CRMCard({
             style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
           >
             📞 Call
+          </button>
+        )}
+        {entry.phone && (
+          <button
+            onClick={copyNumber}
+            className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: "rgba(255,255,255,0.05)", color: copied ? "#b0ff00" : "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}
+            title="Copy number to clipboard"
+          >
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        )}
+        {entry.phone && (
+          <button
+            onClick={sendText}
+            disabled={smsState === "sending"}
+            className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{
+              background: smsState === "sent" ? "rgba(176,255,0,0.22)" : smsState === "error" ? "rgba(255,107,107,0.12)" : "rgba(176,255,0,0.06)",
+              color: smsState === "error" ? "#ff6b6b" : "#b0ff00",
+              border: `1px solid ${smsState === "error" ? "rgba(255,107,107,0.3)" : "rgba(176,255,0,0.2)"}`,
+              cursor: smsState === "sending" ? "wait" : "pointer",
+              opacity: smsState === "sending" ? 0.7 : 1,
+            }}
+            title="Send templated SMS via JustCall"
+          >
+            {smsState === "sending" ? "Sending…" : smsState === "sent" ? "✓ Sent" : smsState === "error" ? "✗ Failed" : "💬 Text"}
           </button>
         )}
         {callCount > 0 && (
