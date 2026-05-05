@@ -97,6 +97,10 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     await updateDoc(doc(db, "callList", id), { textedAt: Date.now() });
   }
 
+  async function unmarkTexted(id: string) {
+    await updateDoc(doc(db, "callList", id), { textedAt: null });
+  }
+
   async function incrementCallCount(id: string, current: number) {
     await updateDoc(doc(db, "callList", id), { callCount: current + 1 });
   }
@@ -376,6 +380,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     onNotesChange={updateNotes}
                     onCallIncrement={incrementCallCount}
                     onTexted={markTexted}
+                    onUntexted={unmarkTexted}
                     onDelete={(id, name) => setDeleteConfirm({ id, name })}
                     onSubmitToLeads={() => openSubmitLeads(entry)}
                   />
@@ -593,6 +598,7 @@ function CRMCard({
   onNotesChange,
   onCallIncrement,
   onTexted,
+  onUntexted,
   onDelete,
   onSubmitToLeads,
 }: {
@@ -601,6 +607,7 @@ function CRMCard({
   onNotesChange: (id: string, n: string) => void;
   onCallIncrement: (id: string, current: number) => void;
   onTexted: (id: string) => void;
+  onUntexted: (id: string) => void;
   onDelete: (id: string, name: string) => void;
   onSubmitToLeads: () => void;
 }) {
@@ -682,9 +689,14 @@ function CRMCard({
               </span>
             )}
             {isTexted && (
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(96,165,250,0.15)", color: "#60a5fa" }}>
+              <button
+                onClick={() => { if (confirm("Unmark this lead as texted?")) onUntexted(entry.id); }}
+                className="text-xs px-2 py-0.5 rounded-full transition-opacity hover:opacity-70"
+                style={{ background: "rgba(96,165,250,0.15)", color: "#60a5fa", cursor: "pointer", border: "none" }}
+                title="Click to unmark as texted"
+              >
                 ✉ Texted
-              </span>
+              </button>
             )}
           </div>
           <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{entry.address}</p>
@@ -741,6 +753,16 @@ function CRMCard({
             title="Send templated SMS via JustCall"
           >
             {smsState === "sending" ? "Sending…" : smsState === "sent" ? "✓ Sent" : smsState === "error" ? "✗ Failed" : "💬 Text"}
+          </button>
+        )}
+        {entry.phone && !isTexted && (
+          <button
+            onClick={() => onTexted(entry.id)}
+            className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: "rgba(96,165,250,0.08)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.25)", cursor: "pointer" }}
+            title="Mark as texted without sending (use this for SMS you sent manually)"
+          >
+            ✓ Mark texted
           </button>
         )}
         {callCount > 0 && (
