@@ -685,7 +685,8 @@ function CallListCard({
 
   async function sendText() {
     if (smsState === "sending") return;
-    const msg = `Hi, this is Sam from Dygiko. We noticed you didn't have a website for ${entry.businessName} and wanted to offer you a free template. If you like it, you can sign up to one of our subscriptions. Reply STOP to opt out.`;
+    const shortName = entry.businessName.replace(/\b(ltd\.?|limited|llp\.?|plc\.?)\b/gi, "").replace(/\s+/g, " ").trim();
+    const msg = `Hi, Sam at Dygiko here. Noticed ${shortName} has no website - happy to build you a free template. Reply STOP to opt out.`;
     if (!confirm(`Send this SMS to ${entry.phone}?\n\n${msg}`)) return;
     setSmsState("sending");
     try {
