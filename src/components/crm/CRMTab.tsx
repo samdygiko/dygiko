@@ -48,6 +48,7 @@ type CallEntry = {
   movedToLeads?: boolean;
   callCount?: number;
   pscName?: string;
+  textedAt?: number;
 };
 
 type LeadsForm = {
@@ -90,6 +91,10 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
 
   async function updateNotes(id: string, notes: string) {
     await updateDoc(doc(db, "callList", id), { notes });
+  }
+
+  async function markTexted(id: string) {
+    await updateDoc(doc(db, "callList", id), { textedAt: Date.now() });
   }
 
   async function incrementCallCount(id: string, current: number) {
@@ -202,15 +207,28 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     (e) => (e.callCount ?? 0) === 0 && !/not.?interested/i.test(e.status ?? "")
   );
 
-  function jumpToNextUncalled() {
-    if (!nextUncalled) return;
-    const el = document.getElementById(`crm-entry-${nextUncalled.id}`);
+  const nextUntexted = visibleList.find(
+    (e) => !e.textedAt && !!e.phone && !/not.?interested/i.test(e.status ?? "")
+  );
+
+  function jumpToEntry(id: string) {
+    const el = document.getElementById(`crm-entry-${id}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 1.4s ease";
       el.style.boxShadow = "0 0 0 2px rgba(176,255,0,0.45)";
       setTimeout(() => { el.style.boxShadow = ""; }, 1500);
     }
+  }
+
+  function jumpToNextUncalled() {
+    if (!nextUncalled) return;
+    jumpToEntry(nextUncalled.id);
+  }
+
+  function jumpToNextUntexted() {
+    if (!nextUntexted) return;
+    jumpToEntry(nextUntexted.id);
   }
 
   // Active count excludes not-interested and movedToLeads (for header display)
@@ -316,6 +334,22 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     ? `→ Next uncalled: ${nextUncalled.businessName.length > 24 ? nextUncalled.businessName.slice(0, 22) + "…" : nextUncalled.businessName}`
                     : "All called"}
                 </button>
+                <button
+                  onClick={jumpToNextUntexted}
+                  disabled={!nextUntexted}
+                  className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  style={{
+                    background: "rgba(96,165,250,0.12)",
+                    color: "#60a5fa",
+                    border: "1px solid rgba(96,165,250,0.3)",
+                    maxWidth: 280,
+                  }}
+                  title={nextUntexted ? `Jump to ${nextUntexted.businessName}` : "No untexted businesses"}
+                >
+                  {nextUntexted
+                    ? `→ Next untexted: ${nextUntexted.businessName.length > 24 ? nextUntexted.businessName.slice(0, 22) + "…" : nextUntexted.businessName}`
+                    : "All texted"}
+                </button>
               </div>
 
               {/* Match count */}
@@ -341,6 +375,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     onStatusChange={updateStatus}
                     onNotesChange={updateNotes}
                     onCallIncrement={incrementCallCount}
+                    onTexted={markTexted}
                     onDelete={(id, name) => setDeleteConfirm({ id, name })}
                     onSubmitToLeads={() => openSubmitLeads(entry)}
                   />
@@ -557,6 +592,7 @@ function CRMCard({
   onStatusChange,
   onNotesChange,
   onCallIncrement,
+  onTexted,
   onDelete,
   onSubmitToLeads,
 }: {
@@ -564,6 +600,7 @@ function CRMCard({
   onStatusChange: (id: string, s: CallStatus) => void;
   onNotesChange: (id: string, n: string) => void;
   onCallIncrement: (id: string, current: number) => void;
+  onTexted: (id: string) => void;
   onDelete: (id: string, name: string) => void;
   onSubmitToLeads: () => void;
 }) {
@@ -596,6 +633,7 @@ function CRMCard({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
       setSmsState("sent");
+      onTexted(entry.id);
       setTimeout(() => setSmsState("idle"), 2500);
     } catch (err) {
       console.error("SMS send failed:", err);
@@ -615,13 +653,21 @@ function CRMCard({
   const callCount = entry.callCount ?? 0;
   const isNotInterested = /not.?interested/i.test(entry.status ?? "");
 
+  const isTexted = !!entry.textedAt;
+
   return (
     <div
       id={`crm-entry-${entry.id}`}
       className="rounded-sm p-4 flex flex-col gap-3 shrink-0 scroll-mt-24"
       style={{
-        border: `1px solid ${isNotInterested ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)"}`,
-        background: "rgba(255,255,255,0.02)",
+        border: `1px solid ${
+          isNotInterested
+            ? "rgba(255,255,255,0.04)"
+            : isTexted
+            ? "rgba(96,165,250,0.35)"
+            : "rgba(255,255,255,0.07)"
+        }`,
+        background: isTexted && !isNotInterested ? "rgba(96,165,250,0.05)" : "rgba(255,255,255,0.02)",
         opacity: isNotInterested ? 0.4 : 1,
       }}
     >
@@ -633,6 +679,11 @@ function CRMCard({
             {entry.movedToLeads && (
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00" }}>
                 In Leads
+              </span>
+            )}
+            {isTexted && (
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(96,165,250,0.15)", color: "#60a5fa" }}>
+                ✉ Texted
               </span>
             )}
           </div>
