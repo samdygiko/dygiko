@@ -18,14 +18,9 @@ import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
 type CallStatus = "New" | "Pending callback" | "Not interested" | "Closed";
 
-const STATUS_COLORS: Record<CallStatus, { bg: string; color: string }> = {
-  New: { bg: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)" },
-  "Pending callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
-  "Not interested": { bg: "rgba(255,107,107,0.12)", color: "#ff6b6b" },
-  Closed: { bg: "rgba(176,255,0,0.1)", color: "#b0ff00" },
-};
-
-const STATUS_OPTIONS: CallStatus[] = ["New", "Pending callback", "Not interested", "Closed"];
+function isEntryDead(e: { isDead?: boolean; status?: CallStatus }): boolean {
+  return e.isDead === true || /not.?interested/i.test(e.status ?? "");
+}
 
 function cleanNameForSearch(name: string): string {
   return name
@@ -49,6 +44,7 @@ type CallEntry = {
   callCount?: number;
   pscName?: string;
   textedAt?: number;
+  isDead?: boolean;
 };
 
 type LeadsForm = {
@@ -85,8 +81,8 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     });
   }, []);
 
-  async function updateStatus(id: string, status: CallStatus) {
-    await updateDoc(doc(db, "callList", id), { status });
+  async function toggleDead(id: string, current: boolean) {
+    await updateDoc(doc(db, "callList", id), { isDead: !current });
   }
 
   async function updateNotes(id: string, notes: string) {
@@ -189,7 +185,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
 
   const searchQ = searchQuery.trim().toLowerCase();
 
-  // Exclude movedToLeads entirely — sort not-interested to bottom
+  // Exclude movedToLeads entirely — sort dead to bottom
   const visibleList = callList
     .filter((e) => !e.movedToLeads)
     .filter((e) =>
@@ -198,21 +194,21 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
       (e.phone ?? "").toLowerCase().includes(searchQ)
     )
     .sort((a, b) => {
-      const aNI = /not.?interested/i.test(a.status ?? "");
-      const bNI = /not.?interested/i.test(b.status ?? "");
-      if (aNI && !bNI) return 1;
-      if (!aNI && bNI) return -1;
+      const aDead = isEntryDead(a);
+      const bDead = isEntryDead(b);
+      if (aDead && !bDead) return 1;
+      if (!aDead && bDead) return -1;
       return 0;
     });
 
   const filteredList = visibleList;
 
   const nextUncalled = visibleList.find(
-    (e) => (e.callCount ?? 0) === 0 && !/not.?interested/i.test(e.status ?? "")
+    (e) => (e.callCount ?? 0) === 0 && !isEntryDead(e)
   );
 
   const nextUntexted = visibleList.find(
-    (e) => !e.textedAt && !!e.phone && !/not.?interested/i.test(e.status ?? "")
+    (e) => !e.textedAt && !!e.phone && !isEntryDead(e)
   );
 
   function jumpToEntry(id: string) {
@@ -235,9 +231,9 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     jumpToEntry(nextUntexted.id);
   }
 
-  // Active count excludes not-interested and movedToLeads (for header display)
+  // Active count excludes dead and movedToLeads (for header display)
   const activeCount = callList.filter(
-    (e) => !e.movedToLeads && !/not.?interested/i.test(e.status ?? "")
+    (e) => !e.movedToLeads && !isEntryDead(e)
   ).length;
 
   return (
@@ -376,7 +372,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                   <CRMCard
                     key={entry.id}
                     entry={entry}
-                    onStatusChange={updateStatus}
+                    onToggleDead={toggleDead}
                     onNotesChange={updateNotes}
                     onCallIncrement={incrementCallCount}
                     onTexted={markTexted}
@@ -594,7 +590,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
 
 function CRMCard({
   entry,
-  onStatusChange,
+  onToggleDead,
   onNotesChange,
   onCallIncrement,
   onTexted,
@@ -603,7 +599,7 @@ function CRMCard({
   onSubmitToLeads,
 }: {
   entry: CallEntry;
-  onStatusChange: (id: string, s: CallStatus) => void;
+  onToggleDead: (id: string, current: boolean) => void;
   onNotesChange: (id: string, n: string) => void;
   onCallIncrement: (id: string, current: number) => void;
   onTexted: (id: string) => void;
@@ -658,7 +654,7 @@ function CRMCard({
   }
 
   const callCount = entry.callCount ?? 0;
-  const isNotInterested = /not.?interested/i.test(entry.status ?? "");
+  const dead = isEntryDead(entry);
 
   const isTexted = !!entry.textedAt;
 
@@ -668,14 +664,14 @@ function CRMCard({
       className="rounded-sm p-4 flex flex-col gap-3 shrink-0 scroll-mt-24"
       style={{
         border: `1px solid ${
-          isNotInterested
+          dead
             ? "rgba(255,255,255,0.04)"
             : isTexted
             ? "rgba(96,165,250,0.35)"
             : "rgba(255,255,255,0.07)"
         }`,
-        background: isTexted && !isNotInterested ? "rgba(96,165,250,0.05)" : "rgba(255,255,255,0.02)",
-        opacity: isNotInterested ? 0.4 : 1,
+        background: isTexted && !dead ? "rgba(96,165,250,0.05)" : "rgba(255,255,255,0.02)",
+        opacity: dead ? 0.4 : 1,
       }}
     >
       {/* Top */}
@@ -779,16 +775,19 @@ function CRMCard({
         >
           Check Google ↗
         </a>
-        <select
-          value={entry.status}
-          onChange={(e) => onStatusChange(entry.id, e.target.value as CallStatus)}
-          className="ml-auto rounded-sm px-2 py-1 text-xs outline-none font-medium"
-          style={{ background: STATUS_COLORS[entry.status]?.bg ?? "rgba(255,255,255,0.07)", color: STATUS_COLORS[entry.status]?.color ?? "rgba(255,255,255,0.6)", border: "none" }}
+        <button
+          onClick={() => onToggleDead(entry.id, dead)}
+          className="ml-auto text-xs px-3 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+          style={{
+            background: dead ? "rgba(255,107,107,0.18)" : "rgba(255,255,255,0.05)",
+            color: dead ? "#ff6b6b" : "rgba(255,255,255,0.55)",
+            border: `1px solid ${dead ? "rgba(255,107,107,0.3)" : "rgba(255,255,255,0.1)"}`,
+            cursor: "pointer",
+          }}
+          title={dead ? "Bring back to active" : "Mark as Dead"}
         >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s} style={{ background: "#121212", color: "#fff" }}>{s}</option>
-          ))}
-        </select>
+          {dead ? "✓ Dead" : "💀 Mark Dead"}
+        </button>
       </div>
 
       {/* Notes */}
