@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   addDoc,
@@ -73,6 +73,9 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
   const [submitLeadsId, setSubmitLeadsId] = useState<string | null>(null);
   const [leadsForm, setLeadsForm] = useState<LeadsForm>({ contactName: "", phone: "", email: "", packageInterest: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [bulkSending, setBulkSending] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, errors: 0 });
+  const bulkAbortRef = useRef(false);
 
   useEffect(() => {
     const q = query(collection(db, "callList"), orderBy("dateAdded", "desc"));
@@ -99,6 +102,61 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
 
   async function incrementCallCount(id: string, current: number) {
     await updateDoc(doc(db, "callList", id), { callCount: current + 1 });
+  }
+
+  async function runBulkSMS(targets: CallEntry[]) {
+    setBulkSending(true);
+    bulkAbortRef.current = false;
+    setBulkProgress({ current: 0, total: targets.length, errors: 0 });
+
+    for (let i = 0; i < targets.length; i++) {
+      if (bulkAbortRef.current) break;
+      const entry = targets[i];
+      const shortName = cleanNameForSearch(entry.businessName);
+      const msg = `Hi, Sam at Dygiko here. Noticed ${shortName} has no website - happy to build you a free template. Reply STOP to opt out.`;
+
+      try {
+        const res = await fetch("/api/justcall-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: entry.phone, body: msg }),
+        });
+        if (res.ok) {
+          await updateDoc(doc(db, "callList", entry.id), { textedAt: Date.now() });
+        } else {
+          setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
+        }
+      } catch {
+        setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
+      }
+
+      setBulkProgress((p) => ({ ...p, current: i + 1 }));
+
+      if (i < targets.length - 1 && !bulkAbortRef.current) {
+        const delay = 5000 + Math.random() * 5000; // 5–10s random gap
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    setBulkSending(false);
+  }
+
+  function startBulkSMS() {
+    const targets = callList.filter(
+      (e) => !!e.phone && !e.textedAt && !isEntryDead(e) && !e.movedToLeads
+    );
+    if (targets.length === 0) {
+      alert("No untexted leads with phone numbers to send to.");
+      return;
+    }
+    const cost = (targets.length * 0.05).toFixed(2);
+    const minutes = Math.ceil((targets.length * 7.5) / 60);
+    if (!confirm(`Send SMS to ${targets.length} leads at ~5p each (~£${cost} total)?\n\nWill take roughly ${minutes} min (5-10s gap between sends).\nYou can stop at any time. Don't close this tab while it's running.`)) return;
+    runBulkSMS(targets);
+  }
+
+  function abortBulkSMS() {
+    bulkAbortRef.current = true;
   }
 
   async function doDelete() {
@@ -350,7 +408,62 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     ? `→ Next untexted: ${nextUntexted.businessName.length > 24 ? nextUntexted.businessName.slice(0, 22) + "…" : nextUntexted.businessName}`
                     : "All texted"}
                 </button>
+                <button
+                  onClick={startBulkSMS}
+                  disabled={bulkSending}
+                  className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  style={{
+                    background: "rgba(176,255,0,0.12)",
+                    color: "#b0ff00",
+                    border: "1px solid rgba(176,255,0,0.3)",
+                  }}
+                  title="Send SMS to every untexted lead with a phone number"
+                >
+                  💬 Text all untexted
+                </button>
               </div>
+
+              {/* Bulk send progress banner */}
+              {bulkSending && (
+                <div
+                  className="rounded-sm p-4 flex items-center justify-between gap-4"
+                  style={{ border: "1px solid rgba(176,255,0,0.3)", background: "rgba(176,255,0,0.06)" }}
+                >
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "#b0ff00" }}>
+                      Sending {bulkProgress.current} / {bulkProgress.total}
+                      {bulkProgress.errors > 0 && (
+                        <span style={{ color: "#ff6b6b" }}> · {bulkProgress.errors} errors</span>
+                      )}
+                    </p>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                      <div
+                        style={{
+                          width: `${(bulkProgress.current / Math.max(bulkProgress.total, 1)) * 100}%`,
+                          background: "#b0ff00",
+                          height: "100%",
+                          transition: "width 0.3s",
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+                      Don&apos;t close this tab. ~5-10s between sends. Cost so far: £{(bulkProgress.current * 0.05).toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={abortBulkSMS}
+                    className="text-xs px-3 py-2 rounded-sm font-medium shrink-0"
+                    style={{
+                      background: "rgba(255,107,107,0.12)",
+                      color: "#ff6b6b",
+                      border: "1px solid rgba(255,107,107,0.3)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Stop
+                  </button>
+                </div>
+              )}
 
               {/* Match count */}
               {searchQ && (
