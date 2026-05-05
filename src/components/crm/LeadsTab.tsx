@@ -434,7 +434,7 @@ export default function LeadsTab() {
               <div className="text-xs flex flex-col gap-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
                 {selectedLead.address && <p>📍 {selectedLead.address}</p>}
                 {selectedLead.phone && (
-                  <p>
+                  <p className="flex items-center gap-2 flex-wrap">
                     📱{" "}
                     <button
                       onClick={() => dialViaJustCall(selectedLead.phone!.replace(/\s/g, ""), selectedLead.id || "")}
@@ -442,6 +442,16 @@ export default function LeadsTab() {
                     >
                       {selectedLead.phone}
                     </button>
+                    <a
+                      href={`https://wa.me/${selectedLead.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Easier to chat over WhatsApp! Happy to send over a free website preview for ${selectedLead.businessName ?? "your business"} whenever suits.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs px-2 py-0.5 rounded-sm font-medium transition-opacity hover:opacity-80"
+                      style={{ background: "rgba(37,211,102,0.12)", color: "#25D366", border: "1px solid rgba(37,211,102,0.3)", textDecoration: "none" }}
+                      title="Open WhatsApp with this number prefilled (free)"
+                    >
+                      💚 WhatsApp
+                    </a>
                   </p>
                 )}
                 {selectedLead.category && <p>🏷 {selectedLead.category}</p>}

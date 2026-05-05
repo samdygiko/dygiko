@@ -890,6 +890,18 @@ function CRMCard({
             ✓ Mark texted
           </button>
         )}
+        {entry.phone && (isTexted || callCount > 0) && (
+          <a
+            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Easier to chat over WhatsApp! Happy to send over a free website preview for ${cleanNameForSearch(entry.businessName)} whenever suits.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: "rgba(37,211,102,0.12)", color: "#25D366", border: "1px solid rgba(37,211,102,0.3)", textDecoration: "none" }}
+            title="Open WhatsApp with this number prefilled (free)"
+          >
+            💚 WhatsApp
+          </a>
+        )}
         {callCount > 0 && (
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
             {callCount} call{callCount !== 1 ? "s" : ""}
