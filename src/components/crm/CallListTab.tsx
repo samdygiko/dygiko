@@ -674,7 +674,8 @@ function CallListCard({
 }) {
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
-  const [copied, setCopied] = useState<"" | "text" | "number">("");
+  const [copied, setCopied] = useState<"" | "number">("");
+  const [smsState, setSmsState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function saveNotes() {
     setSavingNotes(true);
@@ -682,11 +683,27 @@ function CallListCard({
     setSavingNotes(false);
   }
 
-  async function copyTextTemplate() {
+  async function sendText() {
+    if (smsState === "sending") return;
     const msg = `Hi, this is Sam from Dygiko. We noticed you didn't have a website for ${entry.businessName} — we wanted to offer you a free template. If you like it, you can sign up to one of our subscriptions. Reply STOP to opt out.`;
-    try { await navigator.clipboard.writeText(msg); } catch { /* ignore */ }
-    setCopied("text");
-    setTimeout(() => setCopied(""), 1800);
+    if (!confirm(`Send this SMS to ${entry.phone}?\n\n${msg}`)) return;
+    setSmsState("sending");
+    try {
+      const res = await fetch("/api/justcall-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: entry.phone, body: msg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setSmsState("sent");
+      setTimeout(() => setSmsState("idle"), 2500);
+    } catch (err) {
+      console.error("SMS send failed:", err);
+      alert(`SMS failed: ${err instanceof Error ? err.message : "unknown error"}`);
+      setSmsState("error");
+      setTimeout(() => setSmsState("idle"), 2500);
+    }
   }
 
   async function copyNumber() {
@@ -748,12 +765,19 @@ function CallListCard({
           📞 Call
         </button>
         <button
-          onClick={copyTextTemplate}
+          onClick={sendText}
+          disabled={smsState === "sending"}
           className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-          style={{ background: copied === "text" ? "rgba(176,255,0,0.18)" : "rgba(176,255,0,0.06)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
-          title="Copy templated SMS to clipboard"
+          style={{
+            background: smsState === "sent" ? "rgba(176,255,0,0.22)" : smsState === "error" ? "rgba(255,107,107,0.12)" : "rgba(176,255,0,0.06)",
+            color: smsState === "error" ? "#ff6b6b" : "#b0ff00",
+            border: `1px solid ${smsState === "error" ? "rgba(255,107,107,0.3)" : "rgba(176,255,0,0.2)"}`,
+            cursor: smsState === "sending" ? "wait" : "pointer",
+            opacity: smsState === "sending" ? 0.7 : 1,
+          }}
+          title="Send templated SMS via JustCall"
         >
-          {copied === "text" ? "✓ Text copied" : "💬 Text"}
+          {smsState === "sending" ? "Sending…" : smsState === "sent" ? "✓ Sent" : smsState === "error" ? "✗ Failed" : "💬 Text"}
         </button>
         <a
           href={`https://www.google.com/search?q=${encodeURIComponent(entry.businessName)}`}
