@@ -109,6 +109,9 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     bulkAbortRef.current = false;
     setBulkProgress({ current: 0, total: targets.length, errors: 0 });
 
+    let consecutiveErrors = 0;
+    let lastError = "";
+
     for (let i = 0; i < targets.length; i++) {
       if (bulkAbortRef.current) break;
       const entry = targets[i];
@@ -123,14 +126,26 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
         });
         if (res.ok) {
           await updateDoc(doc(db, "callList", entry.id), { textedAt: Date.now() });
+          consecutiveErrors = 0;
         } else {
+          const data = await res.json().catch(() => ({}));
+          lastError = data?.error || `HTTP ${res.status}`;
           setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
+          consecutiveErrors++;
         }
-      } catch {
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : "network error";
         setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
+        consecutiveErrors++;
       }
 
       setBulkProgress((p) => ({ ...p, current: i + 1 }));
+
+      // Auto-abort if we hit 3 errors in a row — likely credits dry, rate limit, or API down
+      if (consecutiveErrors >= 3) {
+        alert(`Bulk send stopped: 3 sends failed in a row.\n\nLast error: ${lastError}\n\nLikely cause: credits ran out, JustCall rate limit, or API issue. Check your JustCall balance, then resume by clicking the button again — it'll skip ones already sent.`);
+        break;
+      }
 
       if (i < targets.length - 1 && !bulkAbortRef.current) {
         const delay = 5000 + Math.random() * 5000; // 5–10s random gap
