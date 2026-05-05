@@ -674,11 +674,25 @@ function CallListCard({
 }) {
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [copied, setCopied] = useState<"" | "text" | "number">("");
 
   async function saveNotes() {
     setSavingNotes(true);
     await onNotesChange(entry.id, notes);
     setSavingNotes(false);
+  }
+
+  async function copyTextTemplate() {
+    const msg = `Hi, this is Sam from Dygiko. We noticed you didn't have a website for ${entry.businessName} — we wanted to offer you a free template. If you like it, you can sign up to one of our subscriptions. Reply STOP to opt out.`;
+    try { await navigator.clipboard.writeText(msg); } catch { /* ignore */ }
+    setCopied("text");
+    setTimeout(() => setCopied(""), 1800);
+  }
+
+  async function copyNumber() {
+    try { await navigator.clipboard.writeText(entry.phone.replace(/\s/g, "")); } catch { /* ignore */ }
+    setCopied("number");
+    setTimeout(() => setCopied(""), 1800);
   }
 
   const isNotInterested = /not.?interested/i.test(entry.status ?? "");
@@ -719,11 +733,27 @@ function CallListCard({
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>📱 {entry.phone}</span>
         <button
+          onClick={copyNumber}
+          className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+          style={{ background: "rgba(255,255,255,0.05)", color: copied === "number" ? "#b0ff00" : "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}
+          title="Copy number to clipboard"
+        >
+          {copied === "number" ? "✓ Copied" : "Copy"}
+        </button>
+        <button
           onClick={() => dialViaJustCall(entry.phone.replace(/\s/g, ""), entry.id || "")}
           className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
           style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
         >
           📞 Call
+        </button>
+        <button
+          onClick={copyTextTemplate}
+          className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
+          style={{ background: copied === "text" ? "rgba(176,255,0,0.18)" : "rgba(176,255,0,0.06)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)", cursor: "pointer" }}
+          title="Copy templated SMS to clipboard"
+        >
+          {copied === "text" ? "✓ Text copied" : "💬 Text"}
         </button>
         <a
           href={`https://www.google.com/search?q=${encodeURIComponent(entry.businessName)}`}
