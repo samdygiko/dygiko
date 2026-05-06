@@ -443,7 +443,7 @@ export default function LeadsTab() {
                       {selectedLead.phone}
                     </button>
                     <a
-                      href={`https://wa.me/${selectedLead.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Easier to chat over WhatsApp! Happy to send over a free website preview for ${selectedLead.businessName ?? "your business"} whenever suits.`)}`}
+                      href={`https://wa.me/${selectedLead.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs px-2 py-0.5 rounded-sm font-medium transition-opacity hover:opacity-80"

@@ -649,7 +649,7 @@ function CRMCard({
         )}
         {entry.phone && callCount > 0 && (
           <a
-            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Happy to send over a free website preview for ${cleanNameForSearch(entry.businessName)} whenever suits.`)}`}
+            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
