@@ -77,7 +77,6 @@ function CRMPageInner() {
     return (TABS as readonly string[]).includes(t || "") ? (t as Tab) : "Business Finder";
   });
   const [callCount, setCallCount] = useState(0);
-  const [textedCount, setTextedCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
   const [clientsCount, setClientsCount] = useState(0);
@@ -95,15 +94,15 @@ function CRMPageInner() {
   useEffect(() => {
     if (!user) return;
     const u1 = onSnapshot(collection(db, "callList"), (s) => {
-      const docs = s.docs.map((d) => d.data());
-      const active = docs.filter(
-        (data) =>
+      const active = s.docs.filter((d) => {
+        const data = d.data();
+        return (
           !data.movedToLeads &&
           data.isDead !== true &&
           !/not.?interested/i.test(data.status ?? "")
-      );
+        );
+      });
       setCallCount(active.length);
-      setTextedCount(docs.filter((d) => !!d.textedAt).length);
     });
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
@@ -159,7 +158,6 @@ function CRMPageInner() {
           <div className="px-4 mb-6 flex flex-col gap-2">
             {[
               { label: "CRM list", value: callCount },
-              { label: "Texted", value: textedCount },
               { label: "Leads", value: leadsCount },
               { label: "Clients", value: clientsCount },
               { label: "Conversion", value: `${convRate}%` },

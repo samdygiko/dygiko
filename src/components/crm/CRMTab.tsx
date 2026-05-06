@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
@@ -43,7 +43,6 @@ type CallEntry = {
   movedToLeads?: boolean;
   callCount?: number;
   pscName?: string;
-  textedAt?: number;
   isDead?: boolean;
 };
 
@@ -73,9 +72,6 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
   const [submitLeadsId, setSubmitLeadsId] = useState<string | null>(null);
   const [leadsForm, setLeadsForm] = useState<LeadsForm>({ contactName: "", phone: "", email: "", packageInterest: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
-  const [bulkSending, setBulkSending] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, errors: 0 });
-  const bulkAbortRef = useRef(false);
 
   useEffect(() => {
     const q = query(collection(db, "callList"), orderBy("dateAdded", "desc"));
@@ -92,86 +88,8 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     await updateDoc(doc(db, "callList", id), { notes });
   }
 
-  async function markTexted(id: string) {
-    await updateDoc(doc(db, "callList", id), { textedAt: Date.now() });
-  }
-
-  async function unmarkTexted(id: string) {
-    await updateDoc(doc(db, "callList", id), { textedAt: null });
-  }
-
   async function incrementCallCount(id: string, current: number) {
     await updateDoc(doc(db, "callList", id), { callCount: current + 1 });
-  }
-
-  async function runBulkSMS(targets: CallEntry[]) {
-    setBulkSending(true);
-    bulkAbortRef.current = false;
-    setBulkProgress({ current: 0, total: targets.length, errors: 0 });
-
-    let consecutiveErrors = 0;
-    let lastError = "";
-
-    for (let i = 0; i < targets.length; i++) {
-      if (bulkAbortRef.current) break;
-      const entry = targets[i];
-      const shortName = cleanNameForSearch(entry.businessName);
-      const msg = `Hi, Sam at Dygiko here. Noticed ${shortName} has no website - happy to build you a free template. Reply STOP to opt out.`;
-
-      try {
-        const res = await fetch("/api/justcall-sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: entry.phone, body: msg }),
-        });
-        if (res.ok) {
-          await updateDoc(doc(db, "callList", entry.id), { textedAt: Date.now() });
-          consecutiveErrors = 0;
-        } else {
-          const data = await res.json().catch(() => ({}));
-          lastError = data?.error || `HTTP ${res.status}`;
-          setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
-          consecutiveErrors++;
-        }
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : "network error";
-        setBulkProgress((p) => ({ ...p, errors: p.errors + 1 }));
-        consecutiveErrors++;
-      }
-
-      setBulkProgress((p) => ({ ...p, current: i + 1 }));
-
-      // Auto-abort if we hit 3 errors in a row — likely credits dry, rate limit, or API down
-      if (consecutiveErrors >= 3) {
-        alert(`Bulk send stopped: 3 sends failed in a row.\n\nLast error: ${lastError}\n\nLikely cause: credits ran out, JustCall rate limit, or API issue. Check your JustCall balance, then resume by clicking the button again — it'll skip ones already sent.`);
-        break;
-      }
-
-      if (i < targets.length - 1 && !bulkAbortRef.current) {
-        const delay = 5000 + Math.random() * 5000; // 5–10s random gap
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    setBulkSending(false);
-  }
-
-  function startBulkSMS() {
-    const targets = callList.filter(
-      (e) => !!e.phone && !e.textedAt && !isEntryDead(e) && !e.movedToLeads
-    );
-    if (targets.length === 0) {
-      alert("No untexted leads with phone numbers to send to.");
-      return;
-    }
-    const cost = (targets.length * 0.05).toFixed(2);
-    const minutes = Math.ceil((targets.length * 7.5) / 60);
-    if (!confirm(`Send SMS to ${targets.length} leads at ~5p each (~£${cost} total)?\n\nWill take roughly ${minutes} min (5-10s gap between sends).\nYou can stop at any time. Don't close this tab while it's running.`)) return;
-    runBulkSMS(targets);
-  }
-
-  function abortBulkSMS() {
-    bulkAbortRef.current = true;
   }
 
   async function doDelete() {
@@ -280,28 +198,15 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
     (e) => (e.callCount ?? 0) === 0 && !isEntryDead(e)
   );
 
-  const nextUntexted = visibleList.find(
-    (e) => !e.textedAt && !!e.phone && !isEntryDead(e)
-  );
-
-  function jumpToEntry(id: string) {
-    const el = document.getElementById(`crm-entry-${id}`);
+  function jumpToNextUncalled() {
+    if (!nextUncalled) return;
+    const el = document.getElementById(`crm-entry-${nextUncalled.id}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 1.4s ease";
       el.style.boxShadow = "0 0 0 2px rgba(176,255,0,0.45)";
       setTimeout(() => { el.style.boxShadow = ""; }, 1500);
     }
-  }
-
-  function jumpToNextUncalled() {
-    if (!nextUncalled) return;
-    jumpToEntry(nextUncalled.id);
-  }
-
-  function jumpToNextUntexted() {
-    if (!nextUntexted) return;
-    jumpToEntry(nextUntexted.id);
   }
 
   // Active count excludes dead and movedToLeads (for header display)
@@ -407,78 +312,7 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     ? `→ Next uncalled: ${nextUncalled.businessName.length > 24 ? nextUncalled.businessName.slice(0, 22) + "…" : nextUncalled.businessName}`
                     : "All called"}
                 </button>
-                <button
-                  onClick={jumpToNextUntexted}
-                  disabled={!nextUntexted}
-                  className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                  style={{
-                    background: "rgba(96,165,250,0.12)",
-                    color: "#60a5fa",
-                    border: "1px solid rgba(96,165,250,0.3)",
-                    maxWidth: 280,
-                  }}
-                  title={nextUntexted ? `Jump to ${nextUntexted.businessName}` : "No untexted businesses"}
-                >
-                  {nextUntexted
-                    ? `→ Next untexted: ${nextUntexted.businessName.length > 24 ? nextUntexted.businessName.slice(0, 22) + "…" : nextUntexted.businessName}`
-                    : "All texted"}
-                </button>
-                <button
-                  onClick={startBulkSMS}
-                  disabled={bulkSending}
-                  className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                  style={{
-                    background: "rgba(176,255,0,0.12)",
-                    color: "#b0ff00",
-                    border: "1px solid rgba(176,255,0,0.3)",
-                  }}
-                  title="Send SMS to every untexted lead with a phone number"
-                >
-                  💬 Text all untexted
-                </button>
               </div>
-
-              {/* Bulk send progress banner */}
-              {bulkSending && (
-                <div
-                  className="rounded-sm p-4 flex items-center justify-between gap-4"
-                  style={{ border: "1px solid rgba(176,255,0,0.3)", background: "rgba(176,255,0,0.06)" }}
-                >
-                  <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "#b0ff00" }}>
-                      Sending {bulkProgress.current} / {bulkProgress.total}
-                      {bulkProgress.errors > 0 && (
-                        <span style={{ color: "#ff6b6b" }}> · {bulkProgress.errors} errors</span>
-                      )}
-                    </p>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                      <div
-                        style={{
-                          width: `${(bulkProgress.current / Math.max(bulkProgress.total, 1)) * 100}%`,
-                          background: "#b0ff00",
-                          height: "100%",
-                          transition: "width 0.3s",
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      Don&apos;t close this tab. ~5-10s between sends. Cost so far: £{(bulkProgress.current * 0.05).toFixed(2)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={abortBulkSMS}
-                    className="text-xs px-3 py-2 rounded-sm font-medium shrink-0"
-                    style={{
-                      background: "rgba(255,107,107,0.12)",
-                      color: "#ff6b6b",
-                      border: "1px solid rgba(255,107,107,0.3)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Stop
-                  </button>
-                </div>
-              )}
 
               {/* Match count */}
               {searchQ && (
@@ -503,8 +337,6 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
                     onToggleDead={toggleDead}
                     onNotesChange={updateNotes}
                     onCallIncrement={incrementCallCount}
-                    onTexted={markTexted}
-                    onUntexted={unmarkTexted}
                     onDelete={(id, name) => setDeleteConfirm({ id, name })}
                     onSubmitToLeads={() => openSubmitLeads(entry)}
                   />
@@ -721,8 +553,6 @@ function CRMCard({
   onToggleDead,
   onNotesChange,
   onCallIncrement,
-  onTexted,
-  onUntexted,
   onDelete,
   onSubmitToLeads,
 }: {
@@ -730,14 +560,11 @@ function CRMCard({
   onToggleDead: (id: string, current: boolean) => void;
   onNotesChange: (id: string, n: string) => void;
   onCallIncrement: (id: string, current: number) => void;
-  onTexted: (id: string) => void;
-  onUntexted: (id: string) => void;
   onDelete: (id: string, name: string) => void;
   onSubmitToLeads: () => void;
 }) {
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
-  const [smsState, setSmsState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -750,31 +577,6 @@ function CRMCard({
     setSavingNotes(false);
   }
 
-  async function sendText() {
-    if (smsState === "sending" || !entry.phone) return;
-    const shortName = cleanNameForSearch(entry.businessName);
-    const msg = `Hi, Sam at Dygiko here. Noticed ${shortName} has no website - happy to build you a free template. Reply STOP to opt out.`;
-    if (!confirm(`Send this SMS to ${entry.phone}?\n\n${msg}`)) return;
-    setSmsState("sending");
-    try {
-      const res = await fetch("/api/justcall-sms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: entry.phone, body: msg }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-      setSmsState("sent");
-      onTexted(entry.id);
-      setTimeout(() => setSmsState("idle"), 2500);
-    } catch (err) {
-      console.error("SMS send failed:", err);
-      alert(`SMS failed: ${err instanceof Error ? err.message : "unknown error"}`);
-      setSmsState("error");
-      setTimeout(() => setSmsState("idle"), 2500);
-    }
-  }
-
   async function copyNumber() {
     if (!entry.phone) return;
     try { await navigator.clipboard.writeText(entry.phone.replace(/\s/g, "")); } catch { /* ignore */ }
@@ -785,21 +587,13 @@ function CRMCard({
   const callCount = entry.callCount ?? 0;
   const dead = isEntryDead(entry);
 
-  const isTexted = !!entry.textedAt;
-
   return (
     <div
       id={`crm-entry-${entry.id}`}
       className="rounded-sm p-4 flex flex-col gap-3 shrink-0 scroll-mt-24"
       style={{
-        border: `1px solid ${
-          dead
-            ? "rgba(255,255,255,0.04)"
-            : isTexted
-            ? "rgba(96,165,250,0.35)"
-            : "rgba(255,255,255,0.07)"
-        }`,
-        background: isTexted && !dead ? "rgba(96,165,250,0.05)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${dead ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.07)"}`,
+        background: "rgba(255,255,255,0.02)",
         opacity: dead ? 0.4 : 1,
       }}
     >
@@ -812,16 +606,6 @@ function CRMCard({
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00" }}>
                 In Leads
               </span>
-            )}
-            {isTexted && (
-              <button
-                onClick={() => { if (confirm("Unmark this lead as texted?")) onUntexted(entry.id); }}
-                className="text-xs px-2 py-0.5 rounded-full transition-opacity hover:opacity-70"
-                style={{ background: "rgba(96,165,250,0.15)", color: "#60a5fa", cursor: "pointer", border: "none" }}
-                title="Click to unmark as texted"
-              >
-                ✉ Texted
-              </button>
             )}
           </div>
           <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{entry.address}</p>
@@ -863,36 +647,9 @@ function CRMCard({
             {copied ? "✓ Copied" : "Copy"}
           </button>
         )}
-        {entry.phone && (
-          <button
-            onClick={sendText}
-            disabled={smsState === "sending"}
-            className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{
-              background: smsState === "sent" ? "rgba(176,255,0,0.22)" : smsState === "error" ? "rgba(255,107,107,0.12)" : "rgba(176,255,0,0.06)",
-              color: smsState === "error" ? "#ff6b6b" : "#b0ff00",
-              border: `1px solid ${smsState === "error" ? "rgba(255,107,107,0.3)" : "rgba(176,255,0,0.2)"}`,
-              cursor: smsState === "sending" ? "wait" : "pointer",
-              opacity: smsState === "sending" ? 0.7 : 1,
-            }}
-            title="Send templated SMS via JustCall"
-          >
-            {smsState === "sending" ? "Sending…" : smsState === "sent" ? "✓ Sent" : smsState === "error" ? "✗ Failed" : "💬 Text"}
-          </button>
-        )}
-        {entry.phone && !isTexted && (
-          <button
-            onClick={() => onTexted(entry.id)}
-            className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(96,165,250,0.08)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.25)", cursor: "pointer" }}
-            title="Mark as texted without sending (use this for SMS you sent manually)"
-          >
-            ✓ Mark texted
-          </button>
-        )}
-        {entry.phone && (isTexted || callCount > 0) && (
+        {entry.phone && callCount > 0 && (
           <a
-            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Easier to chat over WhatsApp! Happy to send over a free website preview for ${cleanNameForSearch(entry.businessName)} whenever suits.`)}`}
+            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}?text=${encodeURIComponent(`Hi, Sam from Dygiko here - thanks for getting back. Happy to send over a free website preview for ${cleanNameForSearch(entry.businessName)} whenever suits.`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
