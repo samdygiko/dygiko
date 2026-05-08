@@ -89,8 +89,8 @@ export default function TermsPage() {
             <p>
               <strong className="text-white">Website (£69/month or £690/year):</strong> Custom website
               design, domain registration, hosting setup, mobile-responsive build, advanced on-page SEO,
-              contact form integration, business email address setup, WhatsApp and click-to-call button
-              integration, and unlimited revisions.
+              contact form integration, business email address setup, WhatsApp and click-to-call buttons
+              embedded on your website so visitors can reach you instantly, and unlimited revisions.
             </p>
             <p>
               <strong className="text-white">CRM (£129/month or £1,290/year):</strong> Custom CRM
@@ -176,7 +176,7 @@ export default function TermsPage() {
             </p>
             <p>
               Submit revision requests by replying to any Dygiko email or messaging sam@dygiko.com.
-              Standard turnaround is 1–2 business days per request. Larger structural changes
+              We aim to handle requests as quickly as we can. Larger structural changes
               (e.g. adding a full new page or new CRM workflow) may take longer; we will confirm
               expected timelines on request.
             </p>
@@ -191,8 +191,8 @@ export default function TermsPage() {
             <p>To ensure timely delivery, you agree to:</p>
             <ul className="list-none space-y-2 mt-2">
               {[
-                "Provide all required content (text, images, logos, brand assets) within 3 business days of payment",
-                "Respond to review requests and approval requests within 5 business days",
+                "Provide all required content (text, images, logos, brand assets) so we can build your site",
+                "Respond to review requests and approval requests in a reasonable time",
                 "Ensure all content provided is legally owned by you or that you have the right to use it",
                 "Keep your payment details up to date to avoid service interruption",
                 "Not use the website or services for any unlawful, harmful, or fraudulent purpose",

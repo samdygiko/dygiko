@@ -220,345 +220,6 @@ function CRMPageInner() {
   );
 }
 
-const TC_URL = "/terms-and-conditions.pdf";
-
-const QUOTE_TEMPLATES = [
-  {
-    key: "quote-website",
-    label: "01 — Website",
-    name: "Website",
-    price: "£69",
-    recur: "per month · cancel anytime · or £690/yr (2 months free)",
-    stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
-    includes: [
-      "Custom website design",
-      "Domain registration & hosting setup",
-      "Mobile-responsive build",
-      "Advanced on-page SEO",
-      "Contact form integration",
-      "Business email address setup",
-      "WhatsApp & click-to-call button integration",
-      "Unlimited revisions to your site",
-      "Hosting & support included",
-    ],
-  },
-  {
-    key: "quote-crm",
-    label: "02 — CRM",
-    name: "Custom CRM",
-    price: "£129",
-    recur: "per month · cancel anytime · or £1,290/yr (2 months free)",
-    stripeUrl: "https://buy.stripe.com/00wbJ1f6wdfFfRy8pgfjG0e",
-    includes: [
-      "Custom CRM tailored to your business",
-      "Leads, customers & pipeline tracking",
-      "Calls, notes & follow-ups in one place",
-      "WhatsApp & click-to-call integration",
-      "Built around your exact workflow",
-      "Unlimited revisions to your CRM",
-      "Hosting & support included",
-    ],
-  },
-  {
-    key: "quote-website-crm",
-    label: "03 — Website + CRM",
-    name: "Website + CRM",
-    price: "£149",
-    recur: "per month · save £29/mo vs separate · or £1,490/yr (2 months free)",
-    stripeUrl: "https://buy.stripe.com/bJe3cv8I8cbB48QeNEfjG0c",
-    includes: [
-      "Everything in Website",
-      "Everything in CRM",
-      "Single login, unified setup",
-      "Best value — save £29/mo vs separate plans",
-      "Unlimited revisions to your site & CRM",
-      "Hosting & support included",
-    ],
-  },
-];
-
-function buildEmailHtml(pkg: typeof QUOTE_TEMPLATES[0], firstName: string, businessName: string) {
-  const name = firstName || "[First name]";
-  const biz = businessName || "[Business name]";
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0D0D0D;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
-.wrapper{max-width:600px;margin:0 auto;background:#0D0D0D;}
-.top-bar{background:#CCFF00;height:4px;}
-.header{padding:28px 36px 22px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:8px;}
-.logo-text{font-size:17px;font-weight:700;color:#CCFF00;letter-spacing:-0.02em;}
-.body{padding:32px 36px;}
-.greeting{font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:18px;}
-.intro{font-size:14px;color:#C8C8C8;line-height:1.7;margin-bottom:22px;}
-.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:6px;padding:22px 26px;margin-bottom:24px;}
-.pkg-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:5px;}
-.pkg-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.02em;margin-bottom:4px;}
-.pkg-price{font-size:26px;font-weight:700;color:#CCFF00;letter-spacing:-0.02em;}
-.pkg-recur{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;}
-hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:14px 0;}
-.inc-title{font-size:10px;font-weight:600;color:rgba(255,255,255,0.32);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;}
-.inc-item{font-size:13px;color:#B8B8B8;padding:3px 0 3px 18px;position:relative;line-height:1.5;}
-.inc-item::before{content:"✓";position:absolute;left:0;color:#CCFF00;font-weight:700;font-size:12px;}
-.cta{text-align:center;margin-bottom:24px;}
-.cta a{display:inline-block;background:#CCFF00;color:#080808;font-size:13px;font-weight:700;padding:13px 34px;border-radius:4px;text-decoration:none;}
-.cta-note{font-size:11px;color:rgba(255,255,255,0.28);margin-top:9px;}
-.tc-box{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:14px 18px;margin-bottom:24px;}
-.tc-box p{font-size:11px;color:rgba(255,255,255,0.38);line-height:1.6;}
-.tc-box a{color:#CCFF00;text-decoration:none;}
-.signoff{font-size:13px;color:#C8C8C8;line-height:1.8;margin-bottom:6px;}
-.sig-name{font-size:13px;font-weight:600;color:#fff;}
-.sig-role{font-size:12px;color:rgba(255,255,255,0.38);}
-.footer{padding:18px 36px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;}
-.footer-brand{font-size:12px;font-weight:700;color:#CCFF00;}
-.footer-info{font-size:10px;color:rgba(255,255,255,0.28);}
-</style>
-</head>
-<body>
-<div class="wrapper">
-  <div class="top-bar"></div>
-  <div class="header">
-    <svg width="26" height="26" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" fill="#CCFF00"/><rect x="18" y="2" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.6"/><rect x="2" y="18" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.6"/><rect x="18" y="18" width="12" height="12" rx="1.5" fill="#CCFF00" opacity="0.3"/></svg>
-    <span class="logo-text">dygiko</span>
-  </div>
-  <div class="body">
-    <p class="greeting">Hi ${name},</p>
-    <p class="intro">It was great speaking with you! Here's your personalised quote for <strong style="color:#fff">${biz}</strong>. No upfront cost — your subscription covers everything from build to ongoing support.</p>
-    <div class="card">
-      <div class="pkg-label">${pkg.label}</div>
-      <div class="pkg-name">${pkg.name}</div>
-      <div class="pkg-price">${pkg.price}</div>
-      <div class="pkg-recur">${pkg.recur}</div>
-      <hr/>
-      <div class="inc-title">What's included</div>
-      ${pkg.includes.map(i => `<div class="inc-item">${i}</div>`).join("")}
-    </div>
-    <div class="cta">
-      <a href="${pkg.stripeUrl}" target="_blank" rel="noopener noreferrer">Subscribe securely →</a>
-      <p class="cta-note">Secure payment via Stripe · Work starts on your first payment</p>
-    </div>
-    <div class="tc-box">
-      <p>By subscribing you agree to our <a href="${TC_URL}">Terms &amp; Conditions of Service</a>. Your subscription covers your custom build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.</p>
-    </div>
-    <p class="signoff">Any questions at all, just reply to this email or give me a call.<br/>Looking forward to building something great for ${biz}!</p>
-  </div>
-  <div class="footer">
-    <span class="footer-brand">dygiko</span>
-    <span class="footer-info">dygiko.com · sam@dygiko.com</span>
-  </div>
-</div>
-</body></html>`;
-}
-
-function QuoteEmailModal({ pkg, onClose }: { pkg: typeof QUOTE_TEMPLATES[0]; onClose: () => void }) {
-  const [firstName, setFirstName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [copiedStripe, setCopiedStripe] = useState(false);
-  const [copiedSubject, setCopiedSubject] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  const subject = `Your Dygiko quote — ${pkg.name} for ${businessName || "[Business name]"}`;
-  const html = buildEmailHtml(pkg, firstName, businessName);
-
-  // Fix #2: write HTML directly to iframe document so it updates live without remounting
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) return;
-    doc.open();
-    doc.write(html);
-    doc.close();
-  }, [html]);
-
-  // Fix #1: plain-text version of the email for copying
-  function buildPlainText() {
-    const name = firstName || "[First name]";
-    const biz = businessName || "[Business name]";
-    return `Subject: ${subject}
-
-Hi ${name},
-
-It was great speaking with you! Here's your personalised quote for ${biz}. No upfront cost — your subscription covers everything from build to ongoing support.
-
-PACKAGE: ${pkg.name}
-PRICE: ${pkg.price} ${pkg.recur}
-
-What's included:
-${pkg.includes.map(i => `✓ ${i}`).join("\n")}
-
-SUBSCRIBE SECURELY:
-${pkg.stripeUrl}
-
-TERMS & CONDITIONS:
-${window.location.origin}${TC_URL}
-
-By subscribing you agree to our Terms & Conditions of Service. Your monthly subscription covers your custom website build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.
-
-Any questions, just reply to this email or give me a call.
-Looking forward to building something great for ${biz}!`;
-  }
-
-  const inputSt: React.CSSProperties = {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    color: "#fff",
-    borderRadius: "2px",
-    padding: "8px 12px",
-    fontSize: "13px",
-    outline: "none",
-    width: "100%",
-  };
-
-  const labelSt: React.CSSProperties = {
-    fontSize: "10px",
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.12em",
-    color: "rgba(255,255,255,0.35)",
-    marginBottom: "6px",
-    display: "block",
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex" style={{ background: "rgba(0,0,0,0.8)" }} onClick={onClose}>
-      <div
-        className="ml-auto flex h-full"
-        style={{ width: "min(92vw, 1040px)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Left: controls */}
-        <div
-          className="flex flex-col overflow-y-auto shrink-0"
-          style={{ width: "300px", background: "#0d0d0d", borderLeft: "1px solid rgba(255,255,255,0.09)", padding: "24px 20px" }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "3px" }}>Quote Email</p>
-              <p style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{pkg.name}</p>
-              <p style={{ fontSize: "20px", fontWeight: 700, color: "#b0ff00", letterSpacing: "-0.02em" }}>{pkg.price}</p>
-            </div>
-            <button onClick={onClose} style={{ color: "rgba(255,255,255,0.3)", fontSize: "18px", lineHeight: 1 }}>✕</button>
-          </div>
-
-          <div className="flex flex-col gap-4 flex-1">
-            <div>
-              <label style={labelSt}>First name</label>
-              <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. James" style={inputSt} />
-            </div>
-            <div>
-              <label style={labelSt}>Business name</label>
-              <input type="text" value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Sunrise Plumbing" style={inputSt} />
-            </div>
-
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "16px" }}>
-              <label style={labelSt}>Subject line</label>
-              <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", lineHeight: 1.5, flex: 1 }}>{subject}</p>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(subject); setCopiedSubject(true); setTimeout(() => setCopiedSubject(false), 2000); }}
-                  style={{ fontSize: "10px", fontWeight: 600, padding: "4px 10px", borderRadius: "2px", background: copiedSubject ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedSubject ? "#b0ff00" : "rgba(255,255,255,0.55)", border: `1px solid ${copiedSubject ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}
-                >
-                  {copiedSubject ? "✓" : "Copy"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "16px" }}>
-              <label style={labelSt}>Stripe payment link</label>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", flex: 1, wordBreak: "break-all" }}>{pkg.stripeUrl}</p>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(pkg.stripeUrl); setCopiedStripe(true); setTimeout(() => setCopiedStripe(false), 2000); }}
-                  style={{ fontSize: "10px", fontWeight: 600, padding: "4px 10px", borderRadius: "2px", background: copiedStripe ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedStripe ? "#b0ff00" : "rgba(255,255,255,0.55)", border: `1px solid ${copiedStripe ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  {copiedStripe ? "✓" : "Copy"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "16px" }}>
-              <label style={labelSt}>T&amp;Cs PDF</label>
-              <a href={TC_URL} target="_blank" rel="noopener noreferrer" style={{ fontSize: "11px", color: "#b0ff00", textDecoration: "none" }}>
-                View / download ↗
-              </a>
-            </div>
-          </div>
-
-          {/* Fix #1: Copy full email button */}
-          <div style={{ marginTop: "20px", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "20px" }}>
-            <button
-              onClick={() => { navigator.clipboard.writeText(buildPlainText()); setCopiedEmail(true); setTimeout(() => setCopiedEmail(false), 2500); }}
-              style={{ width: "100%", background: copiedEmail ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedEmail ? "#b0ff00" : "#080808", fontWeight: 700, fontSize: "13px", padding: "12px", borderRadius: "4px", border: copiedEmail ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedEmail ? "✓ Copied!" : "Copy full email"}
-            </button>
-          </div>
-        </div>
-
-        {/* Right: email preview — Fix #2 + #3 */}
-        <div style={{ flex: 1, background: "#1a1a1a", borderLeft: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Email Preview</span>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>— updates live as you type</span>
-          </div>
-          <iframe
-            ref={iframeRef}
-            style={{ flex: 1, border: "none", width: "100%" }}
-            title="Email preview"
-            sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function buildTemplateFollowUpEmail(name: string, templateUrl: string) {
-  const n = name || "[Name]";
-  const url = templateUrl || "[Template URL]";
-  return `Hi ${n},
-
-Great to speak with you! As discussed, here's your free website template:
-
-${url}
-
-All our websites are fully compatible with mobile and desktop.
-
-Here's a quick overview of our packages:
-
-Website — £69/month (or £690/year, 2 months free)
-✓ Custom website design
-✓ Domain registration & hosting setup
-✓ Mobile-responsive build
-✓ Advanced on-page SEO
-✓ Contact form integration
-✓ Business email address setup
-✓ WhatsApp & click-to-call button integration
-✓ Unlimited revisions to your site
-✓ Hosting & support included
-
-CRM — £129/month (or £1,290/year, 2 months free)
-✓ Custom CRM tailored to your business
-✓ Leads, customers & pipeline tracking
-✓ Calls, notes & follow-ups in one place
-✓ WhatsApp & click-to-call integration
-✓ Built around your exact workflow
-✓ Unlimited revisions to your CRM
-✓ Hosting & support included
-
-Website + CRM — £149/month (or £1,490/year, 2 months free)
-✓ Everything in Website
-✓ Everything in CRM
-✓ Single login, unified setup
-✓ Best value — save £29/mo vs separate plans
-✓ Unlimited revisions to your site & CRM
-✓ Hosting & support included`;
-}
-
 function buildClaudeBrief(args: {
   business: string;
   industry: string;
@@ -640,32 +301,7 @@ Output: the entire prompt as a single copyable code block (one fenced \`\`\` blo
 }
 
 function AdminContent() {
-  const searchParams = useSearchParams();
-  const prefillName = searchParams?.get("prefillName") ?? "";
-  const prefillUrl = searchParams?.get("prefillUrl") ?? "";
-
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
-  const [openQuotePkg, setOpenQuotePkg] = useState<typeof QUOTE_TEMPLATES[0] | null>(null);
-
-  // Template follow-up email
-  const [tmplName, setTmplName] = useState(prefillName);
-  const [tmplUrl, setTmplUrl] = useState(prefillUrl);
-  const [copiedTmplSubject, setCopiedTmplSubject] = useState(false);
-  const [copiedTmplBody, setCopiedTmplBody] = useState(false);
-
-  const tmplSubject = `Your website template from Dygiko${tmplName ? ` — ${tmplName}` : ""}`;
-  const tmplBody = buildTemplateFollowUpEmail(tmplName, tmplUrl);
-
-  // Template SMS message
-  const [smsName, setSmsName] = useState(prefillName);
-  const [smsUrl, setSmsUrl] = useState(prefillUrl);
-  const [copiedSms, setCopiedSms] = useState(false);
-
-  useEffect(() => {
-    if (prefillName) { setSmsName(prefillName); setTmplName(prefillName); }
-    if (prefillUrl)  { setSmsUrl(prefillUrl);   setTmplUrl(prefillUrl);  }
-  }, [prefillName, prefillUrl]);
-  const smsBody = `Hi ${smsName || "[Name]"}, here's your website template ${smsUrl || "[Template URL]"} 👍`;
 
   // Trustpilot review request
   const [tpName, setTpName] = useState("");
@@ -674,14 +310,19 @@ function AdminContent() {
 
 https://au.trustpilot.com/review/dygiko.com`;
 
-  // Template takedown notice
-  const [takedownName, setTakedownName] = useState("");
-  const [takedownNumber, setTakedownNumber] = useState("");
-  const [copiedTakedown, setCopiedTakedown] = useState(false);
+  // Booking confirmation message — sent to prospects after they book the Calendly slot
+  const [bookName, setBookName] = useState("");
+  const [bookBusiness, setBookBusiness] = useState("");
+  const [copiedBookWa, setCopiedBookWa] = useState(false);
+  const [copiedBookSms, setCopiedBookSms] = useState(false);
+  const bookWaBody = `Hi ${bookName || "[Name]"} 👋 thanks for booking the call with Dygiko!
 
-  const takedownBody = `Hi ${takedownName || "[Name]"} hope you're well, it's Dygiko, just letting you know we'll be taking your website template down as we've been unable to reach you.
+Quick heads up — you should've received a confirmation email from Calendly with the Microsoft Teams link for our call. If it's not in your inbox, check your spam/junk folder.
 
-Kind Regards,`;
+Looking forward to showing you what we've put together for ${bookBusiness || "[Business name]"}. Speak soon!
+
+— Sam`;
+  const bookSmsBody = `Hi ${bookName || "[Name]"}, thanks for booking the call with Dygiko. Check your inbox (plus spam/junk folder) for the confirmation email with your Microsoft Teams link. See you soon - Sam`;
 
   // Claude build brief
   const [briefBusiness, setBriefBusiness] = useState("");
@@ -700,8 +341,6 @@ Kind Regards,`;
 
   return (
     <div className="flex flex-col gap-14 max-w-4xl">
-      {openQuotePkg && <QuoteEmailModal pkg={openQuotePkg} onClose={() => setOpenQuotePkg(null)} />}
-
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Admin</h2>
         <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
@@ -743,169 +382,6 @@ Kind Regards,`;
         </div>
       </div>
 
-      {/* Quote Email Templates */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Quote Email Templates</h3>
-        <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Fill in client details, preview the email, then send via Resend — or copy the Stripe link to send manually.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          {QUOTE_TEMPLATES.map((pkg) => (
-            <button
-              key={pkg.key}
-              onClick={() => setOpenQuotePkg(pkg)}
-              className="flex flex-col gap-2 px-5 py-5 rounded-sm text-left transition-all duration-150 hover:opacity-90"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", flex: "1 1 0" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(176,255,0,0.3)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)")}
-            >
-              <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{pkg.label}</span>
-              <span className="text-base font-bold text-white">{pkg.name}</span>
-              <span style={{ fontSize: "22px", fontWeight: 700, color: "#b0ff00", letterSpacing: "-0.02em" }}>{pkg.price}</span>
-              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>{pkg.recur}</span>
-              <span className="mt-1 text-xs font-semibold" style={{ color: "#b0ff00" }}>Open template →</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Template Follow-up Email */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Template Follow-up Email</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Enter the prospect&apos;s name and their template URL, then copy the subject and email body.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-5">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Prospect name
-            </label>
-            <input
-              type="text"
-              value={tmplName}
-              onChange={(e) => setTmplName(e.target.value)}
-              placeholder="e.g. James"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Website template URL
-            </label>
-            <input
-              type="url"
-              value={tmplUrl}
-              onChange={(e) => setTmplUrl(e.target.value)}
-              placeholder="e.g. https://example-template.vercel.app"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        {/* Subject copy row */}
-        <div
-          className="flex items-center justify-between px-4 py-3 mb-3"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          <div>
-            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "3px" }}>Subject</p>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)" }}>{tmplSubject}</p>
-          </div>
-          <button
-            onClick={() => { navigator.clipboard.writeText(tmplSubject); setCopiedTmplSubject(true); setTimeout(() => setCopiedTmplSubject(false), 2000); }}
-            style={{ fontSize: "11px", fontWeight: 600, padding: "6px 14px", borderRadius: "2px", background: copiedTmplSubject ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedTmplSubject ? "#b0ff00" : "rgba(255,255,255,0.55)", border: `1px solid ${copiedTmplSubject ? "rgba(176,255,0,0.25)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", whiteSpace: "nowrap" as const, flexShrink: 0, marginLeft: "1rem" }}
-          >
-            {copiedTmplSubject ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
-
-        {/* Email body preview + copy */}
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Email body</p>
-            <button
-              onClick={() => { navigator.clipboard.writeText(tmplBody); setCopiedTmplBody(true); setTimeout(() => setCopiedTmplBody(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTmplBody ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTmplBody ? "#b0ff00" : "#080808", border: copiedTmplBody ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedTmplBody ? "✓ Copied!" : "Copy full email"}
-            </button>
-          </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-              maxHeight: "420px",
-              overflowY: "auto",
-            }}
-          >
-            {tmplBody}
-          </pre>
-        </div>
-      </div>
-
-      {/* Template Text Message */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Template Text Message</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Enter the prospect&apos;s name and the template URL, then copy the SMS body and paste it into JustCall.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-5">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Prospect name
-            </label>
-            <input
-              type="text"
-              value={smsName}
-              onChange={(e) => setSmsName(e.target.value)}
-              placeholder="e.g. Keith"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Website template URL
-            </label>
-            <input
-              type="url"
-              value={smsUrl}
-              onChange={(e) => setSmsUrl(e.target.value)}
-              placeholder="e.g. https://hrai-constructions.vercel.app"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>SMS body</p>
-            <button
-              onClick={() => { navigator.clipboard.writeText(smsBody); setCopiedSms(true); setTimeout(() => setCopiedSms(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedSms ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedSms ? "#b0ff00" : "#080808", border: copiedSms ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedSms ? "✓ Copied!" : "Copy message"}
-            </button>
-          </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-            }}
-          >
-            {smsBody}
-          </pre>
-        </div>
-      </div>
 
       {/* Trustpilot Review Request */}
       <div>
@@ -952,11 +428,11 @@ Kind Regards,`;
         </div>
       </div>
 
-      {/* Template Takedown Notice */}
+      {/* Booking Confirmation Message */}
       <div>
-        <h3 className="text-base font-semibold text-white mb-1">Template Takedown Notice</h3>
+        <h3 className="text-base font-semibold text-white mb-1">Booking Confirmation Message</h3>
         <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          For prospects who&apos;ve gone cold — enter their name and number, then copy the message.
+          After a prospect books on Calendly, send them this on WhatsApp (preferred) or SMS. Reminds them about the Microsoft Teams link and to check spam.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-5">
@@ -966,58 +442,58 @@ Kind Regards,`;
             </label>
             <input
               type="text"
-              value={takedownName}
-              onChange={(e) => setTakedownName(e.target.value)}
-              placeholder="e.g. Sebastian"
+              value={bookName}
+              onChange={(e) => setBookName(e.target.value)}
+              placeholder="e.g. James"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
             />
           </div>
           <div className="flex flex-col gap-1.5 flex-1">
             <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Phone number
+              Business name
             </label>
             <input
-              type="tel"
-              value={takedownNumber}
-              onChange={(e) => setTakedownNumber(e.target.value)}
-              placeholder="e.g. 07700 900000"
+              type="text"
+              value={bookBusiness}
+              onChange={(e) => setBookBusiness(e.target.value)}
+              placeholder="e.g. Sunrise Plumbing"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
             />
           </div>
         </div>
 
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center gap-3">
-              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message</p>
-              {takedownNumber && (
-                <a
-                  href={`sms:${takedownNumber.replace(/\s/g, "")}&body=${encodeURIComponent(takedownBody)}`}
-                  style={{ fontSize: "11px", fontWeight: 600, color: "rgba(176,255,0,0.8)", textDecoration: "none" }}
-                >
-                  Send as SMS →
-                </a>
-              )}
+        <div className="flex flex-col gap-3">
+          {/* WhatsApp */}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>WhatsApp message</p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(bookWaBody); setCopiedBookWa(true); setTimeout(() => setCopiedBookWa(false), 2500); }}
+                style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBookWa ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedBookWa ? "#b0ff00" : "#080808", border: copiedBookWa ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
+              >
+                {copiedBookWa ? "✓ Copied!" : "Copy WhatsApp"}
+              </button>
             </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText(takedownBody); setCopiedTakedown(true); setTimeout(() => setCopiedTakedown(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTakedown ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTakedown ? "#b0ff00" : "#080808", border: copiedTakedown ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedTakedown ? "✓ Copied!" : "Copy message"}
-            </button>
+            <pre style={{ padding: "16px", fontSize: "12px", lineHeight: 1.75, color: "rgba(255,255,255,0.55)", whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {bookWaBody}
+            </pre>
           </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-            }}
-          >
-            {takedownBody}
-          </pre>
+
+          {/* SMS (no emoji, single segment) */}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>SMS (shorter, single segment)</p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(bookSmsBody); setCopiedBookSms(true); setTimeout(() => setCopiedBookSms(false), 2500); }}
+                style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBookSms ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedBookSms ? "#b0ff00" : "rgba(255,255,255,0.7)", border: `1px solid ${copiedBookSms ? "rgba(176,255,0,0.3)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", transition: "all 0.15s" }}
+              >
+                {copiedBookSms ? "✓ Copied!" : "Copy SMS"}
+              </button>
+            </div>
+            <pre style={{ padding: "16px", fontSize: "12px", lineHeight: 1.75, color: "rgba(255,255,255,0.55)", whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {bookSmsBody}
+            </pre>
+          </div>
         </div>
       </div>
 

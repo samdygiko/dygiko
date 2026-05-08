@@ -18,19 +18,22 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
-type Stage = "Pending/Callback" | "Template Made" | "Sent" | "Dead";
-type Package = "" | "Basic £49/mo" | "Growth £69/mo" | "Full Business £99/mo";
+type Stage = "Pending" | "Booked" | "Closed" | "Dead";
+type Package = "" | "Website £69/mo" | "CRM £129/mo" | "Website + CRM £149/mo";
 
-const STAGES: Stage[] = ["Pending/Callback", "Template Made", "Sent", "Dead"];
+const STAGES: Stage[] = ["Pending", "Booked", "Closed", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
-  "Pending/Callback": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
-  "Template Made": { bg: "rgba(168,85,247,0.15)", color: "#c084fc" },
-  "Sent": { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
+  "Pending": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
+  "Booked": { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
+  "Closed": { bg: "rgba(176,255,0,0.12)", color: "#b0ff00" },
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
-const PACKAGES: Package[] = ["", "Basic £49/mo", "Growth £69/mo", "Full Business £99/mo"];
+const PACKAGES: Package[] = ["", "Website £69/mo", "CRM £129/mo", "Website + CRM £149/mo"];
+
+// Calendly link for "Book consultation" buttons inside Leads
+const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
 
 const FALLBACK_STAGE_COLOR = { bg: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)" };
 function stageColor(stage: string) {
@@ -54,6 +57,7 @@ type Lead = {
   emailSentClosed: boolean;
   templateSent: boolean;
   templateLink: string;
+  bookingDateTime?: string; // ISO datetime when the consultation is scheduled
   dateAdded: { toDate?: () => Date } | null;
   updates?: { text: string; at: Timestamp }[];
 };
@@ -78,6 +82,7 @@ export default function LeadsTab() {
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelTemplateLink, setPanelTemplateLink] = useState("");
+  const [panelBookingDateTime, setPanelBookingDateTime] = useState("");
   const [currentUpdate, setCurrentUpdate] = useState("");
   const router = useRouter();
 
@@ -98,9 +103,18 @@ export default function LeadsTab() {
     const unsub = onSnapshot(q, (snap) => {
       setLeads(snap.docs.map((d) => {
         const data = d.data();
-        if (data.stage === "Template Made & Sent" || data.stage === "Template Sent") {
-          data.stage = "Template Made";
-          updateDoc(doc(db, "leads", d.id), { stage: "Template Made" }).catch(() => {});
+        // Migrate legacy stages to the new pipeline
+        const LEGACY_TO_NEW: Record<string, Stage> = {
+          "Pending/Callback": "Pending",
+          "Template Made": "Booked",
+          "Template Made & Sent": "Booked",
+          "Template Sent": "Booked",
+          "Sent": "Booked",
+        };
+        if (LEGACY_TO_NEW[data.stage]) {
+          const next = LEGACY_TO_NEW[data.stage];
+          data.stage = next;
+          updateDoc(doc(db, "leads", d.id), { stage: next }).catch(() => {});
         }
         return { id: d.id, ...data } as Lead;
       }));
@@ -118,6 +132,7 @@ export default function LeadsTab() {
         setPanelEmail(updated.email ?? "");
         setPanelName(updated.contactName ?? "");
         setPanelTemplateLink(updated.templateLink ?? "");
+        setPanelBookingDateTime(updated.bookingDateTime ?? "");
       }
     } else {
       setCurrentUpdate("");
@@ -141,6 +156,7 @@ export default function LeadsTab() {
       email: panelEmail,
       contactName: panelName,
       templateLink: panelTemplateLink,
+      bookingDateTime: panelBookingDateTime || null,
     };
     if (trimmedUpdate) {
       payload.updates = arrayUnion({ text: trimmedUpdate, at: Timestamp.now() });
@@ -245,10 +261,20 @@ export default function LeadsTab() {
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {activeLeads.length} total · {leads.filter((l) => l.stage === "Template Made").length} templated
+            {activeLeads.length} total · {leads.filter((l) => l.stage === "Booked").length} booked · {leads.filter((l) => l.stage === "Closed").length} closed
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: "#b0ff00", color: "#080808", textDecoration: "none" }}
+            title="Open the Calendly booking page"
+          >
+            📅 Calendly
+          </a>
           <button
             onClick={exportCSV}
             className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
@@ -322,6 +348,7 @@ export default function LeadsTab() {
                       setPanelEmail(lead.email ?? "");
                       setPanelName(lead.contactName ?? "");
                       setPanelTemplateLink(lead.templateLink ?? "");
+                      setPanelBookingDateTime(lead.bookingDateTime ?? "");
                     }}
                     className="cursor-pointer transition-colors duration-100"
                     style={{
@@ -469,6 +496,24 @@ export default function LeadsTab() {
                     <option key={s} value={s} style={{ background: "#121212", color: "#fff" }}>{s}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Booking date &amp; time
+                  {selectedLead.bookingDateTime && (
+                    <span className="ml-2 font-normal" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      · {new Date(selectedLead.bookingDateTime).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={panelBookingDateTime}
+                  onChange={(e) => setPanelBookingDateTime(e.target.value)}
+                  className="w-full rounded-sm px-3 py-2 text-xs outline-none"
+                  style={inputSt}
+                />
               </div>
 
               <div>
