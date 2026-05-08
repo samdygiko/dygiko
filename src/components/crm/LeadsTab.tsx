@@ -74,6 +74,11 @@ export default function LeadsTab() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [filterStage, setFilterStage] = useState("All");
   const [filterPackage, setFilterPackage] = useState("All");
+  const [view, setView] = useState<"list" | "calendar">("list");
+  const [calMonth, setCalMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
   const [panelNotes, setPanelNotes] = useState("");
   const [panelEmail, setPanelEmail] = useState("");
   const [panelName, setPanelName] = useState("");
@@ -181,16 +186,20 @@ export default function LeadsTab() {
     if (!lead) return;
     setMovingToClients(true);
 
-    // Map labelled package → name. Accepts both new (£49/mo) and legacy (£500) labels.
+    // Map the lead's package label → ClientsTab package name
     const pkgMap: Record<string, string> = {
-      "Basic £49/mo": "Basic",
-      "Growth £69/mo": "Growth",
-      "Full Business £99/mo": "Full Business",
-      "Basic £500": "Basic",
-      "Growth £750": "Growth",
-      "Full Business £1,500": "Full Business",
+      "Website £69/mo": "Website",
+      "CRM £129/mo": "CRM",
+      "Website + CRM £149/mo": "Website + CRM",
+      // Legacy labels from older leads — map them to the closest new tier
+      "Basic £49/mo": "Website",
+      "Growth £69/mo": "Website",
+      "Full Business £99/mo": "Website + CRM",
+      "Basic £500": "Website",
+      "Growth £750": "Website",
+      "Full Business £1,500": "Website + CRM",
     };
-    const clientPkg = pkgMap[lead.package] ?? "Basic";
+    const clientPkg = pkgMap[lead.package] ?? "Website";
 
     await addDoc(collection(db, "clients"), {
       businessName: lead.businessName,
@@ -265,6 +274,26 @@ export default function LeadsTab() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {/* View toggle: list / calendar */}
+          <div
+            className="inline-flex p-0.5 rounded-sm"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            <button
+              onClick={() => setView("list")}
+              className="text-xs px-3 py-1.5 rounded-sm font-medium transition-colors"
+              style={{ background: view === "list" ? "rgba(176,255,0,0.12)" : "transparent", color: view === "list" ? "#b0ff00" : "rgba(255,255,255,0.5)" }}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setView("calendar")}
+              className="text-xs px-3 py-1.5 rounded-sm font-medium transition-colors"
+              style={{ background: view === "calendar" ? "rgba(176,255,0,0.12)" : "transparent", color: view === "calendar" ? "#b0ff00" : "rgba(255,255,255,0.5)" }}
+            >
+              📅 Calendar
+            </button>
+          </div>
           <a
             href={CALENDLY_URL}
             target="_blank"
@@ -273,7 +302,7 @@ export default function LeadsTab() {
             style={{ background: "#b0ff00", color: "#080808", textDecoration: "none" }}
             title="Open the Calendly booking page"
           >
-            📅 Calendly
+            Open Calendly ↗
           </a>
           <button
             onClick={exportCSV}
@@ -315,6 +344,22 @@ export default function LeadsTab() {
         <div className="flex items-center justify-center py-16">
           <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#b0ff00", borderTopColor: "transparent" }} />
         </div>
+      ) : view === "calendar" ? (
+        <CalendarView
+          leads={leads.filter((l) => !!l.bookingDateTime)}
+          month={calMonth}
+          onPrev={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+          onNext={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+          onToday={() => { const d = new Date(); setCalMonth(new Date(d.getFullYear(), d.getMonth(), 1)); }}
+          onSelectLead={(lead) => {
+            setSelectedLead(lead);
+            setPanelNotes(lead.notes ?? "");
+            setPanelEmail(lead.email ?? "");
+            setPanelName(lead.contactName ?? "");
+            setPanelTemplateLink(lead.templateLink ?? "");
+            setPanelBookingDateTime(lead.bookingDateTime ?? "");
+          }}
+        />
       ) : filtered.length === 0 ? (
         <div
           className="rounded-sm px-5 py-10 text-center text-sm"
@@ -704,6 +749,169 @@ export default function LeadsTab() {
         );
       })()}
 
+    </div>
+  );
+}
+
+/* ─── Calendar view ──────────────────────────────────────────────────────── */
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function CalendarView({
+  leads,
+  month,
+  onPrev,
+  onNext,
+  onToday,
+  onSelectLead,
+}: {
+  leads: Lead[];
+  month: Date;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  onSelectLead: (lead: Lead) => void;
+}) {
+  const year = month.getFullYear();
+  const monthIdx = month.getMonth();
+
+  // Build a 6-row grid covering the month, padded into the previous/next month so the grid is always full
+  const firstOfMonth = new Date(year, monthIdx, 1);
+  // JS weekday: Sun=0 ... we want Mon=0
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
+  const gridStart = new Date(year, monthIdx, 1 - firstWeekday);
+
+  const cells: Date[] = [];
+  for (let i = 0; i < 42; i++) {
+    cells.push(new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
+  }
+
+  // Group leads with bookingDateTime by yyyy-mm-dd
+  const byDay = new Map<string, Lead[]>();
+  for (const l of leads) {
+    if (!l.bookingDateTime) continue;
+    const d = new Date(l.bookingDateTime);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const arr = byDay.get(key) ?? [];
+    arr.push(l);
+    byDay.set(key, arr);
+  }
+  for (const arr of byDay.values()) {
+    arr.sort((a, b) => new Date(a.bookingDateTime!).getTime() - new Date(b.bookingDateTime!).getTime());
+  }
+
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+  const monthBookings = leads.filter((l) => {
+    if (!l.bookingDateTime) return false;
+    const d = new Date(l.bookingDateTime);
+    return d.getFullYear() === year && d.getMonth() === monthIdx;
+  });
+
+  return (
+    <div className="flex flex-col gap-4 flex-1 min-h-0">
+      {/* Month header + nav */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onPrev}
+            className="text-sm px-3 py-1.5 rounded-sm transition-opacity hover:opacity-80"
+            style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
+          >
+            ←
+          </button>
+          <h3 className="text-lg font-semibold text-white" style={{ minWidth: 180, textAlign: "center" }}>
+            {MONTH_NAMES[monthIdx]} {year}
+          </h3>
+          <button
+            onClick={onNext}
+            className="text-sm px-3 py-1.5 rounded-sm transition-opacity hover:opacity-80"
+            style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
+          >
+            →
+          </button>
+          <button
+            onClick={onToday}
+            className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 ml-2"
+            style={{ border: "1px solid rgba(176,255,0,0.3)", color: "#b0ff00" }}
+          >
+            Today
+          </button>
+        </div>
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {monthBookings.length} booking{monthBookings.length !== 1 ? "s" : ""} this month
+        </p>
+      </div>
+
+      {/* Day headers */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {DAY_NAMES.map((d) => (
+          <div key={d} className="text-[10px] font-semibold uppercase tracking-[0.12em] py-1.5 text-center" style={{ color: "rgba(255,255,255,0.35)" }}>
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {cells.map((cell, i) => {
+          const inMonth = cell.getMonth() === monthIdx;
+          const key = `${cell.getFullYear()}-${cell.getMonth()}-${cell.getDate()}`;
+          const dayLeads = byDay.get(key) ?? [];
+          const isToday = key === todayKey;
+          return (
+            <div
+              key={i}
+              className="rounded-sm p-2 flex flex-col gap-1"
+              style={{
+                minHeight: 96,
+                background: inMonth ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.005)",
+                border: `1px solid ${isToday ? "rgba(176,255,0,0.35)" : "rgba(255,255,255,0.06)"}`,
+                opacity: inMonth ? 1 : 0.4,
+              }}
+            >
+              <span
+                className="text-xs font-semibold"
+                style={{ color: isToday ? "#b0ff00" : inMonth ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)" }}
+              >
+                {cell.getDate()}
+              </span>
+              <div className="flex flex-col gap-1">
+                {dayLeads.slice(0, 3).map((lead) => {
+                  const t = new Date(lead.bookingDateTime!);
+                  const time = t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <button
+                      key={lead.id}
+                      onClick={() => onSelectLead(lead)}
+                      className="text-left rounded-sm px-1.5 py-1 transition-opacity hover:opacity-80"
+                      style={{
+                        background: stageColor(lead.stage).bg,
+                        color: stageColor(lead.stage).color,
+                        fontSize: "10px",
+                        lineHeight: 1.3,
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                      title={`${lead.businessName} — ${lead.stage}`}
+                    >
+                      <span className="font-semibold">{time}</span>{" "}
+                      <span className="opacity-90 truncate">{lead.businessName}</span>
+                    </button>
+                  );
+                })}
+                {dayLeads.length > 3 && (
+                  <span className="text-[10px] px-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    +{dayLeads.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
