@@ -78,7 +78,6 @@ function CRMPageInner() {
   });
   const [callCount, setCallCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
-  const [closedCount, setClosedCount] = useState(0);
   const [clientsCount, setClientsCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -107,7 +106,6 @@ function CRMPageInner() {
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
       setLeadsCount(docs.filter((d) => d.stage !== "Dead").length);
-      setClosedCount(docs.filter((d) => d.stage === "Closed").length);
     });
     const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
     return () => { u1(); u2(); u3(); };
@@ -121,7 +119,9 @@ function CRMPageInner() {
     );
   }
 
-  const convRate = leadsCount > 0 ? ((closedCount / leadsCount) * 100).toFixed(1) : "0.0";
+  // Conversion = Clients / (Leads + Clients), i.e. of everyone in the pipeline (active leads + already-converted clients), what % are clients
+  const totalPipeline = leadsCount + clientsCount;
+  const convRate = totalPipeline > 0 ? ((clientsCount / totalPipeline) * 100).toFixed(1) : "0.0";
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#080808", color: "#fff" }}>

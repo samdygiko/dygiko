@@ -17,19 +17,15 @@ import {
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
-type Stage = "Pending" | "Booked" | "Closed" | "Dead";
-type Package = "" | "Website £69/mo" | "CRM £129/mo" | "Website + CRM £149/mo";
+type Stage = "Pending" | "Booked" | "Dead";
 
-const STAGES: Stage[] = ["Pending", "Booked", "Closed", "Dead"];
+const STAGES: Stage[] = ["Pending", "Booked", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
   "Booked": { bg: "rgba(96,165,250,0.15)", color: "#60a5fa" },
-  "Closed": { bg: "rgba(176,255,0,0.12)", color: "#b0ff00" },
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
-
-const PACKAGES: Package[] = ["", "Website £69/mo", "CRM £129/mo", "Website + CRM £149/mo"];
 
 // Calendly link for "Book consultation" buttons inside Leads
 const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
@@ -50,7 +46,6 @@ type Lead = {
   websiteStatus: string;
   googleMapsUrl: string;
   stage: Stage;
-  package: Package;
   notes: string;
   emailSentInterest: boolean;
   emailSentClosed: boolean;
@@ -72,7 +67,6 @@ export default function LeadsTab() {
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [filterStage, setFilterStage] = useState("All");
-  const [filterPackage, setFilterPackage] = useState("All");
   const [view, setView] = useState<"list" | "calendar">("list");
   const [calMonth, setCalMonth] = useState(() => {
     const d = new Date();
@@ -95,13 +89,16 @@ export default function LeadsTab() {
     const unsub = onSnapshot(q, (snap) => {
       setLeads(snap.docs.map((d) => {
         const data = d.data();
-        // Migrate legacy stages to the new pipeline
+        // Migrate legacy stages to the new pipeline (Pending / Booked / Dead).
+        // Old 'Closed' is also gone — closed leads should have been moved to Clients;
+        // any stragglers map to Booked so they're still visible at the top of the list.
         const LEGACY_TO_NEW: Record<string, Stage> = {
           "Pending/Callback": "Pending",
           "Template Made": "Booked",
           "Template Made & Sent": "Booked",
           "Template Sent": "Booked",
           "Sent": "Booked",
+          "Closed": "Booked",
         };
         if (LEGACY_TO_NEW[data.stage]) {
           const next = LEGACY_TO_NEW[data.stage];
@@ -199,7 +196,7 @@ export default function LeadsTab() {
   }
 
   function exportCSV() {
-    const headers = ["Business", "Contact", "Email", "Phone", "Category", "Stage", "Package", "Notes", "Date"];
+    const headers = ["Business", "Contact", "Email", "Phone", "Category", "Stage", "Notes", "Date"];
     const rows = filtered.map((l) => [
       l.businessName,
       l.contactName ?? "",
@@ -207,7 +204,6 @@ export default function LeadsTab() {
       l.phone ?? "",
       l.category ?? "",
       l.stage,
-      l.package ?? "",
       (l.notes ?? "").replace(/\n/g, " "),
       formatDate(l),
     ]);
@@ -228,7 +224,6 @@ export default function LeadsTab() {
   const filtered = leads
     .filter((l) => {
       if (filterStage !== "All" && l.stage !== filterStage) return false;
-      if (filterPackage !== "All" && l.package !== filterPackage) return false;
       return true;
     })
     .sort((a, b) => {
@@ -243,7 +238,7 @@ export default function LeadsTab() {
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {activeLeads.length} total · {leads.filter((l) => l.stage === "Booked").length} booked · {leads.filter((l) => l.stage === "Closed").length} closed
+            {activeLeads.length} total · {leads.filter((l) => l.stage === "Booked").length} booked · {leads.filter((l) => l.stage === "Pending").length} pending
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -308,17 +303,6 @@ export default function LeadsTab() {
           <option value="All" style={{ background: "#121212" }}>All stages</option>
           {STAGES.map((s) => (
             <option key={s} value={s} style={{ background: "#121212" }}>{s}</option>
-          ))}
-        </select>
-        <select
-          value={filterPackage}
-          onChange={(e) => setFilterPackage(e.target.value)}
-          className="rounded-sm px-3 py-2 text-xs outline-none"
-          style={inputSt}
-        >
-          <option value="All" style={{ background: "#121212" }}>All packages</option>
-          {PACKAGES.filter(Boolean).map((p) => (
-            <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>
           ))}
         </select>
       </div>
