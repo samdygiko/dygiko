@@ -84,7 +84,7 @@ function buildEmail({
     <p class="greeting">Hi ${firstName},</p>
     <p class="intro">
       It was great speaking with you! As discussed, here's your personalised quote for
-      ${businessName}. Everything you need to get your business online — live within 2 days, no upfront cost.
+      ${businessName}. No upfront cost — your subscription covers everything from build to ongoing support.
     </p>
 
     <div class="package-card">
@@ -132,78 +132,74 @@ function buildEmail({
 }
 
 export const PACKAGE_EMAILS = {
-  basic: {
+  website: {
     subject: (businessName: string) =>
-      `Your Dygiko quote — Basic Website for ${businessName}`,
+      `Your Dygiko quote — Website for ${businessName}`,
     html: (firstName: string, businessName: string) =>
       buildEmail({
         firstName,
         businessName,
-        packageLabel: "Package 01 — Basic",
-        packageName: "Basic Website",
-        price: "£49",
-        recur: "per month · cancel anytime",
-        stripeUrl: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
+        packageLabel: "Package 01 — Website",
+        packageName: "Website",
+        price: "£69",
+        recur: "per month · cancel anytime · or £690/yr (2 months free)",
+        stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
         includes: [
           "Custom website design",
           "Domain registration & hosting setup",
           "Mobile-responsive build",
-          "Basic on-page SEO",
-          "Unlimited revisions to your site",
-          "Live within 2 business days",
-          "Hosting & support included",
-          "No upfront cost · cancel anytime",
-        ],
-      }),
-  },
-
-  growth: {
-    subject: (businessName: string) =>
-      `Your Dygiko quote — Growth Website for ${businessName}`,
-    html: (firstName: string, businessName: string) =>
-      buildEmail({
-        firstName,
-        businessName,
-        packageLabel: "Package 02 — Growth",
-        packageName: "Growth Website",
-        price: "£69",
-        recur: "per month · cancel anytime",
-        stripeUrl: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
-        includes: [
-          "Everything in Basic",
-          "Advanced SEO configuration",
-          "Blog setup with 3 starter posts",
+          "Advanced on-page SEO",
           "Contact form integration",
-          "Professional company email address",
+          "Business email address setup",
           "Unlimited revisions to your site",
-          "Live within 2 business days",
           "Hosting & support included",
-          "No upfront cost · cancel anytime",
         ],
       }),
   },
 
-  fullBusiness: {
+  crm: {
     subject: (businessName: string) =>
-      `Your Dygiko quote — Full Business Package for ${businessName}`,
+      `Your Dygiko quote — CRM for ${businessName}`,
     html: (firstName: string, businessName: string) =>
       buildEmail({
         firstName,
         businessName,
-        packageLabel: "Package 03 — Full Business",
-        packageName: "Full Business Package",
-        price: "£99",
-        recur: "per month · cancel anytime",
-        stripeUrl: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
+        packageLabel: "Package 02 — CRM",
+        packageName: "Custom CRM",
+        price: "£129",
+        recur: "per month · cancel anytime · or £1,290/yr (2 months free)",
+        stripeUrl: "https://buy.stripe.com/00wbJ1f6wdfFfRy8pgfjG0e",
         includes: [
-          "Everything in Growth",
-          "Google Business Profile setup & optimisation",
-          "Custom CRM system",
-          "WhatsApp & click-to-call button integration",
-          "Unlimited revisions to your site & CRM",
-          "Live within 2 business days",
+          "Custom CRM tailored to your business",
+          "Leads, customers & pipeline tracking",
+          "Calls, notes & follow-ups in one place",
+          "WhatsApp & click-to-call integration",
+          "Built around your exact workflow",
+          "Unlimited revisions to your CRM",
           "Hosting & support included",
-          "No upfront cost · cancel anytime",
+        ],
+      }),
+  },
+
+  websiteCrm: {
+    subject: (businessName: string) =>
+      `Your Dygiko quote — Website + CRM for ${businessName}`,
+    html: (firstName: string, businessName: string) =>
+      buildEmail({
+        firstName,
+        businessName,
+        packageLabel: "Package 03 — Website + CRM",
+        packageName: "Website + CRM",
+        price: "£149",
+        recur: "per month · save £29/mo vs separate · or £1,490/yr (2 months free)",
+        stripeUrl: "https://buy.stripe.com/bJe3cv8I8cbB48QeNEfjG0c",
+        includes: [
+          "Everything in Website",
+          "Everything in CRM",
+          "Single login, unified setup",
+          "Best value — save £29/mo vs separate plans",
+          "Unlimited revisions to your site & CRM",
+          "Hosting & support included",
         ],
       }),
   },

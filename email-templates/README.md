@@ -4,12 +4,12 @@ Six standalone HTML files — three packages × two billing intervals.
 
 | File | Package | Stripe link |
 |---|---|---|
-| `basic-monthly.html` | Basic — £49/month | `4gMcN5aQg1wXdJq20SfjG00` |
-| `growth-monthly.html` | Growth — £69/month | `fZueVdbUk2B16gYaxofjG01` |
-| `full-business-monthly.html` | Full Business — £99/month | `bJebJ19McdfFdJq0WOfjG02` |
-| `basic-annual.html` | Basic — £490/year (save £98) | `eVq5kD4rS4J9gVC8pgfjG09` |
-| `growth-annual.html` | Growth — £690/year (save £138) | `4gM28r7E4ejJgVCeNEfjG0a` |
-| `full-business-annual.html` | Full Business — £990/year (save £198) | `6oU7sL1fG8Zp48Q0WOfjG0b` |
+| `website-monthly.html` | Website — £69/month | `fZueVdbUk2B16gYaxofjG01` |
+| `crm-monthly.html` | CRM — £129/month | `00wbJ1f6wdfFfRy8pgfjG0e` |
+| `websitecrm-monthly.html` | Website + CRM — £149/month | `bJe3cv8I8cbB48QeNEfjG0c` |
+| `website-annual.html` | Website — £690/year (2 months free) | `4gM28r7E4ejJgVCeNEfjG0a` |
+| `crm-annual.html` | CRM — £1,290/year (2 months free) | `28E28raQgfnNdJqfRIfjG0f` |
+| `websitecrm-annual.html` | Website + CRM — £1,490/year (2 months free) | `00wbJ1cYodfF8p6dJAfjG0d` |
 
 ## Theme
 
@@ -23,24 +23,24 @@ Each template contains `[First name]` and `[Business name]` — replace before s
 
 | Template | Subject |
 |---|---|
-| `basic-monthly.html` | `[Business name] — your Dygiko website quote (Basic, £49/mo)` |
-| `growth-monthly.html` | `[Business name] — your Dygiko website quote (Growth, £69/mo)` |
-| `full-business-monthly.html` | `[Business name] — your Dygiko website quote (Full Business, £99/mo)` |
-| `basic-annual.html` | `[Business name] — Dygiko Basic, £490/yr (save 17%)` |
-| `growth-annual.html` | `[Business name] — Dygiko Growth, £690/yr (save 17%)` |
-| `full-business-annual.html` | `[Business name] — Dygiko Full Business, £990/yr (save 17%)` |
+| `website-monthly.html` | `[Business name] — your Dygiko Website quote (£69/mo)` |
+| `crm-monthly.html` | `[Business name] — your Dygiko CRM quote (£129/mo)` |
+| `websitecrm-monthly.html` | `[Business name] — your Dygiko Website + CRM quote (£149/mo)` |
+| `website-annual.html` | `[Business name] — Dygiko Website, £690/yr (2 months free)` |
+| `crm-annual.html` | `[Business name] — Dygiko CRM, £1,290/yr (2 months free)` |
+| `websitecrm-annual.html` | `[Business name] — Dygiko Website + CRM, £1,490/yr (2 months free)` |
 
 ## Copy a template to clipboard
 
 Run any of these in your terminal (or paste with `! ` prefix in Claude Code):
 
 ```bash
-pbcopy < ~/Desktop/dygiko/email-templates/basic-monthly.html
-pbcopy < ~/Desktop/dygiko/email-templates/growth-monthly.html
-pbcopy < ~/Desktop/dygiko/email-templates/full-business-monthly.html
-pbcopy < ~/Desktop/dygiko/email-templates/basic-annual.html
-pbcopy < ~/Desktop/dygiko/email-templates/growth-annual.html
-pbcopy < ~/Desktop/dygiko/email-templates/full-business-annual.html
+pbcopy < ~/Desktop/dygiko/email-templates/website-monthly.html
+pbcopy < ~/Desktop/dygiko/email-templates/crm-monthly.html
+pbcopy < ~/Desktop/dygiko/email-templates/websitecrm-monthly.html
+pbcopy < ~/Desktop/dygiko/email-templates/website-annual.html
+pbcopy < ~/Desktop/dygiko/email-templates/crm-annual.html
+pbcopy < ~/Desktop/dygiko/email-templates/websitecrm-annual.html
 ```
 
 Then paste into Zoho → New Template → switch to HTML view → **Cmd+V**.

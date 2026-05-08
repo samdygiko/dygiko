@@ -40,26 +40,26 @@ If you need anything in the meantime just reply here or call 07723396306.
 
 Welcome aboard!`,
       });
-    } else if (type === "quote-basic") {
+    } else if (type === "quote-website") {
       await resend.emails.send({
         from: "Sam at Dygiko <sam@dygiko.com>",
         to,
-        subject: PACKAGE_EMAILS.basic.subject(businessName),
-        html: PACKAGE_EMAILS.basic.html(name, businessName),
+        subject: PACKAGE_EMAILS.website.subject(businessName),
+        html: PACKAGE_EMAILS.website.html(name, businessName),
       });
-    } else if (type === "quote-growth") {
+    } else if (type === "quote-crm") {
       await resend.emails.send({
         from: "Sam at Dygiko <sam@dygiko.com>",
         to,
-        subject: PACKAGE_EMAILS.growth.subject(businessName),
-        html: PACKAGE_EMAILS.growth.html(name, businessName),
+        subject: PACKAGE_EMAILS.crm.subject(businessName),
+        html: PACKAGE_EMAILS.crm.html(name, businessName),
       });
-    } else if (type === "quote-full-business") {
+    } else if (type === "quote-website-crm") {
       await resend.emails.send({
         from: "Sam at Dygiko <sam@dygiko.com>",
         to,
-        subject: PACKAGE_EMAILS.fullBusiness.subject(businessName),
-        html: PACKAGE_EMAILS.fullBusiness.html(name, businessName),
+        subject: PACKAGE_EMAILS.websiteCrm.subject(businessName),
+        html: PACKAGE_EMAILS.websiteCrm.html(name, businessName),
       });
     } else {
       return NextResponse.json({ error: "Unknown email type" }, { status: 400 });

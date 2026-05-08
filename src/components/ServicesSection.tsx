@@ -47,56 +47,60 @@ const CheckIcon = () => (
   </svg>
 );
 
+// Update once Calendly account is set up. Used everywhere consultations are booked.
+export const CALENDLY_URL = "https://calendly.com/sam-dygiko/consultation";
+
 const PACKAGES: Package[] = [
   {
     num: "01",
     icon: <IconMonitor />,
-    name: "Basic Website",
-    monthlyPrice: 49,
-    annualPrice: 490,
-    stripeUrlMonthly: "https://buy.stripe.com/4gMcN5aQg1wXdJq20SfjG00",
-    stripeUrlAnnual: "https://buy.stripe.com/eVq5kD4rS4J9gVC8pgfjG09",
-    includes: [
-      "Custom website design",
-      "Domain & hosting setup",
-      "Mobile responsive",
-      "Basic SEO",
-      "Unlimited revisions to your site",
-      "Live in 2 days",
-    ],
-  },
-  {
-    num: "02",
-    icon: <IconSearch />,
-    name: "Growth Website",
+    name: "Website",
     monthlyPrice: 69,
     annualPrice: 690,
     stripeUrlMonthly: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
     stripeUrlAnnual: "https://buy.stripe.com/4gM28r7E4ejJgVCeNEfjG0a",
     includes: [
-      "Everything in Basic",
+      "Custom website design",
+      "Domain & hosting setup",
+      "Mobile responsive",
       "Advanced SEO",
-      "Blog setup + 3 starter posts",
       "Contact form integration",
-      "Company email address",
-      "Unlimited revisions to your site",
+      "Business email address setup",
+      "Unlimited revisions",
+    ],
+  },
+  {
+    num: "02",
+    icon: <IconSearch />,
+    name: "CRM",
+    monthlyPrice: 129,
+    annualPrice: 1290,
+    stripeUrlMonthly: "https://buy.stripe.com/00wbJ1f6wdfFfRy8pgfjG0e",
+    stripeUrlAnnual: "https://buy.stripe.com/28E28raQgfnNdJqfRIfjG0f",
+    includes: [
+      "Custom CRM tailored to your business",
+      "Leads, customers & pipeline tracking",
+      "Calls, notes, follow-ups in one place",
+      "WhatsApp & call integration",
+      "Built around your workflow",
+      "Unlimited revisions",
     ],
   },
   {
     num: "03",
     icon: <IconRocket />,
-    name: "Full Business Package",
-    monthlyPrice: 99,
-    annualPrice: 990,
-    stripeUrlMonthly: "https://buy.stripe.com/bJebJ19McdfFdJq0WOfjG02",
-    stripeUrlAnnual: "https://buy.stripe.com/6oU7sL1fG8Zp48Q0WOfjG0b",
+    name: "Website + CRM",
+    monthlyPrice: 149,
+    annualPrice: 1490,
+    stripeUrlMonthly: "https://buy.stripe.com/bJe3cv8I8cbB48QeNEfjG0c",
+    stripeUrlAnnual: "https://buy.stripe.com/00wbJ1cYodfF8p6dJAfjG0d",
     featured: true,
     includes: [
-      "Everything in Growth",
-      "Google Business Profile setup",
-      "Custom CRM system",
-      "WhatsApp & call button integration",
-      "Unlimited revisions to your site & CRM",
+      "Everything in Website",
+      "Everything in CRM",
+      "Best value — save £29/mo vs separate",
+      "Single login, unified setup",
+      "Unlimited revisions to site & CRM",
     ],
   },
 ];
@@ -172,7 +176,7 @@ export default function ServicesSection() {
                   color: billing === "annual" ? "#080808" : "#b0ff00",
                 }}
               >
-                Save 17%
+                2 months free
               </span>
             </button>
           </div>
@@ -237,22 +241,33 @@ export default function ServicesSection() {
                 ))}
               </ul>
 
-              {/* Buy now → Stripe */}
-              <Magnetic strength={pkg.featured ? 0.28 : 0.18} className="self-start">
+              {/* Primary: Book consultation → Calendly. Secondary: Buy directly via Stripe. */}
+              <div className="flex flex-col gap-2 self-start">
+                <Magnetic strength={pkg.featured ? 0.28 : 0.18} className="self-start">
+                  <a
+                    href={CALENDLY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
+                    style={{
+                      background: pkg.featured ? "#b0ff00" : "transparent",
+                      color: pkg.featured ? "#080808" : "rgba(255,255,255,0.65)",
+                      border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    Book free 15-min call →
+                  </a>
+                </Magnetic>
                 <a
                   href={billing === "monthly" ? pkg.stripeUrlMonthly : pkg.stripeUrlAnnual}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
-                  style={{
-                    background: pkg.featured ? "#b0ff00" : "transparent",
-                    color: pkg.featured ? "#080808" : "rgba(255,255,255,0.65)",
-                    border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
-                  }}
+                  className="inline-flex items-center text-xs transition-opacity duration-200 hover:opacity-100"
+                  style={{ color: "rgba(255,255,255,0.35)" }}
                 >
-                  Buy now →
+                  Or sign up directly →
                 </a>
-              </Magnetic>
+              </div>
             </motion.div>
           ))}
         </div>

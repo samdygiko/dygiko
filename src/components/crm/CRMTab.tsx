@@ -362,13 +362,37 @@ const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } 
             }}
           >
             <div style={{ padding: '24px', fontFamily: 'var(--font-geist), system-ui, sans-serif' }}>
-              <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Cold Call Script</p>
+              <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Cold Call Script — Goal: book the 15-min consultation</p>
 
               {/* Opening */}
-              <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px' }}>
+              <div style={{ background: 'rgba(176,255,0,0.08)', border: '1px solid rgba(176,255,0,0.25)', borderRadius: '4px', padding: '16px', marginBottom: '12px' }}>
                 <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0ff00', marginBottom: '10px' }}>Opening</p>
                 <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#ffffff' }}>
-                  {`"Hi, how's it going? My name's Sam from Dygiko — we noticed you didn't have a website so we wanted to offer you a free template, and if you like it we can get you on one of our subscriptions."`}
+                  {`"Hi, how's it going? My name's Sam from Dygiko — we build websites and CRMs for trades. I noticed you don't have a website yet, so I'd love to put together a free template for [Business Name] and walk you through it on a quick 15-min call. Can I book you in for a slot tomorrow?"`}
+                </p>
+              </div>
+
+              {/* If they ask about price */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '16px', marginBottom: '12px' }}>
+                <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '10px' }}>If they ask about price</p>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+                  {`"We've got three packages: Website is £69/mo, CRM is £129/mo, and Website + CRM is £149/mo. All come with two months free if you go annual. I'll walk you through them on the call so we can figure out what's the right fit. Sound good?"`}
+                </p>
+              </div>
+
+              {/* If interested in CRM */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '16px', marginBottom: '12px' }}>
+                <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '10px' }}>If they bring up CRM / leads tracking</p>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+                  {`"Perfect — that's our most popular pairing. On the call I'll show you a demo CRM we built for a construction company so you can see how it works. Then we'll tailor one to how you run your business."`}
+                </p>
+              </div>
+
+              {/* Closing the booking */}
+              <div style={{ background: 'rgba(176,255,0,0.05)', border: '1px solid rgba(176,255,0,0.2)', borderRadius: '4px', padding: '16px' }}>
+                <p style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#b0ff00', marginBottom: '10px' }}>Closing the booking</p>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'rgba(255,255,255,0.95)' }}>
+                  {`"Great — I'll send you a Calendly link so you can grab any slot that suits you. The call's on Microsoft Teams, takes about 15-30 mins, no pressure. What's the best email to send it to?"`}
                 </p>
               </div>
             </div>
