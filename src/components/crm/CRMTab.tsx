@@ -567,7 +567,6 @@ function CRMCard({
 }) {
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setNotes(entry.notes ?? "");
@@ -577,13 +576,6 @@ function CRMCard({
     setSavingNotes(true);
     await onNotesChange(entry.id, notes);
     setSavingNotes(false);
-  }
-
-  async function copyNumber() {
-    if (!entry.phone) return;
-    try { await navigator.clipboard.writeText(entry.phone.replace(/\s/g, "")); } catch { /* ignore */ }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
   }
 
   const callCount = entry.callCount ?? 0;
@@ -638,28 +630,6 @@ function CRMCard({
           >
             📞 Call
           </button>
-        )}
-        {entry.phone && (
-          <button
-            onClick={copyNumber}
-            className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(255,255,255,0.05)", color: copied ? "#b0ff00" : "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}
-            title="Copy number to clipboard"
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        )}
-        {entry.phone && callCount > 0 && (
-          <a
-            href={`https://wa.me/${entry.phone.replace(/[^\d]/g, "").replace(/^0/, "44")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs px-2.5 py-1 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(37,211,102,0.12)", color: "#25D366", border: "1px solid rgba(37,211,102,0.3)", textDecoration: "none" }}
-            title="Open WhatsApp with this number prefilled (free)"
-          >
-            💚 WhatsApp
-          </a>
         )}
         {callCount > 0 && (
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>

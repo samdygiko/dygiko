@@ -273,9 +273,19 @@ export default function LeadsTab() {
             rel="noopener noreferrer"
             className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
             style={{ background: "#b0ff00", color: "#080808", textDecoration: "none" }}
-            title="Open the Calendly booking page"
+            title="Open the Calendly booking page (the public link prospects use)"
           >
             Open Calendly ↗
+          </a>
+          <a
+            href="https://calendly.com/app/scheduled_events/user/me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.3)", textDecoration: "none" }}
+            title="Open your Calendly dashboard to see all booked calls"
+          >
+            My bookings ↗
           </a>
           <button
             onClick={exportCSV}
