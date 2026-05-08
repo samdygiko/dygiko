@@ -119,10 +119,6 @@ function CRMPageInner() {
     );
   }
 
-  // Conversion = Clients / (Leads + Clients), i.e. of everyone in the pipeline (active leads + already-converted clients), what % are clients
-  const totalPipeline = leadsCount + clientsCount;
-  const convRate = totalPipeline > 0 ? ((clientsCount / totalPipeline) * 100).toFixed(1) : "0.0";
-
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#080808", color: "#fff" }}>
       <JustCallDialerPanel />
@@ -160,7 +156,6 @@ function CRMPageInner() {
               { label: "CRM list", value: callCount },
               { label: "Leads", value: leadsCount },
               { label: "Clients", value: clientsCount },
-              { label: "Conversion", value: `${convRate}%` },
             ].map((stat) => (
               <div key={stat.label} className="flex items-center justify-between px-3 py-2.5 rounded-sm" style={{ background: "rgba(255,255,255,0.03)" }}>
                 <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{stat.label}</span>
