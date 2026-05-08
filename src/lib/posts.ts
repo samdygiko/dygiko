@@ -69,7 +69,7 @@ export const posts: Post[] = [
 <p>At <a href="/">Dygiko</a>, we've structured our packages to give businesses access to professional web design at transparent, fair prices:</p>
 <ul>
   <li><strong>Website — £69/month (or £690/year, two months free):</strong> Custom website design, domain and hosting setup, mobile-responsive build, advanced SEO, contact form, business email setup, WhatsApp and click-to-call button integration. Unlimited revisions.</li>
-  <li><strong>CRM — £129/month (or £1,290/year, two months free):</strong> Custom CRM tailored to your business — leads, customers, and pipeline tracking, calls and follow-ups in one place, WhatsApp and click-to-call integration. Unlimited revisions.</li>
+  <li><strong>CRM — £129/month (or £1,290/year, two months free):</strong> Custom CRM tailored to your business — leads, customers, and pipeline tracking, calls and follow-ups in one place, built around your exact workflow. Unlimited revisions.</li>
   <li><strong>Website + CRM — £149/month (or £1,490/year, two months free):</strong> Best value — both products together with a single login. Saves £29/month versus subscribing separately.</li>
 </ul>
 <p>Every site and CRM we build is custom — no templates, no shortcuts. All plans are subscriptions with no upfront cost — cancel anytime. We believe a professional online presence should be accessible to any business, not just those with large marketing budgets.</p>

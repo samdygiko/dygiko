@@ -115,7 +115,7 @@ function buildEmail({
 
     <p class="signoff">
       Any questions at all, just reply to this email or give me a call.<br/>
-      Looking forward to building something great for ${businessName}!
+      Looking forward to building something great!
     </p>
     <br/>
     <p class="signoff-name">Sam</p>
@@ -174,7 +174,6 @@ export const PACKAGE_EMAILS = {
           "Custom CRM tailored to your business",
           "Leads, customers & pipeline tracking",
           "Calls, notes & follow-ups in one place",
-          "WhatsApp & click-to-call integration",
           "Built around your exact workflow",
           "Unlimited revisions to your CRM",
           "Hosting & support included",

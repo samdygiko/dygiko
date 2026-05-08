@@ -95,7 +95,7 @@ export default function TermsPage() {
             <p>
               <strong className="text-white">CRM (£129/month or £1,290/year):</strong> Custom CRM
               system tailored to your business — leads, customers, and pipeline tracking, calls and
-              follow-ups in one place, WhatsApp and click-to-call integration, and unlimited revisions
+              follow-ups in one place, built around your exact workflow, and unlimited revisions
               to your CRM.
             </p>
             <p>

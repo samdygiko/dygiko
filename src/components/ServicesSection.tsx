@@ -82,7 +82,6 @@ const PACKAGES: Package[] = [
       "Custom CRM tailored to your business",
       "Leads, customers & pipeline tracking",
       "Calls, notes, follow-ups in one place",
-      "WhatsApp & call integration",
       "Built around your workflow",
       "Unlimited revisions",
     ],
