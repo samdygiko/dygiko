@@ -14,7 +14,6 @@ import {
   arrayUnion,
   Timestamp,
 } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
 
@@ -85,23 +84,11 @@ export default function LeadsTab() {
   const [saving, setSaving] = useState(false);
   const [moveToClientsId, setMoveToClientsId] = useState<string | null>(null);
   const [moveWebsiteUrl, setMoveWebsiteUrl] = useState("");
+  const [movePackage, setMovePackage] = useState<"Website" | "CRM" | "Website + CRM">("Website");
+  const [moveBilling, setMoveBilling] = useState<"monthly" | "annual">("monthly");
   const [movingToClients, setMovingToClients] = useState(false);
-  const [panelTemplateLink, setPanelTemplateLink] = useState("");
   const [panelBookingDateTime, setPanelBookingDateTime] = useState("");
   const [currentUpdate, setCurrentUpdate] = useState("");
-  const router = useRouter();
-
-  const sendTemplateToAdmin = async () => {
-    const url = panelTemplateLink.trim();
-    if (!url || !selectedLead) return;
-    try { await savePanelChanges(); } catch { /* keep going even if save fails */ }
-    const params = new URLSearchParams({
-      tab: "Admin",
-      prefillName: panelName.trim(),
-      prefillUrl: url,
-    });
-    router.push(`/crm?${params.toString()}`);
-  };
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -136,7 +123,6 @@ export default function LeadsTab() {
         setPanelNotes(updated.notes ?? "");
         setPanelEmail(updated.email ?? "");
         setPanelName(updated.contactName ?? "");
-        setPanelTemplateLink(updated.templateLink ?? "");
         setPanelBookingDateTime(updated.bookingDateTime ?? "");
       }
     } else {
@@ -148,10 +134,6 @@ export default function LeadsTab() {
     await updateDoc(doc(db, "leads", id), { stage });
   }
 
-  async function updatePackage(id: string, pkg: Package) {
-    await updateDoc(doc(db, "leads", id), { package: pkg });
-  }
-
   async function savePanelChanges() {
     if (!selectedLead) return;
     setSaving(true);
@@ -160,7 +142,6 @@ export default function LeadsTab() {
       notes: panelNotes,
       email: panelEmail,
       contactName: panelName,
-      templateLink: panelTemplateLink,
       bookingDateTime: panelBookingDateTime || null,
     };
     if (trimmedUpdate) {
@@ -186,25 +167,17 @@ export default function LeadsTab() {
     if (!lead) return;
     setMovingToClients(true);
 
-    // Map the lead's package label → ClientsTab package name
-    const pkgMap: Record<string, string> = {
-      "Website £69/mo": "Website",
-      "CRM £129/mo": "CRM",
-      "Website + CRM £149/mo": "Website + CRM",
-      // Legacy labels from older leads — map them to the closest new tier
-      "Basic £49/mo": "Website",
-      "Growth £69/mo": "Website",
-      "Full Business £99/mo": "Website + CRM",
-      "Basic £500": "Website",
-      "Growth £750": "Website",
-      "Full Business £1,500": "Website + CRM",
-    };
-    const clientPkg = pkgMap[lead.package] ?? "Website";
+    // Use the package + billing chosen in the move modal
+    const PACKAGE_PRICE_MONTHLY = { "Website": 69, "CRM": 129, "Website + CRM": 149 } as const;
+    const PACKAGE_PRICE_ANNUAL  = { "Website": 690, "CRM": 1290, "Website + CRM": 1490 } as const;
+    const price = moveBilling === "annual" ? PACKAGE_PRICE_ANNUAL[movePackage] : PACKAGE_PRICE_MONTHLY[movePackage];
 
     await addDoc(collection(db, "clients"), {
       businessName: lead.businessName,
       email: lead.email ?? "",
-      package: clientPkg,
+      package: movePackage,
+      billingPeriod: moveBilling,
+      price,
       subscriptionStatus: "Active",
       websiteUrl: moveWebsiteUrl.trim(),
       dateAdded: serverTimestamp(),
@@ -356,7 +329,6 @@ export default function LeadsTab() {
             setPanelNotes(lead.notes ?? "");
             setPanelEmail(lead.email ?? "");
             setPanelName(lead.contactName ?? "");
-            setPanelTemplateLink(lead.templateLink ?? "");
             setPanelBookingDateTime(lead.bookingDateTime ?? "");
           }}
         />
@@ -376,7 +348,7 @@ export default function LeadsTab() {
             <table className="w-full text-sm border-collapse min-w-[640px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Business", "Contact", "Phone", "Package", "Stage", "Date", ""].map((h) => (
+                  {["Business", "Contact", "Phone", "Stage", "Date", ""].map((h) => (
                     <th key={h} className="text-left py-2.5 px-3 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>
                       {h}
                     </th>
@@ -392,7 +364,6 @@ export default function LeadsTab() {
                       setPanelNotes(lead.notes ?? "");
                       setPanelEmail(lead.email ?? "");
                       setPanelName(lead.contactName ?? "");
-                      setPanelTemplateLink(lead.templateLink ?? "");
                       setPanelBookingDateTime(lead.bookingDateTime ?? "");
                     }}
                     className="cursor-pointer transition-colors duration-100"
@@ -415,24 +386,6 @@ export default function LeadsTab() {
                           {lead.phone}
                         </button>
                       ) : "—"}
-                    </td>
-                    <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={lead.package ?? ""}
-                        onChange={(e) => updatePackage(lead.id, e.target.value as Package)}
-                        className="rounded-sm px-2 py-1 text-xs outline-none"
-                        style={{
-                          background: lead.package ? "rgba(176,255,0,0.08)" : "rgba(255,255,255,0.05)",
-                          color: lead.package ? "#b0ff00" : "rgba(255,255,255,0.35)",
-                          border: "none",
-                          maxWidth: "140px",
-                        }}
-                      >
-                        <option value="" style={{ background: "#121212", color: "#fff" }}>No package</option>
-                        {PACKAGES.filter(Boolean).map((p) => (
-                          <option key={p} value={p} style={{ background: "#121212", color: "#fff" }}>{p}</option>
-                        ))}
-                      </select>
                     </td>
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                       <select
@@ -561,57 +514,6 @@ export default function LeadsTab() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
-                <select
-                  value={selectedLead.package ?? ""}
-                  onChange={(e) => updatePackage(selectedLead.id, e.target.value as Package)}
-                  className="w-full rounded-sm px-3 py-2 text-xs outline-none"
-                  style={inputSt}
-                >
-                  <option value="" style={{ background: "#121212" }}>No package selected</option>
-                  {PACKAGES.filter(Boolean).map((p) => (
-                    <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Template link</label>
-                <div className="rounded-sm p-2.5 flex flex-col gap-2" style={{ background: "rgba(176,255,0,0.04)", border: "1px solid rgba(176,255,0,0.2)" }}>
-                  <input
-                    value={panelTemplateLink}
-                    onChange={(e) => setPanelTemplateLink(e.target.value)}
-                    placeholder="https://template.dygiko.com/…"
-                    className="w-full rounded-sm px-2.5 py-1.5 text-xs outline-none"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#fff" }}
-                  />
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={sendTemplateToAdmin}
-                      disabled={!panelTemplateLink.trim()}
-                      className="flex-1 text-xs py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
-                      style={{ background: "#b0ff00", color: "#000", border: "1px solid rgba(176,255,0,0.3)" }}
-                    >
-                      Send template via SMS →
-                    </button>
-                    {panelTemplateLink.trim() && (
-                      <a
-                        href={panelTemplateLink.trim()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs py-1.5 px-3 rounded-sm font-medium transition-opacity hover:opacity-80"
-                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      >
-                        Open ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Opens the Admin SMS template with name and URL pre-filled. Auto-saves the link to this lead.</p>
-              </div>
-
               <div className="flex flex-col gap-1.5 flex-1">
                 <label className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Current update</label>
                 <textarea
@@ -716,6 +618,33 @@ export default function LeadsTab() {
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
                 Moving <span className="text-white font-medium">{lead?.businessName}</span> to Clients. This will remove them from Leads.
               </p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
+                  <select
+                    value={movePackage}
+                    onChange={(e) => setMovePackage(e.target.value as typeof movePackage)}
+                    className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                    style={inputSt}
+                  >
+                    <option value="Website" style={{ background: "#121212" }}>Website (£69/mo · £690/yr)</option>
+                    <option value="CRM" style={{ background: "#121212" }}>CRM (£129/mo · £1,290/yr)</option>
+                    <option value="Website + CRM" style={{ background: "#121212" }}>Website + CRM (£149/mo · £1,490/yr)</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Billing</label>
+                  <select
+                    value={moveBilling}
+                    onChange={(e) => setMoveBilling(e.target.value as "monthly" | "annual")}
+                    className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                    style={inputSt}
+                  >
+                    <option value="monthly" style={{ background: "#121212" }}>Monthly</option>
+                    <option value="annual" style={{ background: "#121212" }}>Annual (2 months free)</option>
+                  </select>
+                </div>
+              </div>
               <div>
                 <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Website URL (optional)</label>
                 <input
