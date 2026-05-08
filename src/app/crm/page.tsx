@@ -237,6 +237,7 @@ const QUOTE_TEMPLATES = [
       "Advanced on-page SEO",
       "Contact form integration",
       "Business email address setup",
+      "WhatsApp & click-to-call button integration",
       "Unlimited revisions to your site",
       "Hosting & support included",
     ],

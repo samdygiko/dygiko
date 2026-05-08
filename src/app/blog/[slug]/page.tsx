@@ -106,7 +106,8 @@ export default async function BlogPostPage({ params }: Props) {
               Ready to get your business online?
             </p>
             <p className="text-white/50 text-sm mb-5">
-              Professional websites from £49/month. No upfront cost. Live in 2 days.
+              Websites from £69/month. CRMs from £129/month. Both for £149/month — save £29/mo.
+              No upfront cost. Book a free 15-min call to see a preview.
             </p>
             <a
               href="/#services"

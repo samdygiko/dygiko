@@ -62,18 +62,18 @@ export default function TermsPage() {
 
           <Section num="02" title="Services &amp; Packages">
             <p>
-              We offer three monthly subscription packages. All packages include a custom website build
-              delivered within 2 business days of subscription start, with domain registration, hosting,
-              and ongoing support included in the monthly fee. There is no upfront build cost — the
-              subscription covers everything.
+              We offer three subscription packages, each available on a monthly or annual billing
+              cycle. Annual subscriptions include two months free (10× the monthly price). All packages
+              include a custom build, domain registration where applicable, hosting, and ongoing
+              support — there is no upfront build cost.
             </p>
             <div
               className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6"
             >
               {[
-                { name: "Basic", price: "£49", recur: "/month" },
-                { name: "Growth", price: "£69", recur: "/month" },
-                { name: "Full Business", price: "£99", recur: "/month" },
+                { name: "Website", price: "£69", recur: "/month · £690/year" },
+                { name: "CRM", price: "£129", recur: "/month · £1,290/year" },
+                { name: "Website + CRM", price: "£149", recur: "/month · £1,490/year" },
               ].map((pkg) => (
                 <div
                   key={pkg.name}
@@ -87,24 +87,26 @@ export default function TermsPage() {
               ))}
             </div>
             <p>
-              <strong className="text-white">Basic Website (£49/month):</strong> Custom website
-              design, domain registration, hosting setup, mobile-responsive build, basic on-page SEO.
-              Live within 2 business days.
+              <strong className="text-white">Website (£69/month or £690/year):</strong> Custom website
+              design, domain registration, hosting setup, mobile-responsive build, advanced on-page SEO,
+              contact form integration, business email address setup, WhatsApp and click-to-call button
+              integration, and unlimited revisions.
             </p>
             <p>
-              <strong className="text-white">Growth Website (£69/month):</strong> Everything
-              in Basic, plus advanced SEO configuration, blog setup with 3 starter posts, contact form
-              integration, and a professional company email address.
+              <strong className="text-white">CRM (£129/month or £1,290/year):</strong> Custom CRM
+              system tailored to your business — leads, customers, and pipeline tracking, calls and
+              follow-ups in one place, WhatsApp and click-to-call integration, and unlimited revisions
+              to your CRM.
             </p>
             <p>
-              <strong className="text-white">Full Business Package (£99/month):</strong>{" "}
-              Everything in Growth, plus Google Business Profile setup and optimisation, custom CRM
-              system, WhatsApp and click-to-call button integration.
+              <strong className="text-white">Website + CRM (£149/month or £1,490/year):</strong>{" "}
+              Everything in the Website package plus everything in the CRM package, with a single
+              login and unified setup. Best value — saves £29/month versus subscribing separately.
             </p>
             <p>
-              The monthly subscription covers the website build, continued hosting, security
-              monitoring, software updates, and ongoing technical support. You can cancel anytime;
-              billing stops at the end of the current period.
+              Each subscription covers the build, continued hosting, security monitoring, software
+              updates, and ongoing technical support. You can cancel anytime; billing stops at the
+              end of the current period.
             </p>
           </Section>
 
@@ -167,9 +169,10 @@ export default function TermsPage() {
           <Section num="06" title="Revisions &amp; Ongoing Changes">
             <p>
               Every active subscription includes <strong className="text-white">unlimited revisions</strong>{" "}
-              to your website (and, on the Full Business Package, to your custom CRM). This covers
-              copy edits, layout adjustments, image swaps, new sections, SEO tweaks, and CRM
-              configuration changes — for as long as your subscription is active.
+              to whichever product you have subscribed to — your website (Website or Website + CRM
+              packages) and/or your CRM (CRM or Website + CRM packages). This covers copy edits,
+              layout adjustments, image swaps, new sections, SEO tweaks, and CRM configuration
+              changes — for as long as your subscription is active.
             </p>
             <p>
               Submit revision requests by replying to any Dygiko email or messaging sam@dygiko.com.

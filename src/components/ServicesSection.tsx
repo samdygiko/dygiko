@@ -47,8 +47,8 @@ const CheckIcon = () => (
   </svg>
 );
 
-// Update once Calendly account is set up. Used everywhere consultations are booked.
-export const CALENDLY_URL = "https://calendly.com/sam-dygiko/consultation";
+// Used everywhere consultations are booked. Single source of truth.
+export const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
 
 const PACKAGES: Package[] = [
   {
@@ -66,6 +66,7 @@ const PACKAGES: Package[] = [
       "Advanced SEO",
       "Contact form integration",
       "Business email address setup",
+      "WhatsApp & call button integration",
       "Unlimited revisions",
     ],
   },
