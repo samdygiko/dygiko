@@ -1,4 +1,4 @@
-const TC_URL = "https://dygiko-hosting-a733a.web.app/terms-and-conditions.pdf";
+const TC_URL = "https://dygiko.com/terms-and-conditions.pdf";
 
 const baseStyle = `
   <style>

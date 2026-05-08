@@ -325,7 +325,7 @@ hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:14px 0;}
   </div>
   <div class="body">
     <p class="greeting">Hi ${name},</p>
-    <p class="intro">It was great speaking with you! Here's your personalised quote for <strong style="color:#fff">${biz}</strong>. Everything you need to get your business online — live within 2 days, no upfront cost.</p>
+    <p class="intro">It was great speaking with you! Here's your personalised quote for <strong style="color:#fff">${biz}</strong>. No upfront cost — your subscription covers everything from build to ongoing support.</p>
     <div class="card">
       <div class="pkg-label">${pkg.label}</div>
       <div class="pkg-name">${pkg.name}</div>
@@ -340,7 +340,7 @@ hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:14px 0;}
       <p class="cta-note">Secure payment via Stripe · Work starts on your first payment</p>
     </div>
     <div class="tc-box">
-      <p>By subscribing you agree to our <a href="${TC_URL}">Terms &amp; Conditions of Service</a>. Your monthly subscription covers your custom website build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.</p>
+      <p>By subscribing you agree to our <a href="${TC_URL}">Terms &amp; Conditions of Service</a>. Your subscription covers your custom build, hosting, security updates, and ongoing support — no upfront cost, cancel anytime.</p>
     </div>
     <p class="signoff">Any questions at all, just reply to this email or give me a call.<br/>Looking forward to building something great for ${biz}!</p>
   </div>
@@ -382,7 +382,7 @@ function QuoteEmailModal({ pkg, onClose }: { pkg: typeof QUOTE_TEMPLATES[0]; onC
 
 Hi ${name},
 
-It was great speaking with you! Here's your personalised quote for ${biz}. Everything you need to get your business online — live within 2 days, no upfront cost.
+It was great speaking with you! Here's your personalised quote for ${biz}. No upfront cost — your subscription covers everything from build to ongoing support.
 
 PACKAGE: ${pkg.name}
 PRICE: ${pkg.price} ${pkg.recur}
@@ -530,36 +530,33 @@ All our websites are fully compatible with mobile and desktop.
 
 Here's a quick overview of our packages:
 
-Basic Website — £49/month
+Website — £69/month (or £690/year, 2 months free)
 ✓ Custom website design
 ✓ Domain registration & hosting setup
 ✓ Mobile-responsive build
-✓ Basic on-page SEO
-✓ Unlimited revisions to your site
-✓ Live within 2 business days
-✓ Hosting & support included
-✓ No upfront cost · cancel anytime
-
-Growth Website — £69/month
-✓ Everything in Basic
-✓ Advanced SEO configuration
-✓ Blog setup with 3 starter posts
+✓ Advanced on-page SEO
 ✓ Contact form integration
-✓ Professional company email address
-✓ Unlimited revisions to your site
-✓ Live within 2 business days
-✓ Hosting & support included
-✓ No upfront cost · cancel anytime
-
-Full Business Package — £99/month
-✓ Everything in Growth
-✓ Google Business Profile setup & optimisation
-✓ Custom CRM system
+✓ Business email address setup
 ✓ WhatsApp & click-to-call button integration
-✓ Unlimited revisions to your site & CRM
-✓ Live within 2 business days
+✓ Unlimited revisions to your site
 ✓ Hosting & support included
-✓ No upfront cost · cancel anytime`;
+
+CRM — £129/month (or £1,290/year, 2 months free)
+✓ Custom CRM tailored to your business
+✓ Leads, customers & pipeline tracking
+✓ Calls, notes & follow-ups in one place
+✓ WhatsApp & click-to-call integration
+✓ Built around your exact workflow
+✓ Unlimited revisions to your CRM
+✓ Hosting & support included
+
+Website + CRM — £149/month (or £1,490/year, 2 months free)
+✓ Everything in Website
+✓ Everything in CRM
+✓ Single login, unified setup
+✓ Best value — save £29/mo vs separate plans
+✓ Unlimited revisions to your site & CRM
+✓ Hosting & support included`;
 }
 
 function buildClaudeBrief(args: {
