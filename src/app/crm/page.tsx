@@ -378,6 +378,32 @@ Looking forward to showing you what we've put together for ${bookBusiness || "[B
       </div>
 
 
+      {/* Demo CRM */}
+      <div>
+        <h3 className="text-base font-semibold text-white mb-1">Demo CRM (for consultation calls)</h3>
+        <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
+          A fictional construction company CRM (Marsden Construction Ltd) — open this on a Teams screen-share to show prospects what a custom CRM would look like for their business. No login required.
+        </p>
+        <div className="flex gap-3 flex-wrap items-center">
+          <a
+            href="https://marsden-crm.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-sm font-semibold transition-opacity hover:opacity-80"
+            style={{ background: "#b0ff00", color: "#000", textDecoration: "none", fontSize: 14 }}
+          >
+            🏗️ Open demo CRM →
+          </a>
+          <button
+            onClick={() => { navigator.clipboard.writeText("https://marsden-crm.vercel.app"); }}
+            className="px-3 py-2 rounded-sm text-xs font-medium transition-opacity hover:opacity-80"
+            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            Copy URL
+          </button>
+        </div>
+      </div>
+
       {/* Trustpilot Review Request */}
       <div>
         <h3 className="text-base font-semibold text-white mb-1">Trustpilot Review Request</h3>
