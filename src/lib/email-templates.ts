@@ -74,10 +74,7 @@ function buildEmail({
   <div class="top-bar"></div>
 
   <div class="header">
-    <div class="logo">
-      ${logoSvg()}
-      <span class="logo-text">dygiko</span>
-    </div>
+    <img src="https://dygiko.com/logo-email.png" alt="Dygiko" width="120" style="display:inline-block;height:auto;border:0;outline:none;" />
   </div>
 
   <div class="body">
@@ -123,7 +120,7 @@ function buildEmail({
   </div>
 
   <div class="footer">
-    <span class="footer-brand">dygiko</span>
+    <img src="https://dygiko.com/logo-email.png" alt="Dygiko" width="80" style="display:inline-block;height:auto;border:0;outline:none;vertical-align:middle;" />
     <span class="footer-links">dygiko.com · sam@dygiko.com</span>
   </div>
 </div>
