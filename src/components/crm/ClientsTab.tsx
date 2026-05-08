@@ -14,30 +14,78 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-const PACKAGES = ["Basic", "Growth", "Full Business"] as const;
+// New packages — picked from the dropdown for new clients
+const PACKAGES = ["Website", "CRM", "Website + CRM"] as const;
 const SUB_STATUSES = ["Active", "Paused", "Cancelled"] as const;
+const BILLING_PERIODS = ["monthly", "annual"] as const;
 type Package = (typeof PACKAGES)[number];
 type SubStatus = (typeof SUB_STATUSES)[number];
+type BillingPeriod = (typeof BILLING_PERIODS)[number];
 
-const PACKAGE_PRICE: Record<Package, number> = {
+// Legacy package names from clients added before the rebrand. Read-only — kept
+// so existing client cards and MRR calcs don't break. Pre-existing clients
+// keep their stored package name; only new clients pick from PACKAGES above.
+type LegacyPackage = "Basic" | "Growth" | "Full Business";
+type AnyPackage = Package | LegacyPackage;
+
+const PACKAGE_PRICE_MONTHLY: Record<AnyPackage, number> = {
+  Website: 69,
+  CRM: 129,
+  "Website + CRM": 149,
+  // Legacy
   Basic: 49,
   Growth: 69,
   "Full Business": 99,
+};
+
+const PACKAGE_PRICE_ANNUAL: Record<AnyPackage, number> = {
+  Website: 690,
+  CRM: 1290,
+  "Website + CRM": 1490,
+  // Legacy
+  Basic: 490,
+  Growth: 690,
+  "Full Business": 990,
 };
 
 type Client = {
   id: string;
   businessName: string;
   email: string;
-  package: Package;
+  package: AnyPackage;
   subscriptionStatus: SubStatus;
+  billingPeriod?: BillingPeriod; // defaults to "monthly" for legacy clients
   websiteUrl: string;
-  monthlyPrice?: number;
+  monthlyPrice?: number; // legacy override field — still used as fallback
+  price?: number; // new override field — what the customer actually pays per period
   dateAdded: { toDate?: () => Date } | null;
 };
 
-const monthlyFor = (c: Client): number =>
-  typeof c.monthlyPrice === "number" ? c.monthlyPrice : (PACKAGE_PRICE[c.package] ?? 0);
+// Returns the MRR contribution this client makes (annual subs → annual / 12).
+const monthlyFor = (c: Client): number => {
+  const period = c.billingPeriod ?? "monthly";
+  if (period === "annual") {
+    const annual = typeof c.price === "number" ? c.price : (PACKAGE_PRICE_ANNUAL[c.package] ?? 0);
+    return annual / 12;
+  }
+  // Monthly — prefer new `price` field, fall back to legacy `monthlyPrice`, then to package default
+  if (typeof c.price === "number") return c.price;
+  if (typeof c.monthlyPrice === "number") return c.monthlyPrice;
+  return PACKAGE_PRICE_MONTHLY[c.package] ?? 0;
+};
+
+// Returns what the customer is actually billed per period (for display on cards).
+const periodPriceFor = (c: Client): { amount: number; suffix: string } => {
+  const period = c.billingPeriod ?? "monthly";
+  if (period === "annual") {
+    const annual = typeof c.price === "number" ? c.price : (PACKAGE_PRICE_ANNUAL[c.package] ?? 0);
+    return { amount: annual, suffix: "/yr" };
+  }
+  const monthly = typeof c.price === "number" ? c.price
+    : typeof c.monthlyPrice === "number" ? c.monthlyPrice
+    : (PACKAGE_PRICE_MONTHLY[c.package] ?? 0);
+  return { amount: monthly, suffix: "/mo" };
+};
 
 const SUB_STATUS_COLORS: Record<SubStatus, { bg: string; color: string }> = {
   Active: { bg: "rgba(176,255,0,0.1)", color: "#b0ff00" },
@@ -45,7 +93,11 @@ const SUB_STATUS_COLORS: Record<SubStatus, { bg: string; color: string }> = {
   Cancelled: { bg: "rgba(255,107,107,0.1)", color: "#ff6b6b" },
 };
 
-const PKG_COLORS: Record<Package, { bg: string; color: string }> = {
+const PKG_COLORS: Record<AnyPackage, { bg: string; color: string }> = {
+  Website: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
+  CRM: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },
+  "Website + CRM": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
+  // Legacy
   Basic: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
   Growth: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },
   "Full Business": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
@@ -63,10 +115,11 @@ const STRIPE_SUBS_URL =
 const emptyForm = {
   businessName: "",
   email: "",
-  package: "Basic" as Package,
+  package: "Website" as Package,
   subscriptionStatus: "Active" as SubStatus,
+  billingPeriod: "monthly" as BillingPeriod,
   websiteUrl: "",
-  monthlyPrice: PACKAGE_PRICE.Basic,
+  price: PACKAGE_PRICE_MONTHLY.Website,
 };
 
 export default function ClientsTab() {
@@ -88,12 +141,17 @@ export default function ClientsTab() {
   async function addClient() {
     if (!form.businessName.trim()) return;
     setSaving(true);
+    const defaultPrice = form.billingPeriod === "annual"
+      ? PACKAGE_PRICE_ANNUAL[form.package]
+      : PACKAGE_PRICE_MONTHLY[form.package];
     await addDoc(collection(db, "clients"), {
-      ...form,
       businessName: form.businessName.trim(),
       email: form.email.trim(),
       websiteUrl: form.websiteUrl.trim(),
-      monthlyPrice: Number(form.monthlyPrice) || PACKAGE_PRICE[form.package],
+      package: form.package,
+      subscriptionStatus: form.subscriptionStatus,
+      billingPeriod: form.billingPeriod,
+      price: Number(form.price) || defaultPrice,
       dateAdded: serverTimestamp(),
     });
     setForm(emptyForm);
@@ -102,13 +160,19 @@ export default function ClientsTab() {
   }
 
   async function saveEdit(id: string) {
+    const defaultPrice = editForm.billingPeriod === "annual"
+      ? (PACKAGE_PRICE_ANNUAL[editForm.package] ?? 0)
+      : (PACKAGE_PRICE_MONTHLY[editForm.package] ?? 0);
     await updateDoc(doc(db, "clients", id), {
       businessName: editForm.businessName.trim(),
       email: editForm.email.trim(),
       package: editForm.package,
       subscriptionStatus: editForm.subscriptionStatus,
+      billingPeriod: editForm.billingPeriod,
       websiteUrl: editForm.websiteUrl.trim(),
-      monthlyPrice: Number(editForm.monthlyPrice) || PACKAGE_PRICE[editForm.package],
+      price: Number(editForm.price) || defaultPrice,
+      // Clear legacy field so it doesn't conflict with the new `price` field on existing docs
+      monthlyPrice: null,
     });
     setEditId(null);
   }
@@ -123,6 +187,8 @@ export default function ClientsTab() {
   const activeCount = activeClients.length;
   const monthlyIncome = activeClients.reduce((sum, c) => sum + monthlyFor(c), 0);
   const annualIncome = monthlyIncome * 12;
+  const monthlySubsCount = activeClients.filter((c) => (c.billingPeriod ?? "monthly") === "monthly").length;
+  const annualSubsCount = activeClients.filter((c) => c.billingPeriod === "annual").length;
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
@@ -136,8 +202,11 @@ export default function ClientsTab() {
             Monthly passive income
           </p>
           <p className="text-4xl font-black text-white mt-1" style={{ letterSpacing: "-0.02em" }}>
-            £{monthlyIncome.toLocaleString("en-GB")}
+            £{monthlyIncome.toLocaleString("en-GB", { maximumFractionDigits: 0 })}
             <span className="text-base font-medium ml-1" style={{ color: "rgba(255,255,255,0.45)" }}>/ month</span>
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+            annual subs normalised (annual ÷ 12)
           </p>
         </div>
         <div className="text-right">
@@ -145,10 +214,10 @@ export default function ClientsTab() {
             Annual run rate
           </p>
           <p className="text-lg font-semibold text-white mt-1">
-            £{annualIncome.toLocaleString("en-GB")}<span className="text-xs font-medium ml-1" style={{ color: "rgba(255,255,255,0.4)" }}>/ year</span>
+            £{annualIncome.toLocaleString("en-GB", { maximumFractionDigits: 0 })}<span className="text-xs font-medium ml-1" style={{ color: "rgba(255,255,255,0.4)" }}>/ year</span>
           </p>
           <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-            from {activeCount} active subscription{activeCount !== 1 ? "s" : ""}
+            {monthlySubsCount} monthly · {annualSubsCount} annual
           </p>
         </div>
       </div>
@@ -229,12 +298,29 @@ export default function ClientsTab() {
                   value={form.package}
                   onChange={(e) => {
                     const pkg = e.target.value as Package;
-                    setForm((f) => ({ ...f, package: pkg, monthlyPrice: PACKAGE_PRICE[pkg] }));
+                    const newPrice = form.billingPeriod === "annual" ? PACKAGE_PRICE_ANNUAL[pkg] : PACKAGE_PRICE_MONTHLY[pkg];
+                    setForm((f) => ({ ...f, package: pkg, price: newPrice }));
                   }}
                   className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
                   style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
                 >
                   {PACKAGES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Billing</label>
+                <select
+                  value={form.billingPeriod}
+                  onChange={(e) => {
+                    const bp = e.target.value as BillingPeriod;
+                    const newPrice = bp === "annual" ? PACKAGE_PRICE_ANNUAL[form.package] : PACKAGE_PRICE_MONTHLY[form.package];
+                    setForm((f) => ({ ...f, billingPeriod: bp, price: newPrice }));
+                  }}
+                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                  style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
+                >
+                  <option value="monthly" style={{ background: "#121212" }}>Monthly</option>
+                  <option value="annual" style={{ background: "#121212" }}>Annual</option>
                 </select>
               </div>
               <div className="flex-1">
@@ -249,13 +335,15 @@ export default function ClientsTab() {
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly £ (override)</label>
+                <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  £ {form.billingPeriod === "annual" ? "/year" : "/month"} (override)
+                </label>
                 <input
                   type="number"
                   min={0}
                   step={1}
-                  value={form.monthlyPrice}
-                  onChange={(e) => setForm((f) => ({ ...f, monthlyPrice: Number(e.target.value) }))}
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
                   className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
                   style={inputSt}
                 />
@@ -312,9 +400,25 @@ export default function ClientsTab() {
                         <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
                         <select value={editForm.package} onChange={(e) => {
                           const pkg = e.target.value as Package;
-                          setEditForm((f) => ({ ...f, package: pkg, monthlyPrice: PACKAGE_PRICE[pkg] }));
+                          const newPrice = editForm.billingPeriod === "annual" ? (PACKAGE_PRICE_ANNUAL[pkg] ?? 0) : (PACKAGE_PRICE_MONTHLY[pkg] ?? 0);
+                          setEditForm((f) => ({ ...f, package: pkg, price: newPrice }));
                         }} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
                           {PACKAGES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
+                          {/* If client is on a legacy package, keep it selectable so we don't silently change their package */}
+                          {!PACKAGES.includes(editForm.package as Package) && (
+                            <option value={editForm.package} style={{ background: "#121212" }}>{editForm.package} (legacy)</option>
+                          )}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Billing</label>
+                        <select value={editForm.billingPeriod} onChange={(e) => {
+                          const bp = e.target.value as BillingPeriod;
+                          const newPrice = bp === "annual" ? (PACKAGE_PRICE_ANNUAL[editForm.package] ?? 0) : (PACKAGE_PRICE_MONTHLY[editForm.package] ?? 0);
+                          setEditForm((f) => ({ ...f, billingPeriod: bp, price: newPrice }));
+                        }} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
+                          <option value="monthly" style={{ background: "#121212" }}>Monthly</option>
+                          <option value="annual" style={{ background: "#121212" }}>Annual</option>
                         </select>
                       </div>
                       <div className="flex-1">
@@ -324,8 +428,10 @@ export default function ClientsTab() {
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly £ (override)</label>
-                        <input type="number" min={0} step={1} value={editForm.monthlyPrice} onChange={(e) => setEditForm((f) => ({ ...f, monthlyPrice: Number(e.target.value) }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
+                        <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          £ {editForm.billingPeriod === "annual" ? "/year" : "/month"} (override)
+                        </label>
+                        <input type="number" min={0} step={1} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: Number(e.target.value) }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
                       </div>
                     </div>
                   </div>
@@ -353,12 +459,18 @@ export default function ClientsTab() {
                         >
                           {client.subscriptionStatus}
                         </span>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}
-                        >
-                          £{monthlyFor(client)}/mo
-                        </span>
+                        {(() => {
+                          const { amount, suffix } = periodPriceFor(client);
+                          return (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}
+                              title={client.billingPeriod === "annual" ? `MRR contribution: £${(monthlyFor(client)).toFixed(0)}/mo` : undefined}
+                            >
+                              £{amount.toLocaleString("en-GB")}{suffix}
+                            </span>
+                          );
+                        })()}
                       </div>
                       {client.email && (
                         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{client.email}</p>
@@ -366,7 +478,20 @@ export default function ClientsTab() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => { setEditId(client.id); setEditForm({ businessName: client.businessName, email: client.email, package: client.package, subscriptionStatus: client.subscriptionStatus, websiteUrl: client.websiteUrl, monthlyPrice: monthlyFor(client) }); }}
+                        onClick={() => {
+                          setEditId(client.id);
+                          const period = client.billingPeriod ?? "monthly";
+                          const { amount } = periodPriceFor(client);
+                          setEditForm({
+                            businessName: client.businessName,
+                            email: client.email,
+                            package: client.package as Package,
+                            subscriptionStatus: client.subscriptionStatus,
+                            billingPeriod: period,
+                            websiteUrl: client.websiteUrl,
+                            price: amount,
+                          });
+                        }}
                         className="text-xs px-2.5 py-1 rounded-sm transition-opacity hover:opacity-80"
                         style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}
                       >
