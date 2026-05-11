@@ -787,7 +787,7 @@ function CalendarView({
           return (
             <div
               key={i}
-              className="rounded-sm p-2 flex flex-col gap-1"
+              className="rounded-sm p-2 flex flex-col gap-1 min-w-0 overflow-hidden"
               style={{
                 minHeight: 96,
                 background: inMonth ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.005)",
@@ -801,7 +801,7 @@ function CalendarView({
               >
                 {cell.getDate()}
               </span>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-0">
                 {dayLeads.slice(0, 3).map((lead) => {
                   const t = new Date(lead.bookingDateTime!);
                   const time = t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -809,7 +809,7 @@ function CalendarView({
                     <button
                       key={lead.id}
                       onClick={() => onSelectLead(lead)}
-                      className="text-left rounded-sm px-1.5 py-1 transition-opacity hover:opacity-80"
+                      className="text-left rounded-sm px-1.5 py-1 transition-opacity hover:opacity-80 block w-full min-w-0 overflow-hidden"
                       style={{
                         background: stageColor(lead.stage).bg,
                         color: stageColor(lead.stage).color,
@@ -820,8 +820,17 @@ function CalendarView({
                       }}
                       title={`${lead.businessName} — ${lead.stage}`}
                     >
-                      <span className="font-semibold">{time}</span>{" "}
-                      <span className="opacity-90 truncate">{lead.businessName}</span>
+                      <div className="font-semibold">{time}</div>
+                      <div
+                        className="opacity-90"
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {lead.businessName}
+                      </div>
                     </button>
                   );
                 })}
