@@ -48,6 +48,12 @@ const projects: Project[] = [
       rating: 5,
     },
   },
+  {
+    name: "Dzigna Windows",
+    url: "https://www.dzignawindows.co.uk",
+    domain: "dzignawindows.co.uk",
+    label: "Dzigna Windows — Window & Door Installation",
+  },
 ];
 
 const SLIDE_MS = 5000;
