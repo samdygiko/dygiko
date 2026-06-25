@@ -42,37 +42,7 @@ const STATUS_COLORS: Record<CallStatus, { bg: string; color: string }> = {
 
 const STATUS_OPTIONS: CallStatus[] = ["New", "Pending callback", "Not interested", "Closed"];
 
-const COLD_CALL_SCRIPT = `COLD CALL SCRIPT — Initial Call
-
-STEP 1 — Gatekeeper
-"Hi, is the owner available at all?"
-(If yes, proceed. If no, ask for best time to call back and log in notes.)
-
-STEP 2 — Introduction
-"Hi there, my name is Samuel, I'm calling from Dygiko — how are you today?"
-(Wait for response)
-
-STEP 3 — The Offer
-"That's great! So I was just calling because I came across your business and noticed you didn't have a website — so I wanted to offer to build you a free website. If you like it, you can go ahead and purchase it. Does that sound good?"
-(If hesitant: "There's no commitment at all — I'll build it, show you, and if you love it we go from there.")
-
-STEP 4 — Book the Teams Call
-"Brilliant! So what we'll do — if it's ok with you — I'll build the design of your website and then we can hop on a quick Teams call so I can show you everything and see if there are any changes you'd like made. Sound good?"
-(Wait for yes)
-
-STEP 5 — Close
-"Perfect — once I've built it I'll give you a call back and then we can hop on a Teams call so I can go through it properly with you. Does that work?"
-(Wait for yes)
-
-STEP 6 — Sign Off
-"Brilliant — speak to you soon then, thank you so much, bye!"
-
-─────────────────────────────
-REMEMBER:
-• Always get their email to send the Teams invite
-• Log the call in notes immediately after hanging up
-• Move lead to Pending/Callback stage
-• Send the automated "We'll be in touch" email straight after`;
+const COLD_CALL_SCRIPT = `"Hi, how's it going? My name's [x] — we noticed you didn't have a website. We could build you one for £69 a month or £690 a year."`;
 
 type SearchResult = {
   businessName: string;

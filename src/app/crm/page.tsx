@@ -7,12 +7,11 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import DygikoLogo from "@/components/DygikoLogo";
 import BusinessFinderTab from "@/components/crm/BusinessFinderTab";
-import CRMTab from "@/components/crm/CRMTab";
 import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
 
-const TABS = ["Business Finder", "CRM", "Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
+const TABS = ["Business Finder", "Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = {
@@ -52,7 +51,6 @@ const DESIGN_SITES = [
 
 const TAB_ICONS: Record<Tab, string> = {
   "Business Finder": "🔍",
-  CRM: "☎",
   Leads: "◎",
   Clients: "◈",
   Admin: "⚙",
@@ -76,7 +74,6 @@ function CRMPageInner() {
     const t = searchParams?.get("tab");
     return (TABS as readonly string[]).includes(t || "") ? (t as Tab) : "Business Finder";
   });
-  const [callCount, setCallCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
   const [clientsCount, setClientsCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -92,23 +89,12 @@ function CRMPageInner() {
 
   useEffect(() => {
     if (!user) return;
-    const u1 = onSnapshot(collection(db, "callList"), (s) => {
-      const active = s.docs.filter((d) => {
-        const data = d.data();
-        return (
-          !data.movedToLeads &&
-          data.isDead !== true &&
-          !/not.?interested/i.test(data.status ?? "")
-        );
-      });
-      setCallCount(active.length);
-    });
     const u2 = onSnapshot(collection(db, "leads"), (s) => {
       const docs = s.docs.map((d) => d.data());
       setLeadsCount(docs.filter((d) => d.stage !== "Dead").length);
     });
     const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
-    return () => { u1(); u2(); u3(); };
+    return () => { u2(); u3(); };
   }, [user]);
 
   if (loading || !user) {
@@ -153,7 +139,6 @@ function CRMPageInner() {
           {/* Stats */}
           <div className="px-4 mb-6 flex flex-col gap-2">
             {[
-              { label: "CRM list", value: callCount },
               { label: "Leads", value: leadsCount },
               { label: "Clients", value: clientsCount },
             ].map((stat) => (
@@ -203,7 +188,6 @@ function CRMPageInner() {
           <div style={{ display: tab === "Business Finder" ? "block" : "none" }}>
             <BusinessFinderTab />
           </div>
-          {tab === "CRM" && <CRMTab />}
           {tab === "Leads" && <LeadsTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Admin" && <AdminContent />}

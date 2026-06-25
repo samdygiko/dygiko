@@ -27,9 +27,6 @@ const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Dead": { bg: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.2)" },
 };
 
-// Calendly link for "Book consultation" buttons inside Leads
-const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
-
 const FALLBACK_STAGE_COLOR = { bg: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)" };
 function stageColor(stage: string) {
   return STAGE_COLORS[stage as Stage] ?? FALLBACK_STAGE_COLOR;
@@ -83,6 +80,16 @@ export default function LeadsTab() {
   const [movingToClients, setMovingToClients] = useState(false);
   const [panelBookingDateTime, setPanelBookingDateTime] = useState("");
   const [currentUpdate, setCurrentUpdate] = useState("");
+
+  // Add Lead modal
+  const [addOpen, setAddOpen] = useState(false);
+  const [addBusiness, setAddBusiness] = useState("");
+  const [addContact, setAddContact] = useState("");
+  const [addPhone, setAddPhone] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addNotes, setAddNotes] = useState("");
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -156,6 +163,52 @@ export default function LeadsTab() {
   async function deleteLead(id: string) {
     if (selectedLead?.id === id) setSelectedLead(null);
     await deleteDoc(doc(db, "leads", id));
+  }
+
+  function resetAddForm() {
+    setAddBusiness("");
+    setAddContact("");
+    setAddPhone("");
+    setAddEmail("");
+    setAddNotes("");
+    setAddError("");
+  }
+
+  async function submitNewLead() {
+    const business = addBusiness.trim();
+    const phone = addPhone.trim();
+    if (!business) { setAddError("Business name is required."); return; }
+    if (!phone) { setAddError("Phone number is required."); return; }
+
+    setAddSaving(true);
+    setAddError("");
+    try {
+      await addDoc(collection(db, "leads"), {
+        businessName: business,
+        contactName: addContact.trim(),
+        email: addEmail.trim(),
+        phone,
+        address: "",
+        category: "",
+        websiteStatus: "",
+        googleMapsUrl: "",
+        stage: "Pending/Callback",
+        package: "",
+        notes: addNotes.trim(),
+        emailSentInterest: false,
+        emailSentClosed: false,
+        templateSent: false,
+        templateLink: "",
+        manuallyAdded: true,
+        dateAdded: serverTimestamp(),
+      });
+      resetAddForm();
+      setAddOpen(false);
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Failed to add lead.");
+    } finally {
+      setAddSaving(false);
+    }
   }
 
   async function confirmMoveToClients() {
@@ -262,26 +315,13 @@ export default function LeadsTab() {
               📅 Calendar
             </button>
           </div>
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "#b0ff00", color: "#080808", textDecoration: "none" }}
-            title="Open the Calendly booking page (the public link prospects use)"
+          <button
+            onClick={() => { resetAddForm(); setAddOpen(true); }}
+            className="text-xs px-4 py-2 rounded-sm font-semibold text-black transition-opacity hover:opacity-80"
+            style={{ background: "#b0ff00" }}
           >
-            Open Calendly ↗
-          </a>
-          <a
-            href="https://calendly.com/app/scheduled_events/user/me"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.3)", textDecoration: "none" }}
-            title="Open your Calendly dashboard to see all booked calls"
-          >
-            My bookings ↗
-          </a>
+            + Add lead
+          </button>
           <button
             onClick={exportCSV}
             className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
@@ -596,6 +636,119 @@ export default function LeadsTab() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Add Lead modal */}
+      {addOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.75)" }}>
+          <div className="w-full max-w-md rounded-sm p-6 flex flex-col gap-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-white">Add lead manually</h3>
+              <button
+                onClick={() => { setAddOpen(false); resetAddForm(); }}
+                style={{ color: "rgba(255,255,255,0.35)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+              Add a lead manually. Only business name and phone are required.
+            </p>
+
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Business name <span style={{ color: "#ff6b6b" }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={addBusiness}
+                onChange={(e) => setAddBusiness(e.target.value)}
+                placeholder="e.g. Lucy Interior Design"
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={inputSt}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Contact name
+              </label>
+              <input
+                type="text"
+                value={addContact}
+                onChange={(e) => setAddContact(e.target.value)}
+                placeholder="Full name"
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={inputSt}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Phone <span style={{ color: "#ff6b6b" }}>*</span>
+              </label>
+              <input
+                type="tel"
+                value={addPhone}
+                onChange={(e) => setAddPhone(e.target.value)}
+                placeholder="07xxx xxxxxx"
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={inputSt}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={addEmail}
+                onChange={(e) => setAddEmail(e.target.value)}
+                placeholder="email@business.com"
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={inputSt}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                Notes
+              </label>
+              <textarea
+                value={addNotes}
+                onChange={(e) => setAddNotes(e.target.value)}
+                rows={3}
+                placeholder="Anything useful — where the lead came from, what they want, follow-up timing."
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none resize-none"
+                style={inputSt}
+              />
+            </div>
+
+            {addError && (
+              <p className="text-xs" style={{ color: "#ff6b6b" }}>{addError}</p>
+            )}
+
+            <div className="flex gap-3 mt-1">
+              <button
+                onClick={() => { setAddOpen(false); resetAddForm(); }}
+                className="flex-1 py-2.5 text-sm rounded-sm"
+                style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitNewLead}
+                disabled={addSaving}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
+                style={{ background: "#b0ff00" }}
+              >
+                {addSaving ? "Saving…" : "Save lead"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
