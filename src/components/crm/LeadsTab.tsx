@@ -9,8 +9,10 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
+  getDocs,
   query,
   orderBy,
+  where,
   serverTimestamp,
   arrayUnion,
   increment,
@@ -18,6 +20,39 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
+
+// Canonical phone form for dupe checks. Strip everything except digits,
+// drop the international +44 / leading 0 so '07808 905661' and '+44 7808 905661' match.
+function normalizePhone(raw: string): string {
+  const digits = (raw || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("44")) return digits.slice(2);
+  if (digits.startsWith("0")) return digits.slice(1);
+  return digits;
+}
+
+async function findDuplicate(phone: string): Promise<{ kind: "lead" | "client"; name: string } | null> {
+  const norm = normalizePhone(phone);
+  if (!norm) return null;
+  // Firestore doesn't index phoneNormalized on existing docs, so scan client-side.
+  // Lead count is small (hundreds at most) — fine in practice; if it grows, add a
+  // phoneNormalized field at write time and where()-filter on it.
+  const [leadsSnap, clientsSnap] = await Promise.all([
+    getDocs(query(collection(db, "leads"))),
+    getDocs(query(collection(db, "clients"))),
+  ]);
+  for (const d of leadsSnap.docs) {
+    const data = d.data() as { phone?: string; businessName?: string };
+    if (normalizePhone(data.phone || "") === norm) return { kind: "lead", name: data.businessName || "Existing lead" };
+  }
+  for (const d of clientsSnap.docs) {
+    const data = d.data() as { phone?: string; businessName?: string };
+    if (normalizePhone(data.phone || "") === norm) return { kind: "client", name: data.businessName || "Existing client" };
+  }
+  // Silence the unused-where warning until we add the indexed field.
+  void where;
+  return null;
+}
 
 async function dialLead(phone: string, leadId: string) {
   const clean = phone.replace(/\s/g, "");
@@ -235,11 +270,21 @@ export default function LeadsTab() {
     setAddSaving(true);
     setAddError("");
     try {
+      // Block duplicates by phone (matches "07808 905661", "+44 7808 905661", etc.)
+      const dupe = await findDuplicate(phone);
+      if (dupe) {
+        setAddError(dupe.kind === "client"
+          ? `Already a client: ${dupe.name}.`
+          : `Already in leads: ${dupe.name}.`);
+        setAddSaving(false);
+        return;
+      }
       const ref = await addDoc(collection(db, "leads"), {
         businessName: business,
         contactName: addContact.trim(),
         email: addEmail.trim(),
         phone,
+        phoneNormalized: normalizePhone(phone),
         address: extra.address ?? "",
         category: extra.category ?? "",
         websiteStatus: "",
