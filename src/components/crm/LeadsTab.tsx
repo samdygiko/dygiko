@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   collection,
   onSnapshot,
@@ -12,10 +13,25 @@ import {
   orderBy,
   serverTimestamp,
   arrayUnion,
+  increment,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { dialViaJustCall } from "@/components/crm/JustCallDialerPanel";
+
+async function dialLead(phone: string, leadId: string) {
+  const clean = phone.replace(/\s/g, "");
+  if (!clean || !leadId) {
+    dialViaJustCall(clean, leadId);
+    return;
+  }
+  // Fire-and-forget — never block the dial on the write.
+  updateDoc(doc(db, "leads", leadId), {
+    callCount: increment(1),
+    lastCalledAt: serverTimestamp(),
+  }).catch(() => {});
+  dialViaJustCall(clean, leadId);
+}
 
 type Stage = "Pending" | "Booked" | "Dead";
 
@@ -49,6 +65,8 @@ type Lead = {
   templateSent: boolean;
   templateLink: string;
   bookingDateTime?: string; // ISO datetime when the consultation is scheduled
+  callCount?: number;
+  lastCalledAt?: Timestamp;
   dateAdded: { toDate?: () => Date } | null;
   updates?: { text: string; at: Timestamp }[];
 };
@@ -88,8 +106,38 @@ export default function LeadsTab() {
   const [addPhone, setAddPhone] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addNotes, setAddNotes] = useState("");
+  const [addAddress, setAddAddress] = useState("");
+  const [addCategory, setAddCategory] = useState("");
+  const [addGoogleMapsUrl, setAddGoogleMapsUrl] = useState("");
+  const [addAutoDial, setAddAutoDial] = useState(false);
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState("");
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Deep-link from the Chrome extension: prefill + open the Add Lead modal.
+  // URL shape: /crm?tab=Leads&addLead=1&businessName=…&phone=…&address=…&category=…&googleMapsUrl=…&autoDial=1
+  useEffect(() => {
+    if (!searchParams) return;
+    if (searchParams.get("addLead") !== "1") return;
+    setAddBusiness(searchParams.get("businessName") ?? "");
+    setAddPhone(searchParams.get("phone") ?? "");
+    setAddAddress(searchParams.get("address") ?? "");
+    setAddCategory(searchParams.get("category") ?? "");
+    setAddGoogleMapsUrl(searchParams.get("googleMapsUrl") ?? "");
+    setAddContact(searchParams.get("contact") ?? "");
+    setAddEmail(searchParams.get("email") ?? "");
+    setAddAutoDial(searchParams.get("autoDial") === "1");
+    setAddError("");
+    setAddOpen(true);
+    // Strip the consumed params so a refresh doesn't re-open the modal.
+    const next = new URLSearchParams(searchParams.toString());
+    ["addLead", "businessName", "phone", "address", "category", "googleMapsUrl", "contact", "email", "autoDial"].forEach((k) => next.delete(k));
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : (pathname ?? "/crm"));
+  }, [searchParams, router, pathname]);
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -171,10 +219,14 @@ export default function LeadsTab() {
     setAddPhone("");
     setAddEmail("");
     setAddNotes("");
+    setAddAddress("");
+    setAddCategory("");
+    setAddGoogleMapsUrl("");
+    setAddAutoDial(false);
     setAddError("");
   }
 
-  async function submitNewLead() {
+  async function submitNewLead(extra: { address?: string; category?: string; googleMapsUrl?: string; autoDial?: boolean } = {}) {
     const business = addBusiness.trim();
     const phone = addPhone.trim();
     if (!business) { setAddError("Business name is required."); return; }
@@ -183,27 +235,30 @@ export default function LeadsTab() {
     setAddSaving(true);
     setAddError("");
     try {
-      await addDoc(collection(db, "leads"), {
+      const ref = await addDoc(collection(db, "leads"), {
         businessName: business,
         contactName: addContact.trim(),
         email: addEmail.trim(),
         phone,
-        address: "",
-        category: "",
+        address: extra.address ?? "",
+        category: extra.category ?? "",
         websiteStatus: "",
-        googleMapsUrl: "",
-        stage: "Pending/Callback",
-        package: "",
+        googleMapsUrl: extra.googleMapsUrl ?? "",
+        stage: "Pending" as Stage,
         notes: addNotes.trim(),
         emailSentInterest: false,
         emailSentClosed: false,
         templateSent: false,
         templateLink: "",
+        callCount: 0,
         manuallyAdded: true,
         dateAdded: serverTimestamp(),
       });
       resetAddForm();
       setAddOpen(false);
+      if (extra.autoDial) {
+        dialLead(phone, ref.id);
+      }
     } catch (err) {
       setAddError(err instanceof Error ? err.message : "Failed to add lead.");
     } finally {
@@ -413,12 +468,23 @@ export default function LeadsTab() {
                     <td className="py-3 px-3 max-w-[120px] truncate" style={{ color: "rgba(255,255,255,0.45)" }}>{lead.contactName || "—"}</td>
                     <td className="py-3 px-3" style={{ color: "rgba(255,255,255,0.45)" }}>
                       {lead.phone ? (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); dialViaJustCall(lead.phone!.replace(/\s/g, ""), lead.id || ""); }}
-                          style={{ color: "#b0ff00", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-                        >
-                          {lead.phone}
-                        </button>
+                        <span className="inline-flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); dialLead(lead.phone!, lead.id || ""); }}
+                            style={{ color: "#b0ff00", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                          >
+                            {lead.phone}
+                          </button>
+                          {(lead.callCount ?? 0) > 0 && (
+                            <span
+                              className="text-[10px] tabular-nums px-1.5 py-0.5 rounded-sm"
+                              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)" }}
+                              title={lead.lastCalledAt?.toDate ? `Last called ${lead.lastCalledAt.toDate().toLocaleString("en-GB")}` : undefined}
+                            >
+                              {lead.callCount}× called
+                            </span>
+                          )}
+                        </span>
                       ) : "—"}
                     </td>
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
@@ -496,7 +562,7 @@ export default function LeadsTab() {
                   <p className="flex items-center gap-2 flex-wrap">
                     📱{" "}
                     <button
-                      onClick={() => dialViaJustCall(selectedLead.phone!.replace(/\s/g, ""), selectedLead.id || "")}
+                      onClick={() => dialLead(selectedLead.phone!, selectedLead.id || "")}
                       style={{ color: "#b0ff00", background: "transparent", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
                     >
                       {selectedLead.phone}
@@ -511,6 +577,15 @@ export default function LeadsTab() {
                     >
                       💚 WhatsApp
                     </a>
+                    {(selectedLead.callCount ?? 0) > 0 && (
+                      <span
+                        className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-sm"
+                        style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" }}
+                        title={selectedLead.lastCalledAt?.toDate ? `Last called ${selectedLead.lastCalledAt.toDate().toLocaleString("en-GB")}` : undefined}
+                      >
+                        {selectedLead.callCount}× called
+                      </span>
+                    )}
                   </p>
                 )}
                 {selectedLead.category && <p>🏷 {selectedLead.category}</p>}
@@ -740,12 +815,12 @@ export default function LeadsTab() {
                 Cancel
               </button>
               <button
-                onClick={submitNewLead}
+                onClick={() => submitNewLead({ address: addAddress, category: addCategory, googleMapsUrl: addGoogleMapsUrl, autoDial: addAutoDial })}
                 disabled={addSaving}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
                 style={{ background: "#b0ff00" }}
               >
-                {addSaving ? "Saving…" : "Save lead"}
+                {addSaving ? "Saving…" : addAutoDial ? "Save & dial" : "Save lead"}
               </button>
             </div>
           </div>
