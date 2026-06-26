@@ -15,7 +15,6 @@ import {
   where,
   serverTimestamp,
   arrayUnion,
-  increment,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -54,23 +53,14 @@ async function findDuplicate(phone: string): Promise<{ kind: "lead" | "client"; 
   return null;
 }
 
-async function dialLead(phone: string, leadId: string) {
-  const clean = phone.replace(/\s/g, "");
-  if (!clean || !leadId) {
-    dialViaJustCall(clean, leadId);
-    return;
-  }
-  // Fire-and-forget — never block the dial on the write.
-  updateDoc(doc(db, "leads", leadId), {
-    callCount: increment(1),
-    lastCalledAt: serverTimestamp(),
-  }).catch(() => {});
-  dialViaJustCall(clean, leadId);
+function dialLead(phone: string, leadId: string) {
+  // The call counter is bumped by JustCallDialerPanel's onCallEnded handler in
+  // page.tsx — that way "Nx called" only reflects actual completed calls.
+  dialViaJustCall(phone.replace(/\s/g, ""), leadId);
 }
 
 type Stage = "Pending" | "Booked" | "Dead";
 
-const STAGES: Stage[] = ["Pending", "Booked", "Dead"];
 
 const STAGE_COLORS: Record<Stage, { bg: string; color: string }> = {
   "Pending": { bg: "rgba(255,165,0,0.12)", color: "#ffa500" },
@@ -116,7 +106,6 @@ export default function LeadsTab() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [filterStage, setFilterStage] = useState("All");
   const [view, setView] = useState<"list" | "calendar">("list");
   const [calMonth, setCalMonth] = useState(() => {
     const d = new Date();
@@ -134,45 +123,92 @@ export default function LeadsTab() {
   const [panelBookingDateTime, setPanelBookingDateTime] = useState("");
   const [currentUpdate, setCurrentUpdate] = useState("");
 
-  // Add Lead modal
+  // Add Lead modal — only used for manual typing inside the CRM. The Chrome
+  // extension bypasses it entirely (silent add + dial).
   const [addOpen, setAddOpen] = useState(false);
   const [addBusiness, setAddBusiness] = useState("");
   const [addContact, setAddContact] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addNotes, setAddNotes] = useState("");
-  const [addAddress, setAddAddress] = useState("");
-  const [addCategory, setAddCategory] = useState("");
-  const [addGoogleMapsUrl, setAddGoogleMapsUrl] = useState("");
-  const [addAutoDial, setAddAutoDial] = useState(false);
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState("");
+
+  // Toast for extension-driven silent adds.
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Deep-link from the Chrome extension: prefill + open the Add Lead modal.
+  // Deep-link from the Chrome extension: silently add the lead and (if autoDial)
+  // pop the JustCall dialler — no modal, just a toast.
   // URL shape: /crm?tab=Leads&addLead=1&businessName=…&phone=…&address=…&category=…&googleMapsUrl=…&autoDial=1
   useEffect(() => {
     if (!searchParams) return;
     if (searchParams.get("addLead") !== "1") return;
-    setAddBusiness(searchParams.get("businessName") ?? "");
-    setAddPhone(searchParams.get("phone") ?? "");
-    setAddAddress(searchParams.get("address") ?? "");
-    setAddCategory(searchParams.get("category") ?? "");
-    setAddGoogleMapsUrl(searchParams.get("googleMapsUrl") ?? "");
-    setAddContact(searchParams.get("contact") ?? "");
-    setAddEmail(searchParams.get("email") ?? "");
-    setAddAutoDial(searchParams.get("autoDial") === "1");
-    setAddError("");
-    setAddOpen(true);
-    // Strip the consumed params so a refresh doesn't re-open the modal.
+    const businessName = (searchParams.get("businessName") ?? "").trim();
+    const phone = (searchParams.get("phone") ?? "").trim();
+    const address = (searchParams.get("address") ?? "").trim();
+    const category = (searchParams.get("category") ?? "").trim();
+    const googleMapsUrl = (searchParams.get("googleMapsUrl") ?? "").trim();
+    const contact = (searchParams.get("contact") ?? "").trim();
+    const email = (searchParams.get("email") ?? "").trim();
+    const autoDial = searchParams.get("autoDial") === "1";
+
+    // Strip consumed params immediately so a refresh doesn't re-trigger.
     const next = new URLSearchParams(searchParams.toString());
     ["addLead", "businessName", "phone", "address", "category", "googleMapsUrl", "contact", "email", "autoDial"].forEach((k) => next.delete(k));
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : (pathname ?? "/crm"));
+
+    if (!businessName || !phone) {
+      setToast({ kind: "err", msg: "Missing business name or phone — open the lead manually." });
+      return;
+    }
+
+    (async () => {
+      try {
+        const dupe = await findDuplicate(phone);
+        if (dupe) {
+          setToast({ kind: "err", msg: dupe.kind === "client" ? `Already a client: ${dupe.name}` : `Already in leads: ${dupe.name}` });
+          return;
+        }
+        const ref = await addDoc(collection(db, "leads"), {
+          businessName,
+          contactName: contact,
+          email,
+          phone,
+          phoneNormalized: normalizePhone(phone),
+          address,
+          category,
+          websiteStatus: "",
+          googleMapsUrl,
+          stage: "Pending" as Stage,
+          notes: "",
+          emailSentInterest: false,
+          emailSentClosed: false,
+          templateSent: false,
+          templateLink: "",
+          callCount: 0,
+          manuallyAdded: true,
+          source: "chrome-extension",
+          dateAdded: serverTimestamp(),
+        });
+        setToast({ kind: "ok", msg: autoDial ? `Added · dialling ${businessName}` : `Added: ${businessName}` });
+        if (autoDial) dialLead(phone, ref.id);
+      } catch (err) {
+        setToast({ kind: "err", msg: err instanceof Error ? err.message : "Couldn't add lead." });
+      }
+    })();
   }, [searchParams, router, pathname]);
+
+  // Auto-dismiss the toast.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
@@ -217,10 +253,6 @@ export default function LeadsTab() {
     }
   }, [leads, selectedLead?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function updateStage(id: string, stage: Stage) {
-    await updateDoc(doc(db, "leads", id), { stage });
-  }
-
   async function savePanelChanges() {
     if (!selectedLead) return;
     setSaving(true);
@@ -254,10 +286,6 @@ export default function LeadsTab() {
     setAddPhone("");
     setAddEmail("");
     setAddNotes("");
-    setAddAddress("");
-    setAddCategory("");
-    setAddGoogleMapsUrl("");
-    setAddAutoDial(false);
     setAddError("");
   }
 
@@ -349,14 +377,13 @@ export default function LeadsTab() {
   }
 
   function exportCSV() {
-    const headers = ["Business", "Contact", "Email", "Phone", "Category", "Stage", "Notes", "Date"];
+    const headers = ["Business", "Contact", "Email", "Phone", "Category", "Notes", "Date"];
     const rows = filtered.map((l) => [
       l.businessName,
       l.contactName ?? "",
       l.email ?? "",
       l.phone ?? "",
       l.category ?? "",
-      l.stage,
       (l.notes ?? "").replace(/\n/g, " "),
       formatDate(l),
     ]);
@@ -372,26 +399,28 @@ export default function LeadsTab() {
     URL.revokeObjectURL(url);
   }
 
-  const activeLeads = leads.filter((l) => l.stage !== "Dead");
-
-  const filtered = leads
-    .filter((l) => {
-      if (filterStage !== "All" && l.stage !== filterStage) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (a.stage === "Dead" && b.stage !== "Dead") return 1;
-      if (a.stage !== "Dead" && b.stage === "Dead") return -1;
-      return 0;
-    });
+  const filtered = leads;
 
   return (
     <div className="flex flex-col h-full">
+      {toast && (
+        <div
+          role="status"
+          className="fixed top-4 right-4 z-50 px-4 py-3 rounded-sm text-sm font-medium shadow-lg max-w-[360px]"
+          style={
+            toast.kind === "ok"
+              ? { background: "rgba(176,255,0,0.12)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.35)" }
+              : { background: "rgba(255,107,107,0.12)", color: "#ff8a8a", border: "1px solid rgba(255,107,107,0.35)" }
+          }
+        >
+          {toast.msg}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <div>
           <h2 className="text-2xl font-bold text-white">Leads</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {activeLeads.length} total · {leads.filter((l) => l.stage === "Booked").length} booked · {leads.filter((l) => l.stage === "Pending").length} pending
+            {leads.length} total
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -432,20 +461,7 @@ export default function LeadsTab() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 my-5">
-        <select
-          value={filterStage}
-          onChange={(e) => setFilterStage(e.target.value)}
-          className="rounded-sm px-3 py-2 text-xs outline-none"
-          style={inputSt}
-        >
-          <option value="All" style={{ background: "#121212" }}>All stages</option>
-          {STAGES.map((s) => (
-            <option key={s} value={s} style={{ background: "#121212" }}>{s}</option>
-          ))}
-        </select>
-      </div>
+      <div className="my-5" />
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
@@ -482,7 +498,7 @@ export default function LeadsTab() {
             <table className="w-full text-sm border-collapse min-w-[640px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Business", "Contact", "Phone", "Stage", "Date", ""].map((h) => (
+                  {["Business", "Contact", "Phone", "Date", ""].map((h) => (
                     <th key={h} className="text-left py-2.5 px-3 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>
                       {h}
                     </th>
@@ -504,7 +520,6 @@ export default function LeadsTab() {
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.04)",
                       background: selectedLead?.id === lead.id ? "rgba(176,255,0,0.04)" : "transparent",
-                      opacity: lead.stage === "Dead" ? 0.3 : 1,
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = selectedLead?.id === lead.id ? "rgba(176,255,0,0.06)" : "rgba(255,255,255,0.025)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = selectedLead?.id === lead.id ? "rgba(176,255,0,0.04)" : "transparent")}
@@ -531,22 +546,6 @@ export default function LeadsTab() {
                           )}
                         </span>
                       ) : "—"}
-                    </td>
-                    <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={lead.stage}
-                        onChange={(e) => updateStage(lead.id, e.target.value as Stage)}
-                        className="rounded-sm px-2 py-1 text-xs outline-none font-medium"
-                        style={{
-                          background: stageColor(lead.stage).bg,
-                          color: stageColor(lead.stage).color,
-                          border: "none",
-                        }}
-                      >
-                        {STAGES.map((s) => (
-                          <option key={s} value={s} style={{ background: "#121212", color: "#fff" }}>{s}</option>
-                        ))}
-                      </select>
                     </td>
                     <td className="py-3 px-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{formatDate(lead)}</td>
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
@@ -634,20 +633,6 @@ export default function LeadsTab() {
                   </p>
                 )}
                 {selectedLead.category && <p>🏷 {selectedLead.category}</p>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Stage</label>
-                <select
-                  value={selectedLead.stage}
-                  onChange={(e) => updateStage(selectedLead.id, e.target.value as Stage)}
-                  className="w-full rounded-sm px-3 py-2 text-xs outline-none font-medium"
-                  style={{ background: stageColor(selectedLead.stage).bg, color: stageColor(selectedLead.stage).color, border: "1px solid rgba(255,255,255,0.08)" }}
-                >
-                  {STAGES.map((s) => (
-                    <option key={s} value={s} style={{ background: "#121212", color: "#fff" }}>{s}</option>
-                  ))}
-                </select>
               </div>
 
               <div>
@@ -860,12 +845,12 @@ export default function LeadsTab() {
                 Cancel
               </button>
               <button
-                onClick={() => submitNewLead({ address: addAddress, category: addCategory, googleMapsUrl: addGoogleMapsUrl, autoDial: addAutoDial })}
+                onClick={() => submitNewLead()}
                 disabled={addSaving}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
                 style={{ background: "#b0ff00" }}
               >
-                {addSaving ? "Saving…" : addAutoDial ? "Save & dial" : "Save lead"}
+                {addSaving ? "Saving…" : "Save lead"}
               </button>
             </div>
           </div>

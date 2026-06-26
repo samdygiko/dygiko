@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, doc, increment, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import DygikoLogo from "@/components/DygikoLogo";
-import BusinessFinderTab from "@/components/crm/BusinessFinderTab";
 import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
 
-const TABS = ["Business Finder", "Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
+const TABS = ["Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 const PAYMENT_LINKS = {
@@ -50,7 +49,6 @@ const DESIGN_SITES = [
 ];
 
 const TAB_ICONS: Record<Tab, string> = {
-  "Business Finder": "🔍",
   Leads: "◎",
   Clients: "◈",
   Admin: "⚙",
@@ -72,7 +70,7 @@ function CRMPageInner() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams?.get("tab");
-    return (TABS as readonly string[]).includes(t || "") ? (t as Tab) : "Business Finder";
+    return (TABS as readonly string[]).includes(t || "") ? (t as Tab) : "Leads";
   });
   const [leadsCount, setLeadsCount] = useState(0);
   const [clientsCount, setClientsCount] = useState(0);
@@ -107,7 +105,19 @@ function CRMPageInner() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#080808", color: "#fff" }}>
-      <JustCallDialerPanel />
+      <JustCallDialerPanel
+        onCallEnded={async (leadId) => {
+          if (!leadId) return;
+          try {
+            await updateDoc(doc(db, "leads", leadId), {
+              callCount: increment(1),
+              lastCalledAt: serverTimestamp(),
+            });
+          } catch {
+            // Lead may have been deleted; ignore.
+          }
+        }}
+      />
       {/* Mobile top bar */}
       <div
         className="flex lg:hidden items-center justify-between px-4 h-14 sticky top-0 z-30"
@@ -163,7 +173,7 @@ function CRMPageInner() {
                 }}
               >
                 <span className="text-base">{TAB_ICONS[t]}</span>
-                {t === "Design" ? "Design Inspiration" : t === "Business Finder" ? "Business Finder" : t}
+                {t === "Design" ? "Design Inspiration" : t}
               </button>
             ))}
           </nav>
@@ -184,10 +194,6 @@ function CRMPageInner() {
         )}
 
         <main className="flex-1 min-w-0 overflow-auto px-6 py-8 lg:px-8">
-          {/* BusinessFinderTab is always mounted so searches persist across tab navigation */}
-          <div style={{ display: tab === "Business Finder" ? "block" : "none" }}>
-            <BusinessFinderTab />
-          </div>
           {tab === "Leads" && <LeadsTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Admin" && <AdminContent />}
