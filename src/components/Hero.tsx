@@ -45,29 +45,10 @@ export default function Hero() {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center flex flex-col items-center">
-        {/* Eyebrow */}
-        <motion.div
-          className="flex items-center gap-3 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <span
-            className="eyebrow-dot w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ background: "#b0ff00" }}
-          />
-          <span
-            className="text-xs uppercase tracking-[0.2em] font-sans"
-            style={{ color: "rgba(255,255,255,0.5)" }}
-          >
-            Web Design Studio
-          </span>
-        </motion.div>
-
         {/* Headline — split-text reveal, char-by-char with blur+y */}
         <h1
-          className="font-heading font-black tracking-tight leading-[1.0] mb-8"
-          style={{ fontSize: "clamp(3rem, 8vw, 7.5rem)" }}
+          className="font-heading font-black tracking-tight leading-[0.95] mb-10"
+          style={{ fontSize: "clamp(4rem, 13vw, 12rem)" }}
           aria-label="Simple is better."
         >
           {(["Simple is", "better."] as const).map((line, lineIdx) => (
@@ -94,18 +75,6 @@ export default function Hero() {
             </span>
           ))}
         </h1>
-
-        {/* Subtext */}
-        <motion.p
-          className="text-base md:text-lg max-w-xl mx-auto leading-relaxed mb-12"
-          style={{ color: "rgba(255,255,255,0.45)" }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-        >
-          We build professional websites for businesses globally — fast, affordable,
-          and built to be found. Go live in 2 days.
-        </motion.p>
 
         {/* CTAs */}
         <motion.div

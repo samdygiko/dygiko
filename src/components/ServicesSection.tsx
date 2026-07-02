@@ -187,13 +187,11 @@ export default function ServicesSection() {
                 ))}
               </ul>
 
-              {/* Primary: Book consultation → Calendly. Secondary: Buy directly via Stripe. */}
+              {/* Add to cart → PayPal checkout for this package. */}
               <div className="flex flex-col gap-2 self-start">
                 <Magnetic strength={pkg.featured ? 0.28 : 0.18} className="self-start">
                   <a
-                    href={CALENDLY_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/checkout?pkg=${pkg.checkoutPkg}`}
                     className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
                     style={{
                       background: pkg.featured ? "#b0ff00" : "transparent",
@@ -201,16 +199,9 @@ export default function ServicesSection() {
                       border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
                     }}
                   >
-                    Book free 15-min call →
+                    Add to cart →
                   </a>
                 </Magnetic>
-                <a
-                  href={`/checkout?pkg=${pkg.checkoutPkg}`}
-                  className="inline-flex items-center text-xs transition-opacity duration-200 hover:opacity-100"
-                  style={{ color: "rgba(255,255,255,0.35)" }}
-                >
-                  Or sign up directly →
-                </a>
               </div>
             </motion.div>
           ))}

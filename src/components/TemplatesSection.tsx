@@ -179,9 +179,6 @@ export default function TemplatesSection() {
             >
               Built for real businesses
             </h2>
-            <p className="text-sm max-w-xs" style={{ color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
-              Every site is custom — designed and built to convert visitors into customers.
-            </p>
           </div>
         </motion.div>
 

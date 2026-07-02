@@ -4,7 +4,6 @@ import ServicesSection from "@/components/ServicesSection";
 import DemoMarquee from "@/components/DemoMarquee";
 import TemplatesSection from "@/components/TemplatesSection";
 import ClientMarquee from "@/components/ClientMarquee";
-import PlatformsBar from "@/components/PlatformsBar";
 import ContactSection from "@/components/ContactSection";
 import FloatingButtons from "@/components/FloatingButtons";
 import ScrollProgress from "@/components/ScrollProgress";
@@ -66,7 +65,6 @@ export default function HomePage() {
         <TemplatesSection />
         <ClientMarquee />
         <CubeSection />
-        <PlatformsBar />
         <ContactSection />
       </main>
       <FloatingButtons />

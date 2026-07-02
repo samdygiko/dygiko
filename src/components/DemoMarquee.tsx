@@ -5,9 +5,9 @@
 // slowly + loops seamlessly (cards are duplicated once).
 
 const DEMOS: { label: string; url: string }[] = [
-  { label: "Electrician CRM", url: "https://electrician-crm.vercel.app" },
-  { label: "Construction CRM", url: "https://construction-crm.vercel.app" },
-  { label: "Dental CRM", url: "https://dental-crm.vercel.app" },
+  { label: "Electrician CRM", url: "https://voltix-crm.vercel.app" },
+  { label: "Construction CRM", url: "https://marsden-crm.vercel.app" },
+  { label: "Dental CRM", url: "https://brightwater-crm.vercel.app" },
 ];
 
 function DemoCard({ label, url }: { label: string; url: string }) {
@@ -67,14 +67,11 @@ export default function DemoMarquee() {
       style={{ background: "#080808", borderColor: "rgba(255,255,255,0.06)", padding: "80px 0", overflow: "hidden" }}
     >
       <div style={{ textAlign: "center", marginBottom: 44, padding: "0 24px" }}>
-        <p className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Live systems
-        </p>
         <h2
           className="font-heading font-black tracking-tight"
           style={{ fontSize: "clamp(2.25rem, 4.5vw, 3.5rem)", lineHeight: 1.05, color: "#ffffff" }}
         >
-          Systems we&apos;ve built
+          Demo systems
         </h2>
       </div>
       <div className="dyg-marquee-wrap" style={{ width: "100%", overflow: "hidden" }}>
@@ -84,9 +81,6 @@ export default function DemoMarquee() {
           ))}
         </div>
       </div>
-      <p className="text-center mt-12 px-6 mx-auto" style={{ color: "rgba(255,255,255,0.45)", maxWidth: 640, fontSize: "1rem", lineHeight: 1.6 }}>
-        Every system is custom — designed and built to run your business, not just look good.
-      </p>
     </section>
   );
 }
