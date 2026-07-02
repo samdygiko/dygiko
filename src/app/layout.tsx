@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Inter } from "next/font/google";
 import "./globals.css";
+import { LocaleProvider } from "@/lib/i18n";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -76,7 +77,9 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable} ${inter.variable}`}>
       <head>
       </head>
-      <body>{children}</body>
+      <body>
+        <LocaleProvider>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }

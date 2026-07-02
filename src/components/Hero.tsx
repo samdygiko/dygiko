@@ -68,9 +68,9 @@ export default function Hero() {
         <h1
           className="font-heading font-black tracking-tight leading-[1.0] mb-8"
           style={{ fontSize: "clamp(3rem, 8vw, 7.5rem)" }}
-          aria-label="Your business, finally online."
+          aria-label="Simple is better."
         >
-          {(["Your business,", "finally online."] as const).map((line, lineIdx) => (
+          {(["Simple is", "better."] as const).map((line, lineIdx) => (
             <span key={lineIdx} className="block" aria-hidden="true">
               {line.split("").map((ch, i) => {
                 const delay = 0.2 + lineIdx * 0.12 + i * 0.022;

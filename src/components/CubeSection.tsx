@@ -36,7 +36,7 @@ export default function CubeSection() {
               className="mt-6 max-w-md text-base md:text-lg leading-relaxed"
               style={{ color: "rgba(255,255,255,0.5)" }}
             >
-              No two sites we ship look the same. Every layout, animation and
+              No two systems we ship look the same. Every layout, animation and
               detail is built from scratch — so your business stops looking like
               everyone else's template.
             </p>

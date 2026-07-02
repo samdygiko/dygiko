@@ -19,10 +19,8 @@ export default function Nav() {
   }, []);
 
   const navLinks: [string, string][] = [
-    ["Work", p("#work")],
     ["Services", p("#services")],
-    ["About", p("#about")],
-    ["Blog", "/blog"],
+    ["Systems", p("#demos")],
     ["Contact", p("#contact")],
   ];
 

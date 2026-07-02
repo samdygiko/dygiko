@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
@@ -8,10 +7,8 @@ type Package = {
   num: string;
   icon: React.ReactNode;
   name: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  stripeUrlMonthly: string;
-  stripeUrlAnnual: string;
+  price: number;
+  checkoutPkg: "site" | "crm" | "bundle";
   includes: string[];
   featured?: boolean;
 };
@@ -55,10 +52,8 @@ const PACKAGES: Package[] = [
     num: "01",
     icon: <IconMonitor />,
     name: "Website",
-    monthlyPrice: 69,
-    annualPrice: 690,
-    stripeUrlMonthly: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01",
-    stripeUrlAnnual: "https://buy.stripe.com/4gM28r7E4ejJgVCeNEfjG0a",
+    price: 500,
+    checkoutPkg: "site",
     includes: [
       "Custom website design",
       "Domain & hosting setup",
@@ -74,10 +69,8 @@ const PACKAGES: Package[] = [
     num: "02",
     icon: <IconSearch />,
     name: "CRM",
-    monthlyPrice: 129,
-    annualPrice: 1290,
-    stripeUrlMonthly: "https://buy.stripe.com/00wbJ1f6wdfFfRy8pgfjG0e",
-    stripeUrlAnnual: "https://buy.stripe.com/28E28raQgfnNdJqfRIfjG0f",
+    price: 1000,
+    checkoutPkg: "crm",
     includes: [
       "Custom CRM tailored to your business",
       "Leads, customers & pipeline tracking",
@@ -90,15 +83,13 @@ const PACKAGES: Package[] = [
     num: "03",
     icon: <IconRocket />,
     name: "Website + CRM",
-    monthlyPrice: 149,
-    annualPrice: 1490,
-    stripeUrlMonthly: "https://buy.stripe.com/bJe3cv8I8cbB48QeNEfjG0c",
-    stripeUrlAnnual: "https://buy.stripe.com/00wbJ1cYodfF8p6dJAfjG0d",
+    price: 1250,
+    checkoutPkg: "bundle",
     featured: true,
     includes: [
       "Everything in Website",
       "Everything in CRM",
-      "Best value — save £29/mo vs separate",
+      "Best value — save £250/yr vs separate",
       "Single login, unified setup",
       "Unlimited revisions to site & CRM",
     ],
@@ -106,8 +97,6 @@ const PACKAGES: Package[] = [
 ];
 
 export default function ServicesSection() {
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-
   return (
     <section
       className="border-b"
@@ -136,50 +125,9 @@ export default function ServicesSection() {
           >
             Simple, transparent pricing
           </h2>
-
-          {/* Billing toggle */}
-          <div
-            className="inline-flex items-center mt-8 p-1 rounded-full"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-            role="tablist"
-            aria-label="Billing period"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={billing === "monthly"}
-              onClick={() => setBilling("monthly")}
-              className="px-5 py-2 text-sm font-medium rounded-full transition-colors duration-200"
-              style={{
-                background: billing === "monthly" ? "#b0ff00" : "transparent",
-                color: billing === "monthly" ? "#080808" : "rgba(255,255,255,0.6)",
-              }}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={billing === "annual"}
-              onClick={() => setBilling("annual")}
-              className="px-5 py-2 text-sm font-medium rounded-full transition-colors duration-200 flex items-center gap-2"
-              style={{
-                background: billing === "annual" ? "#b0ff00" : "transparent",
-                color: billing === "annual" ? "#080808" : "rgba(255,255,255,0.6)",
-              }}
-            >
-              Annual
-              <span
-                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                style={{
-                  background: billing === "annual" ? "rgba(8,8,8,0.12)" : "rgba(176,255,0,0.15)",
-                  color: billing === "annual" ? "#080808" : "#b0ff00",
-                }}
-              >
-                2 months free
-              </span>
-            </button>
-          </div>
+          <p className="text-sm mt-6" style={{ color: "rgba(255,255,255,0.45)" }}>
+            One yearly price · everything included · you own it
+          </p>
         </motion.div>
 
         {/* Cards */}
@@ -217,15 +165,13 @@ export default function ServicesSection() {
                   className="font-heading text-3xl font-black tracking-tight"
                   style={{ color: pkg.featured ? "#b0ff00" : "#ffffff" }}
                 >
-                  £{billing === "monthly" ? pkg.monthlyPrice : pkg.annualPrice}
+                  £{pkg.price.toLocaleString()}
                   <span className="text-base font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
-                    {billing === "monthly" ? " /month" : " /year"}
+                    {" "}/year
                   </span>
                 </p>
                 <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  {billing === "monthly"
-                    ? "No upfront cost · cancel anytime"
-                    : `2 months free · save £${pkg.monthlyPrice * 12 - pkg.annualPrice}`}
+                  {pkg.featured ? "Best value · save £250/yr" : "Billed yearly · cancel anytime"}
                 </p>
               </div>
 
@@ -259,9 +205,7 @@ export default function ServicesSection() {
                   </a>
                 </Magnetic>
                 <a
-                  href={billing === "monthly" ? pkg.stripeUrlMonthly : pkg.stripeUrlAnnual}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/checkout?pkg=${pkg.checkoutPkg}`}
                   className="inline-flex items-center text-xs transition-opacity duration-200 hover:opacity-100"
                   style={{ color: "rgba(255,255,255,0.35)" }}
                 >

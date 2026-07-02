@@ -1,20 +1,15 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
-import StatsSection from "@/components/StatsSection";
 import ServicesSection from "@/components/ServicesSection";
+import DemoMarquee from "@/components/DemoMarquee";
 import TemplatesSection from "@/components/TemplatesSection";
 import ClientMarquee from "@/components/ClientMarquee";
-import AboutSection from "@/components/AboutSection";
-import AppDevSection from "@/components/AppDevSection";
-import HowItWorksSection from "@/components/HowItWorksSection";
 import PlatformsBar from "@/components/PlatformsBar";
 import ContactSection from "@/components/ContactSection";
-import FooterCTA from "@/components/FooterCTA";
 import FloatingButtons from "@/components/FloatingButtons";
 import ScrollProgress from "@/components/ScrollProgress";
 import SmoothScroll from "@/components/SmoothScroll";
 import Cursor from "@/components/Cursor";
-import CraftSection from "@/components/CraftSection";
 import CubeSection from "@/components/CubeSection";
 
 const orgJsonLd = {
@@ -66,19 +61,14 @@ export default function HomePage() {
       <Nav />
       <main>
         <Hero />
-        <StatsSection />
         <ServicesSection />
+        <DemoMarquee />
         <TemplatesSection />
         <ClientMarquee />
         <CubeSection />
-        <AboutSection />
-        <AppDevSection />
-        <CraftSection />
-        <HowItWorksSection />
         <PlatformsBar />
         <ContactSection />
       </main>
-      <FooterCTA />
       <FloatingButtons />
     </>
   );

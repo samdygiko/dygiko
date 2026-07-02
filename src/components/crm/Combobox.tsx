@@ -131,10 +131,10 @@ export default function Combobox({
                 fontSize: "13px",
                 cursor: "pointer",
                 background:
-                  i === highlighted ? "rgba(176,255,0,0.1)" : "transparent",
+                  i === highlighted ? "rgba(59, 130, 246,0.1)" : "transparent",
                 color:
                   i === highlighted
-                    ? "#b0ff00"
+                    ? "#3b82f6"
                     : "rgba(255,255,255,0.7)",
               }}
             >

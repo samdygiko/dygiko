@@ -1,59 +1,26 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, doc, increment, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import DygikoLogo from "@/components/DygikoLogo";
 import LeadsTab from "@/components/crm/LeadsTab";
+import EnquiriesTab from "@/components/crm/EnquiriesTab";
 import ClientsTab from "@/components/crm/ClientsTab";
-import JustCallDialerPanel from "@/components/crm/JustCallDialerPanel";
+import OrdersTab from "@/components/crm/OrdersTab";
+import { UK_POSTCODES } from "@/lib/ukPostcodes";
 
-const TABS = ["Leads", "Clients", "Admin", "Onboarding", "Design"] as const;
+const TABS = ["Leads", "Enquiries", "Clients", "Orders", "Admin"] as const;
 type Tab = (typeof TABS)[number];
-
-const PAYMENT_LINKS = {
-  monthly: [
-    { label: "Website (mo)", price: "£69/mo", url: "https://buy.stripe.com/fZueVdbUk2B16gYaxofjG01" },
-    { label: "CRM (mo)", price: "£129/mo", url: "https://buy.stripe.com/00wbJ1f6wdfFfRy8pgfjG0e" },
-    { label: "Website + CRM (mo)", price: "£149/mo", url: "https://buy.stripe.com/bJe3cv8I8cbB48QeNEfjG0c" },
-  ],
-  annual: [
-    { label: "Website (yr)", price: "£690/yr", url: "https://buy.stripe.com/4gM28r7E4ejJgVCeNEfjG0a" },
-    { label: "CRM (yr)", price: "£1290/yr", url: "https://buy.stripe.com/28E28raQgfnNdJqfRIfjG0f" },
-    { label: "Website + CRM (yr)", price: "£1490/yr", url: "https://buy.stripe.com/00wbJ1cYodfF8p6dJAfjG0d" },
-  ],
-};
-
-const QUICK_LINKS = [
-  { label: "Vercel Dashboard", url: "https://vercel.com/samdygikos-projects" },
-  { label: "GitHub — samdygiko", url: "https://github.com/samdygiko" },
-  { label: "Firebase Console", url: "https://console.firebase.google.com/project/sako-digital" },
-  { label: "IONOS", url: "https://my.ionos.co.uk" },
-  { label: "Stripe Dashboard", url: "https://dashboard.stripe.com" },
-  { label: "Zoho Mail", url: "https://mail.zoho.eu" },
-  { label: "Trustpilot Business", url: "https://businessapp.b2b.trustpilot.com" },
-  { label: "Leave a Trustpilot Review ↗", url: "https://au.trustpilot.com/review/dygiko.com" },
-  { label: "Google Search Console", url: "https://search.google.com/search-console" },
-  { label: "Companies House Dev Hub", url: "https://developer.company-information.service.gov.uk" },
-  { label: "Google Custom Search", url: "https://programmablesearchengine.google.com" },
-];
-
-const DESIGN_SITES = [
-  { name: "Site Inspire", url: "https://www.siteinspire.com/", description: "Curated web design gallery" },
-  { name: "Awwwards — Hotels & Restaurants", url: "https://www.awwwards.com/websites/hotel-restaurant/", description: "Award-winning hospitality sites" },
-  { name: "Godly — SaaS", url: "https://godly.website/?types=%5B%22saas%22%5D", description: "Curated SaaS UI inspiration" },
-  { name: "Saaspo", url: "https://saaspo.com", description: "SaaS website design inspiration" },
-  { name: "Hayford Group", url: "https://hayfordgroup.com", description: "Live client site" },
-];
 
 const TAB_ICONS: Record<Tab, string> = {
   Leads: "◎",
+  Enquiries: "✉",
   Clients: "◈",
+  Orders: "🧾",
   Admin: "⚙",
-  Onboarding: "✧",
-  Design: "✦",
 };
 
 export default function CRMPage() {
@@ -75,6 +42,26 @@ function CRMPageInner() {
   const [leadsCount, setLeadsCount] = useState(0);
   const [clientsCount, setClientsCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Back-to-top button. The list can scroll inside a nested container, so we
+  // listen in the capture phase (scroll doesn't bubble) to catch whichever
+  // element actually scrolls, and scroll that one back up.
+  const scrollerRef = useRef<HTMLElement | null>(null);
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = (e: Event) => {
+      const t = e.target as HTMLElement;
+      if (!t || typeof t.scrollTop !== "number") return;
+      scrollerRef.current = t;
+      setShowTop(t.scrollTop > 400);
+    };
+    document.addEventListener("scroll", onScroll, true);
+    return () => document.removeEventListener("scroll", onScroll, true);
+  }, []);
+  const goTop = () => {
+    const el = scrollerRef.current;
+    if (el && typeof el.scrollTo === "function") el.scrollTo({ top: 0, behavior: "smooth" });
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace("/crm/login");
@@ -85,12 +72,33 @@ function CRMPageInner() {
     if (t && (TABS as readonly string[]).includes(t)) setTab(t as Tab);
   }, [searchParams]);
 
+  // Arrow-key navigation through the sidebar tabs (ignored while typing in a field).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const el = (e.target as HTMLElement | null) ?? (document.activeElement as HTMLElement | null);
+      if (el) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable) return;
+      }
+      e.preventDefault();
+      setTab((cur) => {
+        const i = TABS.indexOf(cur);
+        const next = e.key === "ArrowDown"
+          ? (i + 1) % TABS.length
+          : (i - 1 + TABS.length) % TABS.length;
+        return TABS[next];
+      });
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
-    const u2 = onSnapshot(collection(db, "leads"), (s) => {
-      const docs = s.docs.map((d) => d.data());
-      setLeadsCount(docs.filter((d) => d.stage !== "Dead").length);
-    });
+    const u2 = onSnapshot(collection(db, "leads"), (s) =>
+      setLeadsCount(s.docs.filter((d) => d.data().notInterested !== true).length)
+    );
     const u3 = onSnapshot(collection(db, "clients"), (s) => setClientsCount(s.size));
     return () => { u2(); u3(); };
   }, [user]);
@@ -98,26 +106,13 @@ function CRMPageInner() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#080808" }}>
-        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#b0ff00", borderTopColor: "transparent" }} />
+        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#3b82f6", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#080808", color: "#fff" }}>
-      <JustCallDialerPanel
-        onCallEnded={async (leadId) => {
-          if (!leadId) return;
-          try {
-            await updateDoc(doc(db, "leads", leadId), {
-              callCount: increment(1),
-              lastCalledAt: serverTimestamp(),
-            });
-          } catch {
-            // Lead may have been deleted; ignore.
-          }
-        }}
-      />
       {/* Mobile top bar */}
       <div
         className="flex lg:hidden items-center justify-between px-4 h-14 sticky top-0 z-30"
@@ -154,7 +149,7 @@ function CRMPageInner() {
             ].map((stat) => (
               <div key={stat.label} className="flex items-center justify-between px-3 py-2.5 rounded-sm" style={{ background: "rgba(255,255,255,0.03)" }}>
                 <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{stat.label}</span>
-                <span className="text-sm font-bold" style={{ color: "#b0ff00" }}>{stat.value}</span>
+                <span className="text-sm font-bold" style={{ color: "#3b82f6" }}>{stat.value}</span>
               </div>
             ))}
           </div>
@@ -167,13 +162,13 @@ function CRMPageInner() {
                 onClick={() => { setTab(t); setSidebarOpen(false); }}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-left text-sm transition-colors duration-100"
                 style={{
-                  background: tab === t ? "rgba(176,255,0,0.08)" : "transparent",
-                  color: tab === t ? "#b0ff00" : "rgba(255,255,255,0.45)",
+                  background: tab === t ? "rgba(59, 130, 246,0.08)" : "transparent",
+                  color: tab === t ? "#3b82f6" : "rgba(255,255,255,0.45)",
                   fontWeight: tab === t ? 600 : 400,
                 }}
               >
                 <span className="text-base">{TAB_ICONS[t]}</span>
-                {t === "Design" ? "Design Inspiration" : t}
+                {t}
               </button>
             ))}
           </nav>
@@ -195,896 +190,148 @@ function CRMPageInner() {
 
         <main className="flex-1 min-w-0 overflow-auto px-6 py-8 lg:px-8">
           {tab === "Leads" && <LeadsTab />}
+          {tab === "Enquiries" && <EnquiriesTab />}
           {tab === "Clients" && <ClientsTab />}
+          {tab === "Orders" && <OrdersTab />}
           {tab === "Admin" && <AdminContent />}
-          {tab === "Onboarding" && <OnboardingContent />}
-          {tab === "Design" && <DesignContent />}
         </main>
       </div>
+
+      {showTop && (
+        <button
+          onClick={goTop}
+          title="Back to top"
+          className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold shadow-lg transition-opacity hover:opacity-80"
+          style={{ background: "#3b82f6", color: "#fff", border: "none" }}
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
-}
-
-function buildClaudeBrief(args: {
-  business: string;
-  industry: string;
-  inspiration: string;
-  font: string;
-  notes: string;
-}) {
-  const business = args.business.trim() || "[Business name]";
-  const industry = args.industry.trim() || "[business type / industry]";
-  const inspirationLines = args.inspiration
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const inspirationBlock = inspirationLines.length
-    ? inspirationLines.map((u) => `- ${u}`).join("\n")
-    : "- [paste one or more inspiration site URLs]";
-  const font = args.font.trim() || "[font inspiration site URL]";
-  const notes = args.notes.trim();
-
-  return `Hi Claude — I need you to write a complete prompt I can paste into Claude Code to build a marketing website. You are writing the prompt, not the site.
-
-Before you start, please check the memory of this project — load any prior context you have on Dygiko, the client pipeline, design direction, and previous builds we've shipped together.
-
-The client is ${business}, a ${industry} business.
-
-I've attached a screenshot of their Google Business Profile. Read it carefully and pull the real business name, address, phone number, opening hours, photos and any reviews into the prompt you produce.
-
-IMPORTANT — this site must feel visually distinct from every Dygiko site we've built before. The prompt you write should:
-  - Pick a fresh typography pairing we have NOT used on a previous Dygiko build. Avoid the Playfair Display + DM Sans combination — find a different display + body pairing on Google Fonts that matches this client's vibe.
-  - Specify a colour palette and section vocabulary that is clearly different from prior builds (no recycling the same hero-then-pull-quote-then-services rhythm if it doesn't fit).
-  - Lean on the inspiration sites below for layout cues, but the result should be its own thing — not a clone of any one reference.
-  - When in doubt, choose the more unusual option.
-
-Every site you ship MUST feel meaningfully different from the last one. The brief, the hero, the section rhythm and the colour story should not echo prior Dygiko builds — if you find yourself reaching for a layout you already used, deliberately pick a different one. Repetition across client sites is the failure mode here.
-
-To enforce that, the prompt you generate must instruct Claude Code to pick exactly ONE signature feature from the curated menu below — and only one — that fits the client's business. Do not invent your own outside this list, do not stack two of them, and do not skip this step. Pick whichever genuinely suits the brand:
-
-  1. Live "Open now · closes in X" status pill in the nav, driven by the real opening hours from the Google Business Profile. Updates by the minute.
-  2. A custom 404 page that riffs on the business in a single witty line (e.g. for a barber: "you've found a bad hair day").
-  3. An oversized editorial pull-quote of a real Google review — one quote, display-size serif, lots of whitespace. Picked from the highest-rated review in the GBP screenshot.
-  4. A subtle colour-palette inversion as the user scrolls past the hero — same site, different mood in the lower half. Must remain accessible.
-  5. A morphing / typewriter tagline in the hero, cycling through 3–4 phrases specific to the business (no generic copy).
-  6. A "Today at [Business]" line in the nav that's day-of-week aware (e.g. "Friday · curry night until 9pm" for a pub, "Saturdays book out fast" for a salon). Use real opening hours.
-  7. An animated SVG monogram or logo reveal on first paint — pure SVG, no third-party libs, must complete in under a second.
-  8. Hand-drawn or illustrated section dividers in place of standard borders — themed to the business (scissors for a barber, knife strokes for a butcher, espresso cup rings for a café). Inline SVG only.
-  9. A photo grid that subtly Ken-Burns-cycles through the real GBP photos. No fast crossfades, no parallax — just slow, editorial drift.
- 10. A sticky low-profile "call us" pill at the bottom edge that gently morphs (size, copy, or colour) as the user scrolls toward the contact section.
-
-Hard constraints on whichever feature is chosen:
-  - Must work cleanly on mobile. If it breaks responsive, drop it.
-  - Must not slow the first paint by more than ~150ms.
-  - Must feel editorial, not gimmicky. If it would look at home on a SaaS landing page rather than a thoughtful local-business site, it's the wrong pick.
-  - Must use real client data wherever possible (real reviews, real opening hours, real photos), never lorem ipsum or placeholder values.
-
-In the prompt you generate, name the chosen signature feature explicitly and explain why it suits this particular client — so Claude Code knows which one to build, and so the human reviewing the prompt can sanity-check the pick before pasting.
-
-Design inspiration sites (the prompt should reference these):
-${inspirationBlock}
-
-Font / typography inspiration:
-- ${font}
-
-The prompt you generate must instruct Claude Code to:
-  - Use Next.js 14 (App Router), TypeScript and Tailwind, matching the editorial style we've been using on previous Dygiko client builds.
-  - Pull imagery directly from the client's Google Business Profile and from the inspiration sites above where appropriate, then fill any gaps using Unsplash with searches relevant to a ${industry} business. No placeholders, no lorem ipsum.
-  - Run \`git init\` (or use the existing repo), make a clean initial commit, push the repo to GitHub under the samdygiko account, and deploy the project to Vercel.
-  - When everything is live, reply with the live Vercel URL only — nothing else, no commentary, no GitHub link, no summary. Just the URL on a single line.
-
-Please reference the full memory of all our previous conversations as context — branch discipline, deploy patterns, my tone preferences, the editorial design direction, and anything else that's already been established between us.${
-    notes
-      ? `
-
-Extra notes from me to fold into the prompt:
-${notes}`
-      : ""
-  }
-
-Output: the entire prompt as a single copyable code block (one fenced \`\`\` block containing the whole thing) so I can copy it with one click. Paste-ready for Claude Code. No commentary or preamble before or after the block.`;
 }
 
 function AdminContent() {
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
-
-  // Trustpilot review request
-  const [tpName, setTpName] = useState("");
-  const [copiedTp, setCopiedTp] = useState(false);
-  const tpBody = `Hi ${tpName || "[Name]"}, hope you're loving the new website! If you've got a spare minute, a quick Trustpilot review would mean a lot — it helps other businesses find us.
-
-https://au.trustpilot.com/review/dygiko.com`;
-
-  // Booking confirmation message — sent to prospects after they book the Calendly slot
-  const [bookName, setBookName] = useState("");
-  const [bookBusiness, setBookBusiness] = useState("");
-  const [copiedBookWa, setCopiedBookWa] = useState(false);
-  const [copiedBookSms, setCopiedBookSms] = useState(false);
-  const bookWaBody = `Hi ${bookName || "[Name]"} 👋 thanks for booking the call with Dygiko!
-
-Quick heads up — you should've received a confirmation email from Calendly with the Microsoft Teams link for our call. If it's not in your inbox, check your spam/junk folder.
-
-Looking forward to showing you what we've put together for ${bookBusiness || "[Business name]"}. Speak soon!
-
-— Sam`;
-  const bookSmsBody = `Hi ${bookName || "[Name]"}, thanks for booking the call with Dygiko. Check your inbox (plus spam/junk folder) for the confirmation email with your Microsoft Teams link. See you soon - Sam`;
-
-  // Claude build brief
-  const [briefBusiness, setBriefBusiness] = useState("");
-  const [briefIndustry, setBriefIndustry] = useState("");
-  const [briefInspiration, setBriefInspiration] = useState("");
-  const [briefFont, setBriefFont] = useState("");
-  const [briefNotes, setBriefNotes] = useState("");
-  const [copiedBrief, setCopiedBrief] = useState(false);
-  const briefBody = buildClaudeBrief({
-    business: briefBusiness,
-    industry: briefIndustry,
-    inspiration: briefInspiration,
-    font: briefFont,
-    notes: briefNotes,
-  });
-
   return (
-    <div className="flex flex-col gap-14 max-w-4xl">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-1">Admin</h2>
-        <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Payment links and dashboards.
-        </p>
-
-        <h3 className="text-base font-semibold text-white mb-4">Payment Links</h3>
-
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>Monthly</p>
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          {PAYMENT_LINKS.monthly.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => { navigator.clipboard.writeText(item.url); setCopiedLink(item.label); setTimeout(() => setCopiedLink(null), 2000); }}
-              className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80 text-left"
-              style={{ background: copiedLink === item.label ? "rgba(176,255,0,0.12)" : "#b0ff00", flex: "1 1 0", border: copiedLink === item.label ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer" }}
-            >
-              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "rgba(176,255,0,0.6)" : "rgba(0,0,0,0.55)" }}>{item.label}</span>
-              <span className="text-xl font-black" style={{ color: copiedLink === item.label ? "#b0ff00" : "#000" }}>{item.price}</span>
-              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "#b0ff00" : "rgba(0,0,0,0.45)" }}>{copiedLink === item.label ? "✓ Link copied!" : "Copy payment link"}</span>
-            </button>
-          ))}
-        </div>
-
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>Annual <span style={{ color: "#b0ff00" }}>· save 17%</span></p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          {PAYMENT_LINKS.annual.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => { navigator.clipboard.writeText(item.url); setCopiedLink(item.label); setTimeout(() => setCopiedLink(null), 2000); }}
-              className="flex flex-col gap-1 px-6 py-4 rounded-sm transition-opacity hover:opacity-80 text-left"
-              style={{ background: copiedLink === item.label ? "rgba(176,255,0,0.12)" : "rgba(176,255,0,0.85)", flex: "1 1 0", border: copiedLink === item.label ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer" }}
-            >
-              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "rgba(176,255,0,0.6)" : "rgba(0,0,0,0.55)" }}>{item.label}</span>
-              <span className="text-xl font-black" style={{ color: copiedLink === item.label ? "#b0ff00" : "#000" }}>{item.price}</span>
-              <span className="text-xs font-medium" style={{ color: copiedLink === item.label ? "#b0ff00" : "rgba(0,0,0,0.45)" }}>{copiedLink === item.label ? "✓ Link copied!" : "Copy payment link"}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-
-      {/* Demo CRM */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Demo CRM (for consultation calls)</h3>
-        <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-          A fictional construction company CRM (Marsden Construction Ltd) — open this on a Teams screen-share to show prospects what a custom CRM would look like for their business. No login required.
-        </p>
-        <div className="flex gap-3 flex-wrap items-center">
-          <a
-            href="https://marsden-crm.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-sm font-semibold transition-opacity hover:opacity-80"
-            style={{ background: "#b0ff00", color: "#000", textDecoration: "none", fontSize: 14 }}
-          >
-            🏗️ Open demo CRM →
-          </a>
-          <button
-            onClick={() => { navigator.clipboard.writeText("https://marsden-crm.vercel.app"); }}
-            className="px-3 py-2 rounded-sm text-xs font-medium transition-opacity hover:opacity-80"
-            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            Copy URL
-          </button>
-        </div>
-      </div>
-
-      {/* Trustpilot Review Request */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Trustpilot Review Request</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          For happy clients — enter their name and copy the message asking for a Trustpilot review.
-        </p>
-
-        <div className="flex flex-col gap-1.5 mb-5 max-w-sm">
-          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-            Client name
-          </label>
-          <input
-            type="text"
-            value={tpName}
-            onChange={(e) => setTpName(e.target.value)}
-            placeholder="e.g. James"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-          />
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message</p>
-            <button
-              onClick={() => { navigator.clipboard.writeText(tpBody); setCopiedTp(true); setTimeout(() => setCopiedTp(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedTp ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedTp ? "#b0ff00" : "#080808", border: copiedTp ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedTp ? "✓ Copied!" : "Copy message"}
-            </button>
-          </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-            }}
-          >
-            {tpBody}
-          </pre>
-        </div>
-      </div>
-
-      {/* Booking Confirmation Message */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Booking Confirmation Message</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          After a prospect books on Calendly, send them this on WhatsApp (preferred) or SMS. Reminds them about the Microsoft Teams link and to check spam.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-5">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Prospect name
-            </label>
-            <input
-              type="text"
-              value={bookName}
-              onChange={(e) => setBookName(e.target.value)}
-              placeholder="e.g. James"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Business name
-            </label>
-            <input
-              type="text"
-              value={bookBusiness}
-              onChange={(e) => setBookBusiness(e.target.value)}
-              placeholder="e.g. Sunrise Plumbing"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* WhatsApp */}
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>WhatsApp message</p>
-              <button
-                onClick={() => { navigator.clipboard.writeText(bookWaBody); setCopiedBookWa(true); setTimeout(() => setCopiedBookWa(false), 2500); }}
-                style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBookWa ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedBookWa ? "#b0ff00" : "#080808", border: copiedBookWa ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-              >
-                {copiedBookWa ? "✓ Copied!" : "Copy WhatsApp"}
-              </button>
-            </div>
-            <pre style={{ padding: "16px", fontSize: "12px", lineHeight: 1.75, color: "rgba(255,255,255,0.55)", whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-              {bookWaBody}
-            </pre>
-          </div>
-
-          {/* SMS (no emoji, single segment) */}
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>SMS (shorter, single segment)</p>
-              <button
-                onClick={() => { navigator.clipboard.writeText(bookSmsBody); setCopiedBookSms(true); setTimeout(() => setCopiedBookSms(false), 2500); }}
-                style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBookSms ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.07)", color: copiedBookSms ? "#b0ff00" : "rgba(255,255,255,0.7)", border: `1px solid ${copiedBookSms ? "rgba(176,255,0,0.3)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", transition: "all 0.15s" }}
-              >
-                {copiedBookSms ? "✓ Copied!" : "Copy SMS"}
-              </button>
-            </div>
-            <pre style={{ padding: "16px", fontSize: "12px", lineHeight: 1.75, color: "rgba(255,255,255,0.55)", whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-              {bookSmsBody}
-            </pre>
-          </div>
-        </div>
-      </div>
-
-      {/* Claude Build Brief */}
-      <div>
-        <h3 className="text-base font-semibold text-white mb-1">Claude Build Brief</h3>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-          Paste this into the Claude web app (claude.ai) along with the client&apos;s Google Business Profile screenshot. Claude will reply with a complete prompt you can paste straight into Claude Code to build the site.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="flex flex-col gap-1.5">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Business name
-            </label>
-            <input
-              type="text"
-              value={briefBusiness}
-              onChange={(e) => setBriefBusiness(e.target.value)}
-              placeholder="e.g. HRAI Constructions Limited"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-              Business type / industry
-            </label>
-            <input
-              type="text"
-              value={briefIndustry}
-              onChange={(e) => setBriefIndustry(e.target.value)}
-              placeholder="e.g. landscaping & construction"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5 mb-4">
-          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-            Google Business Profile screenshot
-          </label>
-          <div
-            className="px-4 py-3"
-            style={{ background: "rgba(176,255,0,0.04)", border: "1px dashed rgba(176,255,0,0.2)", borderRadius: "2px" }}
-          >
-            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
-              Drag the GBP screenshot into the same Claude chat after pasting this brief. Claude (web) will read the image and use the real business name, address, phone, hours, photos and reviews when it writes the Claude Code prompt.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5 mb-4">
-          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-            Inspiration site URLs (one per line)
-          </label>
-          <textarea
-            value={briefInspiration}
-            onChange={(e) => setBriefInspiration(e.target.value)}
-            placeholder={"https://omaivillas.com\nhttps://farmform.be\nhttps://villas-tamarindo.com"}
-            rows={4}
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none", resize: "vertical", fontFamily: "inherit" }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5 mb-4">
-          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-            Font / typography inspiration URL
-          </label>
-          <input
-            type="url"
-            value={briefFont}
-            onChange={(e) => setBriefFont(e.target.value)}
-            placeholder="e.g. https://fonts.google.com/specimen/Playfair+Display"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none" }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5 mb-5">
-          <label style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>
-            Extra notes (optional)
-          </label>
-          <textarea
-            value={briefNotes}
-            onChange={(e) => setBriefNotes(e.target.value)}
-            placeholder="Anything else Claude should know — colour preferences, must-have sections, deadlines…"
-            rows={3}
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "2px", padding: "8px 12px", fontSize: "13px", outline: "none", resize: "vertical", fontFamily: "inherit" }}
-          />
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Message preview</p>
-            <button
-              onClick={() => { navigator.clipboard.writeText(briefBody); setCopiedBrief(true); setTimeout(() => setCopiedBrief(false), 2500); }}
-              style={{ fontSize: "11px", fontWeight: 600, padding: "6px 16px", borderRadius: "2px", background: copiedBrief ? "rgba(176,255,0,0.15)" : "#b0ff00", color: copiedBrief ? "#b0ff00" : "#080808", border: copiedBrief ? "1px solid rgba(176,255,0,0.3)" : "none", cursor: "pointer", transition: "all 0.15s" }}
-            >
-              {copiedBrief ? "✓ Copied!" : "Copy brief"}
-            </button>
-          </div>
-          <pre
-            style={{
-              padding: "16px",
-              fontSize: "12px",
-              lineHeight: 1.75,
-              color: "rgba(255,255,255,0.55)",
-              whiteSpace: "pre-wrap",
-              fontFamily: "inherit",
-              maxHeight: "420px",
-              overflowY: "auto",
-            }}
-          >
-            {briefBody}
-          </pre>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-base font-semibold text-white mb-4">Quick Links</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {QUICK_LINKS.map((item) => (
-            <a
-              key={item.label}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-5 py-4 rounded-sm transition-all duration-150"
-              style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", textDecoration: "none" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
-            >
-              <span className="text-sm font-medium text-white">{item.label}</span>
-              <span style={{ color: "rgba(255,255,255,0.25)" }}>↗</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
+    <div className="max-w-4xl">
+      <QueuedEmails />
+      <PostcodeSweep />
     </div>
   );
 }
 
-function DesignContent() {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-1">Design Inspiration</h2>
-      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
-        Reference sites for UI patterns, typography, and layout ideas.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {DESIGN_SITES.map((site) => (
-          <a
-            key={site.url}
-            href={site.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col rounded-sm overflow-hidden transition-all duration-150"
-            style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", textDecoration: "none" }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(176,255,0,0.3)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
-          >
-            {/* Screenshot preview */}
-            <div className="w-full overflow-hidden" style={{ height: "160px", background: "rgba(255,255,255,0.03)" }}>
-              <img
-                src={`https://image.thum.io/get/width/600/crop/400/${site.url}`}
-                alt={site.name}
-                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            </div>
-            <div className="p-4">
-              <p className="font-semibold text-white group-hover:text-[#b0ff00] transition-colors duration-150 text-sm mb-1">
-                {site.name}
-              </p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{site.description}</p>
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
+// Emails queued to send at 7am (Firestore scheduled_emails, not yet sent).
+// Lets you see exactly what will go out — and cancel any before they fire.
+function QueuedEmails() {
+  const [rows, setRows] = useState<{ id: string; email: string; trade: string; createdAt?: { seconds: number } }[]>([]);
+  useEffect(() => {
+    const q = query(collection(db, "scheduled_emails"), where("sent", "==", false));
+    const unsub = onSnapshot(q, (s) => {
+      const list = s.docs.map((d) => ({ id: d.id, ...(d.data() as { email: string; trade: string; createdAt?: { seconds: number } }) }));
+      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setRows(list);
+    });
+    return () => unsub();
+  }, []);
 
-type OnboardingStep = {
-  title: string;
-  bullets?: string[];
-  code?: string;
-  note?: string;
-  warnings?: string[];
-};
-
-const DESIGNER_STEPS: OnboardingStep[] = [
-  {
-    title: "Install Homebrew",
-    code: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`,
-    note: `Run the three "Next steps" lines it prints at the end to add Homebrew to your PATH.`,
-  },
-  {
-    title: "Install Node + Git",
-    code: `brew install node git`,
-  },
-  {
-    title: "Install Claude Code + Vercel CLI",
-    code: `npm install -g @anthropic-ai/claude-code vercel`,
-  },
-  {
-    title: "Configure Git as yourself",
-    code: `git config --global user.name "Your Real Name"
-git config --global user.email "your-github-email@example.com"`,
-    note: `Use the email tied to the GitHub account you'll push from. If you skip this, Git falls back to your Mac's username + a fake "@your-laptop.local" email — every commit will go up looking like a stranger, won't link to the GitHub account, and won't show on the contributions graph. One-time setup per device. Then log into github.com in your browser with the samdygiko account (Sam will share the login).`,
-  },
-  {
-    title: "Log into Claude Code",
-    code: `claude`,
-    note: `Follow the browser prompt — use the Dygiko Claude account details Sam sends.`,
-  },
-  {
-    title: "Give Claude Code context about you (~/.claude/CLAUDE.md)",
-    code: `mkdir -p ~/.claude
-open -e ~/.claude/CLAUDE.md`,
-    bullets: [
-      `This is your personal context file — Claude Code reads it at the start of every session, on every project, on this device.`,
-      `It lives outside any git repo, so it travels with you (you set it up once per new device).`,
-      `Paste the template below, fill in your name, save, close. Claude Code now knows who you are and the Dygiko house rules without you re-typing them every time.`,
-    ],
-    note: `Template to paste:
-
-# About me
-- I'm a designer at Dygiko (dygiko.com). My job is building client websites with Claude Code, not editing the Dygiko CRM itself.
-- Production sites I work on live under the samdygiko GitHub org.
-
-# House rules
-- Each client site is its own repo and deploys from its main branch via Vercel. Don't push to main without testing locally first.
-- The Dygiko monorepo at ~/Desktop/dygiko is Sam's territory — don't push there unless asked. (And if you ever do, its production branch is master, NOT main.)
-- If a folder on my Desktop disappears, it's still on GitHub — clone it back, don't panic.`,
-  },
-  {
-    title: "Log into Vercel CLI (one-time)",
-    code: `vercel login`,
-    note: `Pick "Continue with GitHub". After this, Claude Code can deploy sites itself and reply with the live URL — no clicking around the Vercel dashboard.`,
-  },
-  {
-    title: "Building a new client site",
-    bullets: [
-      `Create a prompt (generated from the Dygiko CRM's "Claude Build Brief" template) plus a screenshot of the client's Google Business Profile.`,
-      `Open a new terminal tab, cd ~/Desktop, run claude.`,
-      `Paste the prompt into the chat.`,
-      `When Claude Code finishes, it will reply with just the live Vercel URL.`,
-    ],
-  },
-  {
-    title: "Edits after launch",
-    note: `Sam (or the client via Sam) will send change requests. Open Claude Code in the project folder, describe the change, and it'll commit + push + redeploy automatically. Don't push manually unless you know what you're doing.`,
-  },
-  {
-    title: "If your local copy ever goes missing",
-    code: `cd ~/Desktop
-git clone https://github.com/samdygiko/dygiko.git
-cd dygiko
-npm install`,
-    note: `Nothing is lost — everything's on GitHub. Done in 30 seconds. Same applies to any client repo — the URL just changes.`,
-  },
-];
-
-const FOUNDER_STEPS: OnboardingStep[] = [
-  {
-    title: "Install Homebrew",
-    code: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`,
-    note: `Run the three "Next steps" lines it prints to add Homebrew to PATH.`,
-  },
-  {
-    title: "Install Node, Git, Claude Code, Vercel CLI, GitHub CLI",
-    code: `brew install node git gh
-npm install -g @anthropic-ai/claude-code vercel`,
-  },
-  {
-    title: "Configure Git",
-    code: `git config --global user.name "Your Name"
-git config --global user.email "you@dygiko.com"`,
-    note: `Use the email tied to your GitHub account. If you skip this, Git falls back to your Mac's username + a fake "@your-laptop.local" email — commits won't link to GitHub, won't show on the contributions graph, and git blame will show your macOS username forever. One-time setup per device.`,
-  },
-  {
-    title: "Log into GitHub (browser + CLI)",
-    bullets: [
-      `Browser: go to github.com, log in with samdygiko credentials (Sam shares).`,
-      `CLI: gh auth login → pick GitHub.com → HTTPS → "login with a web browser". This unblocks gh PR/repo commands.`,
-    ],
-  },
-  {
-    title: "Log into Claude Code",
-    code: `claude`,
-    note: `Authenticate via browser — use the Dygiko Claude account.`,
-  },
-  {
-    title: "Give Claude Code context about you (~/.claude/CLAUDE.md)",
-    code: `mkdir -p ~/.claude
-open -e ~/.claude/CLAUDE.md`,
-    bullets: [
-      `This is your personal context file — Claude Code reads it at the start of every session, on every project, on this device.`,
-      `It lives outside any git repo, so it travels with you (you set it up once per new device).`,
-      `Paste the template below, fill in the gaps, save, close. From now on every Claude Code session already knows who you are, what you ship, and the production rules.`,
-    ],
-    note: `Template to paste (edit anything in [brackets]):
-
-# About me
-- I'm Eden, founder of Dygiko (dygiko.com).
-- Primary working machine — repos sit under ~/Desktop/.
-
-# Repos & where they deploy
-- ~/Desktop/dygiko (samdygiko/dygiko) → dygiko.com + /crm. Production branch is master, NOT main. Pushing to main has broken the live site before — don't.
-- ~/Desktop/deal-sourcing (hayford-web) → live Hayford app. Deploys from main, so any push there hits prod. Treat carefully.
-- ~/Desktop/hayford-website → hayfordgroup.com/crm via Vercel rewrites + basePath "/crm".
-- Per-client demo sites (e.g. hrai-constructions) → own repo under samdygiko, own Vercel project, auto-deploy from main.
-
-# House rules
-- Always confirm which directory + branch before pushing.
-- If a Desktop folder disappears, nothing is lost — clone it back from GitHub. Don't panic, don't recreate from scratch.
-- This Next.js (in dygiko monorepo) has breaking changes from defaults — read node_modules/next/dist/docs/ before writing Next.js code. AGENTS.md in that repo says the same.
-
-# How I like to work
-- Terse responses, no preamble.
-- Don't add comments to code unless the WHY is non-obvious.
-- Show me the diff, don't re-summarise it.`,
-  },
-  {
-    title: "Log into Vercel (browser + CLI)",
-    bullets: [
-      `Browser: vercel.com, sign in with the Dygiko Vercel account.`,
-      `CLI: vercel login → "Continue with GitHub". This is what lets Claude Code deploy without any dashboard clicks.`,
-    ],
-  },
-  {
-    title: "Clone the Dygiko monorepo",
-    code: `cd ~/Desktop
-git clone https://github.com/samdygiko/dygiko.git
-cd dygiko
-npm install`,
-  },
-  {
-    title: "Pull environment variables",
-    code: `vercel link
-vercel env pull .env.local`,
-    note: `Run from inside ~/Desktop/dygiko. The first command links this folder to the dygiko Vercel project; the second downloads all production env vars. If vercel link asks to scope, pick the samdygikos-projects team.`,
-  },
-  {
-    title: "Run the CRM dev server",
-    code: `npm run dev`,
-    note: `Visit http://localhost:3000/crm to confirm everything works. Leave this tab running.`,
-  },
-  {
-    title: "Open Claude Code for the CRM",
-    code: `cd ~/Desktop/dygiko
-claude`,
-    note: `New terminal tab. Inside Claude Code, run /init once — that creates / refreshes CLAUDE.md. Already exists in this repo via AGENTS.md, so just confirm.`,
-  },
-  {
-    title: "Hard rules — read before pushing anything",
-    warnings: [
-      `Dygiko's production branch is master. Never push to main. There was a live-site incident from this — git push origin main will not deploy and may break things.`,
-      `There's an OLD deal-sourcing/hayford-web repo on disk that mirrors the live Hayford CRM. Pushing to its main overwrites the real live app. Don't touch it unless you know which one you're in.`,
-      `The Hayford site at hayfordgroup.com/crm is a separate project served via Vercel rewrites + a basePath: "/crm" Next config + a postbuild script that moves out/crm. If something there breaks, that's the chain to debug.`,
-    ],
-  },
-  {
-    title: "The day-2 mental map",
-    bullets: [
-      `Dygiko (~/Desktop/dygiko, samdygiko/dygiko, master) — main marketing site at dygiko.com + the CRM at /crm.`,
-      `Hayford site (~/Desktop/deal-sourcing/hayford-web) — separate Vercel project, old code, careful pushes.`,
-      `Hayford CRM (separate Flutter app, deploys via GitHub Actions to Firebase) — not in the local toolchain unless you specifically open it.`,
-      `Each client demo site (e.g. hrai-constructions, akwabaetnicas) — its own repo under samdygiko, its own Vercel project, auto-deploys from main.`,
-    ],
-  },
-  {
-    title: "Building a new client site (the one-shot flow)",
-    bullets: [
-      `In CRM → Admin → Claude Build Brief, fill the fields, copy the brief.`,
-      `Paste into claude.ai (web app), drop in the GBP screenshot — it returns a Claude Code prompt.`,
-      `New terminal tab: cd ~/Desktop, claude, paste the prompt, attach the screenshot, hit go.`,
-      `Claude Code builds → pushes to GitHub → deploys to Vercel → replies with the live URL only.`,
-    ],
-  },
-  {
-    title: "External services to be aware of",
-    note: `JustCall (calling/SMS), Stripe (payments), Resend (transactional email), Google Places API (Business Finder), Companies House API (deal-sourcing), Firebase (auth + Firestore), IONOS (domains), Trustpilot Business.`,
-  },
-  {
-    title: "If your local copy ever goes missing",
-    code: `cd ~/Desktop
-git clone https://github.com/samdygiko/dygiko.git
-cd dygiko
-npm install`,
-    note: `Nothing is lost — everything's on GitHub. Done in 30 seconds. Same applies to any client repo — the URL just changes.`,
-  },
-];
-
-function CodeBlock({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <div className="relative rounded-sm overflow-hidden" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
-      <pre
-        style={{
-          padding: "14px 60px 14px 16px",
-          fontSize: "12.5px",
-          lineHeight: 1.7,
-          color: "#b0ff00",
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          margin: 0,
-        }}
-      >
-        {code}
-      </pre>
-      <button
-        onClick={() => {
-          navigator.clipboard.writeText(code);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }}
-        style={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          fontSize: "10.5px",
-          fontWeight: 600,
-          padding: "4px 10px",
-          borderRadius: "2px",
-          background: copied ? "rgba(176,255,0,0.15)" : "rgba(255,255,255,0.06)",
-          color: copied ? "#b0ff00" : "rgba(255,255,255,0.6)",
-          border: copied ? "1px solid rgba(176,255,0,0.3)" : "1px solid rgba(255,255,255,0.08)",
-          cursor: "pointer",
-          transition: "all 0.15s",
-        }}
-      >
-        {copied ? "✓ Copied" : "Copy"}
-      </button>
-    </div>
-  );
-}
-
-function OnboardingContent() {
-  const [role, setRole] = useState<"Designer" | "Founder">("Designer");
-  const steps = role === "Designer" ? DESIGNER_STEPS : FOUNDER_STEPS;
-  const heading = role === "Designer" ? "🎨 Designer Onboarding" : "👑 Founder Onboarding — Full Access";
-  const subheading = role === "Designer"
-    ? "First-time setup for designers. Get the toolchain installed so Claude Code can build and deploy client sites for you."
-    : "Full keys to Dygiko + every client repo + production deploys. Work through these in order.";
+  const cancel = async (id: string) => {
+    if (!confirm("Cancel this queued email? It won't be sent.")) return;
+    try { await deleteDoc(doc(db, "scheduled_emails", id)); } catch { /* ignore */ }
+  };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-1">Onboarding</h2>
-      <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>
-        New to the team? Pick your role and follow the steps top-to-bottom.
-      </p>
-
-      {/* Quick-resume helper — for when you've already onboarded and just closed your laptop / Terminal */}
-      <div
-        className="rounded-sm p-5 mb-8"
-        style={{ background: "rgba(176,255,0,0.04)", border: "1px solid rgba(176,255,0,0.18)" }}
-      >
-        <h3 className="text-sm font-semibold mb-1" style={{ color: "#b0ff00" }}>
-          ⚡ Closed your laptop or quit Terminal? Pick up where you left off
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-white">
+          Queued for 7am{rows.length > 0 ? ` · ${rows.length}` : ""}
         </h3>
-        <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Already onboarded — just need to get the dev server + Claude Code running again. Open Terminal and run:
-        </p>
-        <CodeBlock
-          code={`cd ~/Desktop/dygiko
-git pull
-npm run dev`}
-        />
-        <p className="text-xs mt-3 mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Then in a new tab, reopen Claude Code in the project (use <code style={{ color: "#b0ff00" }}>--resume</code> to keep your last session):
-        </p>
-        <CodeBlock
-          code={`cd ~/Desktop/dygiko
-claude --resume`}
-        />
-        <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.4)" }}>
-          Folder gone? See <strong style={{ color: "rgba(255,255,255,0.6)" }}>"If your local copy ever goes missing"</strong> at the bottom of the steps.
-        </p>
       </div>
-
-      <div className="flex gap-2 mb-8">
-        {(["Designer", "Founder"] as const).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRole(r)}
-            style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              padding: "8px 18px",
-              borderRadius: "2px",
-              background: role === r ? "#b0ff00" : "transparent",
-              color: role === r ? "#080808" : "rgba(255,255,255,0.55)",
-              border: role === r ? "none" : "1px solid rgba(255,255,255,0.1)",
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-sm p-6 mb-6" style={{ background: "rgba(176,255,0,0.03)", border: "1px solid rgba(176,255,0,0.1)" }}>
-        <h3 className="text-lg font-bold text-white mb-1">{heading}</h3>
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{subheading}</p>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {steps.map((step, i) => (
-          <div
-            key={i}
-            className="rounded-sm p-5"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            <div className="flex items-start gap-4 mb-3">
-              <span
-                className="shrink-0 flex items-center justify-center text-xs font-mono font-bold"
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "50%",
-                  background: "rgba(176,255,0,0.1)",
-                  color: "#b0ff00",
-                  border: "1px solid rgba(176,255,0,0.25)",
-                }}
-              >
-                {i + 1}
-              </span>
-              <h4 className="text-base font-semibold text-white pt-0.5">{step.title}</h4>
-            </div>
-
-            {step.code && (
-              <div className="mb-3 ml-10">
-                <CodeBlock code={step.code} />
+      {rows.length === 0 ? (
+        <div className="text-sm px-3 py-4 rounded-sm" style={{ color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          Nothing queued. Hit ✉ Email on a business to line one up.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {rows.map((r) => (
+            <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="min-w-0">
+                <div className="text-sm text-white truncate">{r.email}</div>
+                <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{r.trade}</div>
               </div>
-            )}
+              <button
+                onClick={() => cancel(r.id)}
+                className="text-xs px-2.5 py-1 rounded-sm shrink-0 ml-3 transition-colors"
+                style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                Cancel
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-            {step.bullets && (
-              <ul className="ml-10 flex flex-col gap-2 mb-1">
-                {step.bullets.map((b, j) => (
-                  <li key={j} className="flex items-start gap-3 text-sm" style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>
-                    <span style={{ color: "#b0ff00", marginTop: "2px" }}>→</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+// Postcode tracker — tick off districts as you clear them (saved locally).
+function PostcodeSweep() {
+  const [openArea, setOpenArea] = useState<string | null>(null);
+  const [done, setDone] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try { const raw = localStorage.getItem("kojoPostcodesDone"); if (raw) setDone(new Set(JSON.parse(raw))); } catch { /* ignore */ }
+  }, []);
+  const persist = (s: Set<string>) => { try { localStorage.setItem("kojoPostcodesDone", JSON.stringify([...s])); } catch { /* ignore */ } };
+  const toggle = (d: string) => setDone((prev) => { const n = new Set(prev); n.has(d) ? n.delete(d) : n.add(d); persist(n); return n; });
 
-            {step.note && (
-              <p className="ml-10 text-sm" style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
-                {step.note}
-              </p>
-            )}
+  const areas = UK_POSTCODES;
 
-            {step.warnings && (
-              <ul className="ml-10 flex flex-col gap-2.5">
-                {step.warnings.map((w, j) => (
-                  <li
-                    key={j}
-                    className="text-sm rounded-sm px-3 py-2"
-                    style={{
-                      color: "rgba(255,200,200,0.85)",
-                      background: "rgba(255,80,80,0.05)",
-                      border: "1px solid rgba(255,80,80,0.15)",
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    ⚠ {w}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+  return (
+    <div>
+      <h3 className="text-base font-semibold text-white mb-3">Postcodes</h3>
+      <div className="flex flex-col gap-1">
+        {areas.map((a) => {
+          const cleared = a.districts.filter((d) => done.has(d)).length;
+          const total = a.districts.length;
+          const isOpen = openArea === a.area;
+          const allDone = cleared === total;
+          return (
+            <div key={a.area} className="rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+              <button
+                onClick={() => setOpenArea(isOpen ? null : a.area)}
+                className="w-full flex items-center justify-between px-3 py-2 text-left"
+              >
+                <span className="text-sm" style={{ color: allDone ? "rgba(255,255,255,0.35)" : "#fff" }}>
+                  <span className="font-semibold">{a.area}</span> · {a.name}
+                </span>
+                <span className="text-xs" style={{ color: allDone ? "#48c78e" : "rgba(255,255,255,0.4)" }}>
+                  {cleared}/{total}{allDone ? " ✓" : ""}
+                </span>
+              </button>
+              {isOpen && (
+                <div className="flex flex-wrap gap-1.5 px-3 pb-3">
+                  {a.districts.map((d) => {
+                    const on = done.has(d);
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => toggle(d)}
+                        className="text-xs px-2 py-1 rounded-sm transition-colors"
+                        style={{
+                          background: on ? "rgba(72,199,142,0.12)" : "rgba(255,255,255,0.04)",
+                          border: on ? "1px solid rgba(72,199,142,0.3)" : "1px solid rgba(255,255,255,0.1)",
+                          color: on ? "#48c78e" : "rgba(255,255,255,0.65)",
+                          textDecoration: on ? "line-through" : "none",
+                        }}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
