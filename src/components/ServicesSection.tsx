@@ -80,17 +80,11 @@ export default function ServicesSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.75 }}
         >
-          <p
-            className="text-xs uppercase tracking-[0.2em] mb-4"
-            style={{ color: "rgba(255,255,255,0.35)" }}
-          >
-            Pricing
-          </p>
           <h2
             className="font-heading font-black tracking-tight"
-            style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", lineHeight: 1.05 }}
+            style={{ fontSize: "clamp(3.5rem, 9vw, 8rem)", lineHeight: 1.0 }}
           >
-            Simple, transparent pricing
+            Pricing
           </h2>
         </motion.div>
 
