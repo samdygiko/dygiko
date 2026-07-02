@@ -4,39 +4,12 @@ import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 
 type Package = {
-  num: string;
-  icon: React.ReactNode;
   name: string;
   price: number;
   checkoutPkg: "site" | "crm" | "bundle";
   includes: string[];
   featured?: boolean;
 };
-
-const IconMonitor = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-);
-
-const IconSearch = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="7" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    <line x1="9" y1="11" x2="13" y2="11" />
-    <line x1="11" y1="9" x2="11" y2="13" />
-  </svg>
-);
-
-const IconRocket = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2C12 2 7 6 7 13h10c0-7-5-11-5-11z" />
-    <path d="M7 13c0 0-3 1.5-3 5h16c0-3.5-3-5-3-5" />
-    <line x1="12" y1="13" x2="12" y2="19" />
-  </svg>
-);
 
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#b0ff00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -49,8 +22,18 @@ export const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
 
 const PACKAGES: Package[] = [
   {
-    num: "01",
-    icon: <IconMonitor />,
+    name: "Custom OMS",
+    price: 1000,
+    checkoutPkg: "crm",
+    includes: [
+      "Custom OMS tailored to your business",
+      "Leads, customers & pipeline tracking",
+      "Calls, notes, follow-ups in one place",
+      "Built around your workflow",
+      "Unlimited revisions",
+    ],
+  },
+  {
     name: "Website",
     price: 500,
     checkoutPkg: "site",
@@ -66,32 +49,16 @@ const PACKAGES: Package[] = [
     ],
   },
   {
-    num: "02",
-    icon: <IconSearch />,
-    name: "CRM",
-    price: 1000,
-    checkoutPkg: "crm",
-    includes: [
-      "Custom CRM tailored to your business",
-      "Leads, customers & pipeline tracking",
-      "Calls, notes, follow-ups in one place",
-      "Built around your workflow",
-      "Unlimited revisions",
-    ],
-  },
-  {
-    num: "03",
-    icon: <IconRocket />,
-    name: "Website + CRM",
+    name: "Website + Custom OMS",
     price: 1250,
     checkoutPkg: "bundle",
     featured: true,
     includes: [
       "Everything in Website",
-      "Everything in CRM",
+      "Everything in Custom OMS",
       "Best value — save £250/yr vs separate",
       "Single login, unified setup",
-      "Unlimited revisions to site & CRM",
+      "Unlimited revisions to site & OMS",
     ],
   },
 ];
@@ -125,16 +92,13 @@ export default function ServicesSection() {
           >
             Simple, transparent pricing
           </h2>
-          <p className="text-sm mt-6" style={{ color: "rgba(255,255,255,0.45)" }}>
-            One yearly price · everything included · you own it
-          </p>
         </motion.div>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3">
           {PACKAGES.map((pkg, i) => (
             <motion.div
-              key={pkg.num}
+              key={pkg.checkoutPkg}
               className={`service-card group flex flex-col gap-7 p-8 py-12 ${pkg.featured ? "service-card-featured" : ""}`}
               style={{
                 borderRight:
@@ -148,14 +112,6 @@ export default function ServicesSection() {
               viewport={{ once: true, amount: 0.15 }}
               transition={{ duration: 0.7, delay: i * 0.12 }}
             >
-              {/* Number + icon */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono" style={{ color: "#b0ff00" }}>
-                  {pkg.num}
-                </span>
-                <span style={{ color: "rgba(255,255,255,0.3)" }}>{pkg.icon}</span>
-              </div>
-
               {/* Name + price */}
               <div>
                 <h3 className="font-heading text-xl font-bold tracking-tight mb-1">
@@ -169,9 +125,6 @@ export default function ServicesSection() {
                   <span className="text-base font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
                     {" "}/year
                   </span>
-                </p>
-                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  {pkg.featured ? "Best value · save £250/yr" : "Billed yearly · cancel anytime"}
                 </p>
               </div>
 
