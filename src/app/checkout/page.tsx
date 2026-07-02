@@ -8,7 +8,7 @@ import { PACKAGES, getPackage } from "@/lib/products";
 import { useI18n } from "@/lib/i18n";
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-const ACCENT = "#2563eb";
+const ACCENT = "#4d7c0f";
 
 declare global {
   interface Window {
@@ -269,7 +269,7 @@ function CheckoutInner() {
         .kb-checkout-grid input::placeholder,
         .kb-checkout-grid textarea::placeholder { color: #aab6cc; }
         .kb-checkout-grid input:focus,
-        .kb-checkout-grid textarea:focus { border-color: #2563eb; }
+        .kb-checkout-grid textarea:focus { border-color: #4d7c0f; }
         @media (min-width: 900px) {
           .kb-checkout-grid { grid-template-columns: 1fr 360px !important; }
         }

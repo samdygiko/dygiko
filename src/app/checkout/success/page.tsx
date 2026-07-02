@@ -7,7 +7,7 @@ import Nav from "@/components/Nav";
 import { getPackage } from "@/lib/products";
 import { useI18n } from "@/lib/i18n";
 
-const ACCENT = "#2563eb";
+const ACCENT = "#4d7c0f";
 
 function SuccessInner() {
   const params = useSearchParams();
