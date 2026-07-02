@@ -74,12 +74,6 @@ export default function ContactSection() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.75 }}
           >
-            <p
-              className="text-xs uppercase tracking-[0.2em] mb-5"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-            >
-              Get in touch
-            </p>
             <h2
               className="font-heading font-black tracking-tight mb-6"
               style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", lineHeight: 1.05 }}
@@ -99,12 +93,12 @@ export default function ContactSection() {
             {/* Contact details */}
             <div className="flex flex-col gap-4">
               <a
-                href="mailto:sam@dygiko.com"
+                href="mailto:hello@dygiko.com"
                 className="flex items-center gap-3 text-sm transition-colors duration-200 hover:text-white"
                 style={{ color: "rgba(255,255,255,0.45)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
-                sam@dygiko.com
+                hello@dygiko.com
               </a>
             </div>
           </motion.div>
@@ -215,7 +209,7 @@ export default function ContactSection() {
 
                 {state === "error" && (
                   <p className="text-sm" style={{ color: "#ff6b6b" }}>
-                    Something went wrong. Please email us directly at sam@dygiko.com
+                    Something went wrong. Please email us directly at hello@dygiko.com
                   </p>
                 )}
 

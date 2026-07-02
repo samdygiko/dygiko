@@ -148,7 +148,7 @@ export default function TermsPage() {
           <Section num="05" title="Cancellation Policy">
             <p>
               You may <strong className="text-white">cancel anytime</strong> from within your Stripe
-              billing portal or by emailing sam@dygiko.com. Billing stops at the end of your current
+              billing portal or by emailing hello@dygiko.com. Billing stops at the end of your current
               billing period — no further charges will be taken.
             </p>
             <p>
@@ -175,7 +175,7 @@ export default function TermsPage() {
               changes — for as long as your subscription is active.
             </p>
             <p>
-              Submit revision requests by replying to any Dygiko email or messaging sam@dygiko.com.
+              Submit revision requests by replying to any Dygiko email or messaging hello@dygiko.com.
               We aim to handle requests as quickly as we can. Larger structural changes
               (e.g. adding a full new page or new CRM workflow) may take longer; we will confirm
               expected timelines on request.
@@ -222,7 +222,7 @@ export default function TermsPage() {
             </p>
             <p>
               You have the right to access, correct, or request deletion of your personal data at
-              any time by contacting sam@dygiko.com. Full details are set out in our{" "}
+              any time by contacting hello@dygiko.com. Full details are set out in our{" "}
               <a href="/privacy" style={{ color: "#b0ff00" }}>Privacy Policy</a>.
             </p>
           </Section>
@@ -263,7 +263,7 @@ export default function TermsPage() {
               agreement with us, please contact:
             </p>
             <ul className="list-none space-y-1.5 mt-2">
-              <li><strong className="text-white">Email:</strong> sam@dygiko.com</li>
+              <li><strong className="text-white">Email:</strong> hello@dygiko.com</li>
               <li><strong className="text-white">Website:</strong> dygiko.com</li>
               <li><strong className="text-white">Business hours:</strong> Monday – Friday, 9am – 6pm GMT</li>
             </ul>

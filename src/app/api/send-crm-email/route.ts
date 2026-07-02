@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     if (type === "interest") {
       await resend.emails.send({
-        from: "Sam at Dygiko <sam@dygiko.com>",
+        from: "Sam at Dygiko <hello@dygiko.com>",
         to,
         subject: "We'll be in touch — Your free website from Dygiko",
         text: `Hi ${name},
@@ -27,7 +27,7 @@ Speak soon,`,
       });
     } else if (type === "closed") {
       await resend.emails.send({
-        from: "Sam at Dygiko <sam@dygiko.com>",
+        from: "Sam at Dygiko <hello@dygiko.com>",
         to,
         subject: "Welcome to Dygiko — Let's get started!",
         text: `Hi ${name},
@@ -42,21 +42,21 @@ Welcome aboard!`,
       });
     } else if (type === "quote-website") {
       await resend.emails.send({
-        from: "Sam at Dygiko <sam@dygiko.com>",
+        from: "Sam at Dygiko <hello@dygiko.com>",
         to,
         subject: PACKAGE_EMAILS.website.subject(businessName),
         html: PACKAGE_EMAILS.website.html(name, businessName),
       });
     } else if (type === "quote-crm") {
       await resend.emails.send({
-        from: "Sam at Dygiko <sam@dygiko.com>",
+        from: "Sam at Dygiko <hello@dygiko.com>",
         to,
         subject: PACKAGE_EMAILS.crm.subject(businessName),
         html: PACKAGE_EMAILS.crm.html(name, businessName),
       });
     } else if (type === "quote-website-crm") {
       await resend.emails.send({
-        from: "Sam at Dygiko <sam@dygiko.com>",
+        from: "Sam at Dygiko <hello@dygiko.com>",
         to,
         subject: PACKAGE_EMAILS.websiteCrm.subject(businessName),
         html: PACKAGE_EMAILS.websiteCrm.html(name, businessName),

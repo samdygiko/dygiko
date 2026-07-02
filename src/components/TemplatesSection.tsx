@@ -169,15 +169,12 @@ export default function TemplatesSection() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-xs uppercase tracking-[0.2em] mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-            Our work
-          </p>
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <h2
               className="font-heading font-black tracking-tight"
               style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", lineHeight: 1.05 }}
             >
-              Built for real businesses
+              Demo sites
             </h2>
           </div>
         </motion.div>

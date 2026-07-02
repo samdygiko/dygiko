@@ -116,12 +116,12 @@ function buildEmail({
     </p>
     <br/>
     <p class="signoff-name">Sam</p>
-    <p class="signoff-role">Dygiko · sam@dygiko.com · 07723396306</p>
+    <p class="signoff-role">Dygiko · hello@dygiko.com · 07723396306</p>
   </div>
 
   <div class="footer">
     <img src="https://dygiko.com/logo-email.png" alt="Dygiko" width="80" style="display:inline-block;height:auto;border:0;outline:none;vertical-align:middle;" />
-    <span class="footer-links">dygiko.com · sam@dygiko.com</span>
+    <span class="footer-links">dygiko.com · hello@dygiko.com</span>
   </div>
 </div>
 </body>

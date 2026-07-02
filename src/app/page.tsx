@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import DemoMarquee from "@/components/DemoMarquee";
 import TemplatesSection from "@/components/TemplatesSection";
-import ClientMarquee from "@/components/ClientMarquee";
 import ContactSection from "@/components/ContactSection";
 import FloatingButtons from "@/components/FloatingButtons";
 import ScrollProgress from "@/components/ScrollProgress";
@@ -25,7 +24,7 @@ const jsonLd = {
   name: "Dygiko",
   url: "https://www.dygiko.com",
   logo: "https://dygiko.com/dygiko-logo-400.png",
-  email: "sam@dygiko.com",
+  email: "hello@dygiko.com",
   description:
     "Dygiko builds fast, professional websites for businesses globally. Web design, SEO, Google Business Profile, custom CRM and mobile apps. Live in 2 days from £49/month, no upfront cost.",
   areaServed: "Worldwide",
@@ -63,7 +62,6 @@ export default function HomePage() {
         <ServicesSection />
         <DemoMarquee />
         <TemplatesSection />
-        <ClientMarquee />
         <CubeSection />
         <ContactSection />
       </main>

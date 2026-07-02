@@ -1,5 +1,5 @@
 // Shared follow-up email: builds the template + sends it through Zoho SMTP
-// (from sam@dygiko.com → lands in Sent). Used by both the single-send route
+// (from hello@dygiko.com → lands in Sent). Used by both the single-send route
 // (/api/send-followup) and the batch route (/api/send-followup-batch).
 
 import nodemailer from "nodemailer";

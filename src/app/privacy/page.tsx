@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           <Section title="1. Who we are">
             <p>
               Dygiko (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is a UK-based web design
-              studio. Our website is dygiko.com. You can contact us at sam@dygiko.com.
+              studio. Our website is dygiko.com. You can contact us at hello@dygiko.com.
             </p>
             <p>
               We are committed to protecting your personal data and complying with the UK
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
               <li><strong className="text-white">Object</strong> — Object to processing based on legitimate interests.</li>
             </ul>
             <p>
-              To exercise any of these rights, contact us at sam@dygiko.com. We will
+              To exercise any of these rights, contact us at hello@dygiko.com. We will
               respond within 30 days.
             </p>
           </Section>
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
           <Section title="10. Contact and complaints">
             <p>
               If you have any questions about this privacy policy or how we handle your
-              data, please contact us at sam@dygiko.com.
+              data, please contact us at hello@dygiko.com.
             </p>
             <p>
               You also have the right to lodge a complaint with the Information
