@@ -86,27 +86,6 @@ export default function Hero() {
           Custom-built operations management systems &amp; databases.
         </motion.p>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 1.2 }}
-      >
-        <span
-          className="text-xs uppercase tracking-widest"
-          style={{ color: "rgba(255,255,255,0.2)" }}
-        >
-          scroll
-        </span>
-        <motion.div
-          className="w-px h-8"
-          style={{ background: "rgba(255,255,255,0.15)" }}
-          animate={{ scaleY: [1, 0.3, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.div>
     </section>
   );
 }

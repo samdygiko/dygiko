@@ -147,7 +147,7 @@ function CheckoutInner() {
           <p style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#7c89a3", marginBottom: 12 }}>
             {t.checkout.secureCheckout}
           </p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 44, fontWeight: 700, letterSpacing: "-1px", marginBottom: 40, color: "#0b1b3b" }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 44, fontWeight: 700, letterSpacing: "-1px", marginBottom: 40, color: "#ffffff" }}>
             {t.checkout.title}
           </h1>
 
