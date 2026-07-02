@@ -76,6 +76,15 @@ export default function Hero() {
           ))}
         </h1>
 
+        <motion.p
+          className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
+          style={{ color: "rgba(255,255,255,0.55)" }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
+          Custom-built operations management systems &amp; databases.
+        </motion.p>
       </div>
 
       {/* Scroll indicator */}
