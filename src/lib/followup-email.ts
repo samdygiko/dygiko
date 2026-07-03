@@ -31,9 +31,9 @@ function bodyHtml(trade: string): string {
   <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #0b1b3b; line-height: 1.5;">
     <p>Hi, hope you're well — I'm Sam, I build systems for ${esc(trade)} to manage all their admin and tech in one place. Here's my website so you can see pricing: <a href="https://dygiko.com" style="color:#4d7c0f;">https://dygiko.com</a></p>
     <p>Here are some demo systems so you can have an idea of what it might look like:<br>
-      <a href="https://voltix-crm.vercel.app" style="color:#4d7c0f;">https://voltix-crm.vercel.app</a><br>
-      <a href="https://marsden-crm.vercel.app" style="color:#4d7c0f;">https://marsden-crm.vercel.app</a><br>
-      <a href="https://brightwater-crm.vercel.app" style="color:#4d7c0f;">https://brightwater-crm.vercel.app</a>
+      <a href="https://voltix-crm.vercel.app" style="color:#4d7c0f;">Electrician system</a><br>
+      <a href="https://marsden-crm.vercel.app" style="color:#4d7c0f;">Construction system</a><br>
+      <a href="https://brightwater-crm.vercel.app" style="color:#4d7c0f;">Dental system</a>
     </p>
     <p>If managing all your admin, clients and data is becoming a headache, here's the link to get started: <a href="https://dygiko.com/checkout?pkg=crm" style="color:#4d7c0f;">https://dygiko.com/checkout?pkg=crm</a></p>
     ${SIGNATURE_HTML}
@@ -45,9 +45,9 @@ function bodyText(trade: string): string {
   return `Hi, hope you're well — I'm Sam, I build systems for ${trade} to manage all their admin and tech in one place. Here's my website so you can see pricing: https://dygiko.com
 
 Here are some demo systems so you can have an idea of what it might look like:
-https://voltix-crm.vercel.app
-https://marsden-crm.vercel.app
-https://brightwater-crm.vercel.app
+Electrician system: https://voltix-crm.vercel.app
+Construction system: https://marsden-crm.vercel.app
+Dental system: https://brightwater-crm.vercel.app
 
 If managing all your admin, clients and data is becoming a headache, here's the link to get started: https://dygiko.com/checkout?pkg=crm
 
