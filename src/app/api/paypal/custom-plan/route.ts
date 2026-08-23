@@ -11,7 +11,7 @@ import { createYearlyPlan, createQuarterlyPlan, createMonthlyPlan, createProduct
 import { Timestamp } from "firebase-admin/firestore";
 
 export const MIN_CUSTOM_PRICE = 10;
-export const MAX_CUSTOM_PRICE = 5000;
+export const MAX_CUSTOM_PRICE = 100000;
 
 async function getProductId(): Promise<string> {
   const { adminDb } = await import("@/lib/firebase-admin");

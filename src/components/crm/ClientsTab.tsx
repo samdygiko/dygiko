@@ -28,6 +28,19 @@ type Package = (typeof PACKAGES)[number];
 const PAYMENT_TYPES = ["PayPal", "Invoice"] as const;
 type PaymentType = (typeof PAYMENT_TYPES)[number];
 
+// How often they're billed. `price` is always the amount for ONE cycle;
+// everything annualised multiplies by this. Clients saved before this field
+// existed have no value and are treated as Annual.
+const BILLING_PERIODS = ["Annual", "Quarterly", "Monthly"] as const;
+type BillingPeriod = (typeof BILLING_PERIODS)[number];
+const CYCLES_PER_YEAR: Record<BillingPeriod, number> = { Annual: 1, Quarterly: 4, Monthly: 12 };
+const PERIOD_SUFFIX: Record<BillingPeriod, string> = { Annual: "/yr", Quarterly: "/qtr", Monthly: "/mo" };
+
+const periodOf = (c: { billingPeriod?: string }): BillingPeriod =>
+  (BILLING_PERIODS as readonly string[]).includes(c.billingPeriod ?? "")
+    ? (c.billingPeriod as BillingPeriod)
+    : "Annual";
+
 // Legacy package names from clients added before the rebrand. Read-only — kept
 // so existing client cards and revenue calcs don't break. Pre-existing clients
 // keep their stored package name; only new clients pick from PACKAGES above.
@@ -55,10 +68,10 @@ type Client = {
   email: string;
   package: AnyPackage;
   subscriptionStatus: SubStatus;
-  billingPeriod?: string; // legacy field — ignored under monthly pricing
+  billingPeriod?: string; // "Annual" | "Quarterly" | "Monthly" — absent means Annual
   websiteUrl: string;
   monthlyPrice?: number; // legacy field — ignored; use `price`
-  price?: number; // the monthly amount the customer pays
+  price?: number; // the amount charged each billing cycle
   paymentType?: PaymentType; // how they pay — PayPal or Invoice
   ownerUid?: string | null;
   ownerName?: string | null;
@@ -78,12 +91,21 @@ const dateToInput = (ts: Client["dateAdded"]): string => {
   return new Date(d.getTime() - off).toISOString().slice(0, 10);
 };
 
-// Returns this client's ANNUAL price.
-// Prefers the stored `price`, falls back to the package default, then 0.
-const revenueFor = (c: Client): number => {
+// What the client is charged each billing cycle.
+const cyclePriceFor = (c: Client): number => {
   if (typeof c.price === "number") return c.price;
-  return PACKAGE_PRICE[c.package] ?? 0;
+  const annual = PACKAGE_PRICE[c.package] ?? 0;
+  return Math.round(annual / CYCLES_PER_YEAR[periodOf(c)]);
 };
+
+// Annualised — a £69/mo client is £828/yr. Drives ARR and the monthly average.
+const revenueFor = (c: Client): number =>
+  cyclePriceFor(c) * CYCLES_PER_YEAR[periodOf(c)];
+
+// Package default for a given billing period, so switching period gives a
+// sensible starting figure rather than an annual price on a monthly plan.
+const defaultCyclePrice = (pkg: AnyPackage, period: BillingPeriod): number =>
+  Math.round((PACKAGE_PRICE[pkg] ?? 0) / CYCLES_PER_YEAR[period]);
 
 const SUB_STATUS_COLORS: Record<SubStatus, { bg: string; color: string }> = {
   Active: { bg: "rgba(176,255,0,0.1)", color: "#b0ff00" },
@@ -118,6 +140,7 @@ const blankForm = () => ({
   subscriptionStatus: "Active" as SubStatus,
   websiteUrl: "",
   price: PACKAGE_PRICE.Website,
+  billingPeriod: "Annual" as BillingPeriod,
   paymentType: "PayPal" as PaymentType,
   dateAdded: todayInput(),
 });
@@ -141,7 +164,7 @@ export default function ClientsTab() {
   async function addClient() {
     if (!form.businessName.trim()) return;
     setSaving(true);
-    const defaultPrice = PACKAGE_PRICE[form.package] ?? 0;
+    const defaultPrice = defaultCyclePrice(form.package, form.billingPeriod);
     await addDoc(collection(db, "clients"), {
       businessName: form.businessName.trim(),
       email: form.email.trim(),
@@ -149,6 +172,7 @@ export default function ClientsTab() {
       package: form.package,
       subscriptionStatus: "Active",
       price: Number(form.price) || defaultPrice,
+      billingPeriod: form.billingPeriod,
       paymentType: form.paymentType,
       dateAdded: form.dateAdded ? new Date(form.dateAdded + "T12:00:00") : serverTimestamp(),
     });
@@ -158,7 +182,7 @@ export default function ClientsTab() {
   }
 
   async function saveEdit(id: string) {
-    const defaultPrice = PACKAGE_PRICE[editForm.package] ?? 0;
+    const defaultPrice = defaultCyclePrice(editForm.package, editForm.billingPeriod);
     await updateDoc(doc(db, "clients", id), {
       businessName: editForm.businessName.trim(),
       email: editForm.email.trim(),
@@ -166,10 +190,10 @@ export default function ClientsTab() {
       subscriptionStatus: "Active",
       websiteUrl: editForm.websiteUrl.trim(),
       price: Number(editForm.price) || defaultPrice,
+      billingPeriod: editForm.billingPeriod,
       paymentType: editForm.paymentType,
       dateAdded: editForm.dateAdded ? new Date(editForm.dateAdded + "T12:00:00") : serverTimestamp(),
-      // Clear legacy fields so they don't conflict with the monthly `price` field
-      billingPeriod: null,
+      // Clear the legacy field that the `price` field replaced
       monthlyPrice: null,
     });
     setEditId(null);
@@ -278,7 +302,7 @@ export default function ClientsTab() {
                   value={form.package}
                   onChange={(e) => {
                     const pkg = e.target.value as Package;
-                    setForm((f) => ({ ...f, package: pkg, price: PACKAGE_PRICE[pkg] ?? 0 }));
+                    setForm((f) => ({ ...f, package: pkg, price: defaultCyclePrice(pkg, f.billingPeriod) }));
                   }}
                   className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
                   style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
@@ -287,8 +311,22 @@ export default function ClientsTab() {
                 </select>
               </div>
               <div className="flex-1">
+                <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Billing</label>
+                <select
+                  value={form.billingPeriod}
+                  onChange={(e) => {
+                    const bp = e.target.value as BillingPeriod;
+                    setForm((f) => ({ ...f, billingPeriod: bp, price: defaultCyclePrice(f.package, bp) }));
+                  }}
+                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                  style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
+                >
+                  {BILLING_PERIODS.map((b) => <option key={b} value={b} style={{ background: "#121212" }}>{b}</option>)}
+                </select>
+              </div>
+              <div className="flex-1">
                 <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  £/yr (override)
+                  £{PERIOD_SUFFIX[form.billingPeriod]} (override)
                 </label>
                 <input
                   type="number"
@@ -366,7 +404,7 @@ export default function ClientsTab() {
                         <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
                         <select value={editForm.package} onChange={(e) => {
                           const pkg = e.target.value as Package;
-                          setEditForm((f) => ({ ...f, package: pkg, price: PACKAGE_PRICE[pkg] ?? 0 }));
+                          setEditForm((f) => ({ ...f, package: pkg, price: defaultCyclePrice(pkg, f.billingPeriod) }));
                         }} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
                           {PACKAGES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
                           {/* If client is on a legacy package, keep it selectable so we don't silently change their package */}
@@ -376,8 +414,17 @@ export default function ClientsTab() {
                         </select>
                       </div>
                       <div className="flex-1">
+                        <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Billing</label>
+                        <select value={editForm.billingPeriod} onChange={(e) => {
+                          const bp = e.target.value as BillingPeriod;
+                          setEditForm((f) => ({ ...f, billingPeriod: bp, price: defaultCyclePrice(f.package, bp) }));
+                        }} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
+                          {BILLING_PERIODS.map((b) => <option key={b} value={b} style={{ background: "#121212" }}>{b}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex-1">
                         <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                          £/yr (override)
+                          £{PERIOD_SUFFIX[editForm.billingPeriod]} (override)
                         </label>
                         <input type="number" min={0} step={1} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: Number(e.target.value) }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
                       </div>
@@ -420,8 +467,9 @@ export default function ClientsTab() {
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-medium"
                           style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}
+                          title={`£${revenueFor(client).toLocaleString("en-GB")} a year`}
                         >
-                          £{revenueFor(client).toLocaleString("en-GB")}/yr
+                          £{cyclePriceFor(client).toLocaleString("en-GB")}{PERIOD_SUFFIX[periodOf(client)]}
                         </span>
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -452,7 +500,8 @@ export default function ClientsTab() {
                             package: client.package as Package,
                             subscriptionStatus: client.subscriptionStatus,
                             websiteUrl: client.websiteUrl,
-                            price: revenueFor(client),
+                            price: cyclePriceFor(client),
+                            billingPeriod: periodOf(client),
                             paymentType: client.paymentType ?? "PayPal",
                             dateAdded: dateToInput(client.dateAdded),
                           });

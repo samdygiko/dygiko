@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     // Per-cycle charge (client-computed for the cart total / social slider).
     // Falls back to the package's list price; clamped to a sane range.
     const raw = typeof amount === "number" ? Math.round(amount) : product.price;
-    const perCycle = Math.min(5000, Math.max(10, raw));
+    const perCycle = Math.min(100000, Math.max(10, raw));
 
     // Verify the subscription is real (never trust the client alone).
     const sub = await getSubscription(subscriptionID);

@@ -49,10 +49,10 @@ function CheckoutInner() {
     const n = Math.round(Number(raw));
     return Number.isFinite(n) && n >= min && n <= max ? n : null;
   };
-  const oneoff = parseAmt(params.get("oneoff"), 10, 5000);
-  const priceOverride = parseAmt(params.get("price"), 10, 5000);
-  const quarterly = parseAmt(params.get("quarterly"), 10, 5000);
-  const monthly = parseAmt(params.get("monthly"), 10, 5000);
+  const oneoff = parseAmt(params.get("oneoff"), 10, 100000);
+  const priceOverride = parseAmt(params.get("price"), 10, 100000);
+  const quarterly = parseAmt(params.get("quarterly"), 10, 100000);
+  const monthly = parseAmt(params.get("monthly"), 10, 100000);
   const pkgParam = params.get("pkg");
   const singlePkg = pkgParam ? getPackage(pkgParam) : undefined;
 

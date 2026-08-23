@@ -421,7 +421,7 @@ function CustomPriceLink() {
   const [copied, setCopied] = useState(false);
 
   const amount = Math.round(Number(price));
-  const max = 5000;
+  const max = 100000;
   const valid = Number.isFinite(amount) && amount >= 10 && amount <= max;
   const param =
     mode === "year" ? "price"
