@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
+import { useCart } from "@/lib/cart";
 
 type Package = {
   name: string;
@@ -64,6 +65,8 @@ const PACKAGES: Package[] = [
 ];
 
 export default function ServicesSection() {
+  const { addItem } = useCart();
+
   return (
     <section
       className="border-b"
@@ -137,8 +140,8 @@ export default function ServicesSection() {
               {/* Add to cart → PayPal checkout for this package. */}
               <div className="flex flex-col gap-2 self-start">
                 <Magnetic strength={pkg.featured ? 0.28 : 0.18} className="self-start">
-                  <a
-                    href={`/checkout?pkg=${pkg.checkoutPkg}`}
+                  <button
+                    onClick={() => addItem(pkg.checkoutPkg)}
                     className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-sm transition-opacity duration-200 hover:opacity-80"
                     style={{
                       background: pkg.featured ? "#b0ff00" : "transparent",
@@ -147,7 +150,7 @@ export default function ServicesSection() {
                     }}
                   >
                     Add to cart →
-                  </a>
+                  </button>
                 </Magnetic>
               </div>
             </motion.div>

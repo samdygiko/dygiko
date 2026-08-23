@@ -1,10 +1,10 @@
-// Kojo Builds package catalog — annual subscription pricing (billed yearly).
+// Dygiko package catalog — ANNUAL SUBSCRIPTION pricing (billed once a year,
+// Dygiko builds + hosts + maintains it, client licenses it while subscribed).
 // This is the single source of truth for prices: the public pricing section,
-// the /checkout page, the PayPal subscription plans, and the CRM payment-link
-// generator all read from here. Change a price once, here (then re-run
-// /api/paypal/setup-plans to regenerate the PayPal billing plans).
+// the /checkout page, the PayPal billing plans, and the CRM payment-link
+// generator all read from here. `price` is the ANNUAL amount in GBP.
 
-export type PackageKey = "site" | "crm" | "bundle";
+export type PackageKey = "site" | "crm" | "bundle" | "social";
 
 export interface Package {
   key: PackageKey;
@@ -12,7 +12,7 @@ export interface Package {
   name: string;
   /** One-line positioning */
   tagline: string;
-  /** One-off price in GBP */
+  /** Annual price in GBP */
   price: number;
   /** Optional "was" price to show a saving (bundle) */
   compareAt?: number;
@@ -20,20 +20,26 @@ export interface Package {
   features: string[];
   /** Highlight as the recommended card */
   featured?: boolean;
+  /** For slider-priced packages (social): annual £ per unit, and the unit label */
+  perUnit?: number;
+  unitLabel?: string;
+  unitMin?: number;
+  unitMax?: number;
+  unitDefault?: number;
 }
 
 export const PACKAGES: Package[] = [
   {
     key: "site",
     name: "Website",
-    tagline: "A fast, professional site — built to order, live in days.",
+    tagline: "A fast, professional site — built, hosted and kept live for you.",
     price: 360,
     features: [
       "Custom multi-page website design",
       "Mobile-first, lightning fast",
       "Contact form + business email setup",
       "Basic SEO + Google indexing",
-      "Next day delivery",
+      "Hosting, updates & support included",
     ],
   },
   {
@@ -46,7 +52,7 @@ export const PACKAGES: Package[] = [
       "Pipeline, notes, follow-up tracking",
       "Built-in dialler + email tools",
       "Secure login for your team",
-      "Hosting, support & updates included",
+      "Hosting, updates & support included",
     ],
   },
   {
@@ -61,7 +67,24 @@ export const PACKAGES: Package[] = [
       "Everything in Custom OMS",
       "Site and system wired together",
       "Leads flow straight from site to system",
-      "Save £120 every year vs separately",
+      "Save £120/yr vs buying separately",
+    ],
+  },
+  {
+    key: "social",
+    name: "Social media management",
+    tagline: "We plan, write and post — so you stay top of mind without lifting a finger.",
+    price: 150, // 2 posts/month baseline (£75/yr per post-per-month = £6.25 a post)
+    perUnit: 75,
+    unitLabel: "posts / month",
+    unitMin: 1,
+    unitMax: 30,
+    unitDefault: 2,
+    features: [
+      "Content planned around your business",
+      "Written, designed and scheduled for you",
+      "£75/year for each post per month — just £6.25 a post",
+      "Scale up or down anytime",
     ],
   },
 ];
@@ -70,4 +93,4 @@ export function getPackage(key: string): Package | undefined {
   return PACKAGES.find((p) => p.key === key);
 }
 
-export const PACKAGE_KEYS: PackageKey[] = ["site", "crm", "bundle"];
+export const PACKAGE_KEYS: PackageKey[] = ["site", "crm", "bundle", "social"];

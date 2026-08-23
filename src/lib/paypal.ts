@@ -155,6 +155,53 @@ export async function createYearlyPlan(productId: string, name: string, priceGBP
   }) as Promise<{ id: string }>;
 }
 
+/** Create an ACTIVE plan that bills a fixed GBP price once per month, forever. */
+export async function createMonthlyPlan(productId: string, name: string, priceGBP: number) {
+  return ppFetch("/v1/billing/plans", "POST", {
+    product_id: productId,
+    name,
+    status: "ACTIVE",
+    billing_cycles: [
+      {
+        frequency: { interval_unit: "MONTH", interval_count: 1 },
+        tenure_type: "REGULAR",
+        sequence: 1,
+        total_cycles: 0, // 0 = repeat indefinitely
+        pricing_scheme: { fixed_price: { value: priceGBP.toFixed(2), currency_code: "GBP" } },
+      },
+    ],
+    payment_preferences: {
+      auto_bill_outstanding: true,
+      setup_fee_failure_action: "CANCEL",
+      payment_failure_threshold: 1,
+    },
+  }) as Promise<{ id: string }>;
+}
+
+/** Create an ACTIVE plan that bills a fixed GBP price every 3 months, forever.
+ *  PayPal has no QUARTER interval — a 3-month cycle is the supported way. */
+export async function createQuarterlyPlan(productId: string, name: string, priceGBP: number) {
+  return ppFetch("/v1/billing/plans", "POST", {
+    product_id: productId,
+    name,
+    status: "ACTIVE",
+    billing_cycles: [
+      {
+        frequency: { interval_unit: "MONTH", interval_count: 3 },
+        tenure_type: "REGULAR",
+        sequence: 1,
+        total_cycles: 0, // 0 = repeat indefinitely
+        pricing_scheme: { fixed_price: { value: priceGBP.toFixed(2), currency_code: "GBP" } },
+      },
+    ],
+    payment_preferences: {
+      auto_bill_outstanding: true,
+      setup_fee_failure_action: "CANCEL",
+      payment_failure_threshold: 1,
+    },
+  }) as Promise<{ id: string }>;
+}
+
 export interface PayPalSubscription {
   id: string;
   status: string;

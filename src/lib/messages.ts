@@ -18,6 +18,15 @@ export type Messages = {
     bundleBlurb: string;
     cta: string;
   };
+  pricing: {
+    monthly: string;
+    annual: string;
+    perMonth: string;
+    perYear: string;
+    perQuarter: string;
+    saveTwoMonths: string;
+    billedAnnually: string;
+  };
   demos: {
     heading: string;
     viewLive: string;
@@ -89,6 +98,15 @@ export const messages: Record<Locale, Messages> = {
       bundleBlurb: "The full stack — site and system, built together as one.",
       cta: "Add to cart →",
     },
+    pricing: {
+      monthly: "Monthly",
+      annual: "Annual",
+      perMonth: "/mo",
+      perYear: "/yr",
+      perQuarter: "/qtr",
+      saveTwoMonths: "2 months free",
+      billedAnnually: "Billed once a year",
+    },
     demos: {
       heading: "Demo systems",
       viewLive: "View live →",
@@ -144,6 +162,16 @@ export const messages: Record<Locale, Messages> = {
           "Save £250 every year vs separately",
         ],
       },
+      social: {
+        name: "Social media management",
+        tagline: "We plan, write and post — so you stay top of mind without lifting a finger.",
+        features: [
+          "Content planned around your business",
+          "Written, designed and scheduled for you",
+          "£75/year for each post per month — just £6.25 a post",
+          "Scale up or down anytime",
+        ],
+      },
     },
     checkout: {
       secureCheckout: "Secure checkout",
@@ -190,6 +218,15 @@ export const messages: Record<Locale, Messages> = {
       bundleName: "Site web + OMS sur mesure",
       bundleBlurb: "La solution complète — site et système, construits ensemble comme un seul système.",
       cta: "Ajouter au panier →",
+    },
+    pricing: {
+      monthly: "Mensuel",
+      annual: "Annuel",
+      perMonth: "/mois",
+      perYear: "/an",
+      perQuarter: "/trim.",
+      saveTwoMonths: "2 mois offerts",
+      billedAnnually: "Facturé une fois par an",
     },
     demos: {
       heading: "Systèmes de démonstration",
@@ -244,6 +281,16 @@ export const messages: Record<Locale, Messages> = {
           "Site et système connectés ensemble",
           "Les leads passent directement du site au système",
           "Économisez 250 £ chaque année",
+        ],
+      },
+      social: {
+        name: "Gestion des réseaux sociaux",
+        tagline: "On planifie, rédige et publie — pour rester présent sans lever le petit doigt.",
+        features: [
+          "Contenu planifié selon votre activité",
+          "Rédigé, conçu et programmé pour vous",
+          "75 £/an pour chaque post par mois — soit 6,25 £ le post",
+          "Ajustez à la hausse ou à la baisse à tout moment",
         ],
       },
     },
