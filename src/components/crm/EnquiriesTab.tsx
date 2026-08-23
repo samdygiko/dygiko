@@ -64,16 +64,16 @@ export default function EnquiriesTab() {
                   onClick={() => setStatus(e.id, s)}
                   className="text-[11px] px-3 py-1 rounded-full capitalize"
                   style={{
-                    background: (e.status || "new") === s ? "#3b82f6" : "transparent",
-                    color: (e.status || "new") === s ? "#fff" : "rgba(255,255,255,0.5)",
-                    border: "1px solid " + ((e.status || "new") === s ? "#3b82f6" : "rgba(255,255,255,0.12)"),
+                    background: (e.status || "new") === s ? "#b0ff00" : "transparent",
+                    color: (e.status || "new") === s ? "#080808" : "rgba(255,255,255,0.5)",
+                    border: "1px solid " + ((e.status || "new") === s ? "#b0ff00" : "rgba(255,255,255,0.12)"),
                   }}
                 >
                   {s}
                 </button>
               ))}
               {e.phone && (
-                <a href={`tel:${e.phone}`} className="text-[11px] px-3 py-1 rounded-full" style={{ color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)" }}>Call</a>
+                <a href={`tel:${e.phone}`} className="text-[11px] px-3 py-1 rounded-full" style={{ color: "#b0ff00", border: "1px solid rgba(176,255,0,0.3)" }}>Call</a>
               )}
               <button onClick={() => remove(e.id)} className="text-[11px] px-3 py-1 rounded-full ml-auto" style={{ color: "rgba(255,120,120,0.8)", border: "1px solid rgba(255,80,80,0.2)" }}>Delete</button>
             </div>

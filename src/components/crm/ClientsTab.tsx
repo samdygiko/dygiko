@@ -15,8 +15,18 @@ import {
 import { db } from "@/lib/firebase";
 
 // New packages — picked from the dropdown for new clients
-const PACKAGES = ["Website", "CRM", "Website + CRM"] as const;
+const PACKAGES = [
+  "Website",
+  "CRM",
+  "Website + CRM",
+  "Social media management",
+  "Website + Social media management",
+] as const;
 type Package = (typeof PACKAGES)[number];
+
+// How the client pays us.
+const PAYMENT_TYPES = ["PayPal", "Invoice"] as const;
+type PaymentType = (typeof PAYMENT_TYPES)[number];
 
 // Legacy package names from clients added before the rebrand. Read-only — kept
 // so existing client cards and revenue calcs don't break. Pre-existing clients
@@ -24,15 +34,17 @@ type Package = (typeof PACKAGES)[number];
 type LegacyPackage = "Basic" | "Growth" | "Full Business";
 type AnyPackage = Package | LegacyPackage;
 
-// One-off prices — the canonical amount a client pays for a build.
+// Annual subscription prices — what a client pays each year.
 const PACKAGE_PRICE: Record<AnyPackage, number> = {
-  Website: 500,
-  CRM: 1000,
-  "Website + CRM": 1250,
-  // Legacy — map to a sensible one-off so old docs don't crash.
-  Basic: 500,
-  Growth: 500,
-  "Full Business": 1250,
+  Website: 360,
+  CRM: 600,
+  "Website + CRM": 840,
+  "Social media management": 150,
+  "Website + Social media management": 510,
+  // Legacy — map to a sensible annual amount so old docs don't crash.
+  Basic: 360,
+  Growth: 360,
+  "Full Business": 840,
 };
 
 type SubStatus = "Active" | "Paused" | "Cancelled";
@@ -43,35 +55,52 @@ type Client = {
   email: string;
   package: AnyPackage;
   subscriptionStatus: SubStatus;
-  billingPeriod?: string; // legacy field — ignored under one-off pricing
+  billingPeriod?: string; // legacy field — ignored under monthly pricing
   websiteUrl: string;
-  monthlyPrice?: number; // legacy field — ignored under one-off pricing
-  price?: number; // the one-off amount the customer paid
+  monthlyPrice?: number; // legacy field — ignored; use `price`
+  price?: number; // the monthly amount the customer pays
+  paymentType?: PaymentType; // how they pay — PayPal or Invoice
+  ownerUid?: string | null;
+  ownerName?: string | null;
   dateAdded: { toDate?: () => Date } | null;
 };
 
-// Returns the one-off revenue this client represents.
+// Local date (YYYY-MM-DD) for the date <input>, avoiding UTC off-by-one.
+const todayInput = (): string => {
+  const d = new Date();
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0, 10);
+};
+const dateToInput = (ts: Client["dateAdded"]): string => {
+  const d = ts?.toDate?.();
+  if (!d) return todayInput();
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0, 10);
+};
+
+// Returns this client's ANNUAL price.
 // Prefers the stored `price`, falls back to the package default, then 0.
-// Gracefully ignores legacy `billingPeriod` / `monthlyPrice` fields.
 const revenueFor = (c: Client): number => {
   if (typeof c.price === "number") return c.price;
   return PACKAGE_PRICE[c.package] ?? 0;
 };
 
 const SUB_STATUS_COLORS: Record<SubStatus, { bg: string; color: string }> = {
-  Active: { bg: "rgba(59, 130, 246,0.1)", color: "#3b82f6" },
+  Active: { bg: "rgba(176,255,0,0.1)", color: "#b0ff00" },
   Paused: { bg: "rgba(255,165,0,0.1)", color: "#ffa500" },
   Cancelled: { bg: "rgba(255,107,107,0.1)", color: "#ff6b6b" },
 };
 
 const PKG_COLORS: Record<AnyPackage, { bg: string; color: string }> = {
   Website: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
-  CRM: { bg: "rgba(59, 130, 246,0.08)", color: "#3b82f6" },
-  "Website + CRM": { bg: "rgba(59, 130, 246,0.15)", color: "#3b82f6" },
+  CRM: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },
+  "Website + CRM": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
+  "Social media management": { bg: "rgba(168,85,247,0.12)", color: "#c084fc" },
+  "Website + Social media management": { bg: "rgba(168,85,247,0.18)", color: "#c084fc" },
   // Legacy
   Basic: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
-  Growth: { bg: "rgba(59, 130, 246,0.08)", color: "#3b82f6" },
-  "Full Business": { bg: "rgba(59, 130, 246,0.15)", color: "#3b82f6" },
+  Growth: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },
+  "Full Business": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
 };
 
 const inputSt = {
@@ -82,23 +111,25 @@ const inputSt = {
 
 const PAYPAL_ACTIVITY_URL = "https://www.paypal.com/myaccount/activities/";
 
-const emptyForm = {
+const blankForm = () => ({
   businessName: "",
   email: "",
   package: "Website" as Package,
   subscriptionStatus: "Active" as SubStatus,
   websiteUrl: "",
   price: PACKAGE_PRICE.Website,
-};
+  paymentType: "PayPal" as PaymentType,
+  dateAdded: todayInput(),
+});
 
 export default function ClientsTab() {
   const [clients, setClients] = useState<Client[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState(emptyForm);
+  const [editForm, setEditForm] = useState(blankForm);
 
   useEffect(() => {
     const q = query(collection(db, "clients"), orderBy("dateAdded", "desc"));
@@ -118,9 +149,10 @@ export default function ClientsTab() {
       package: form.package,
       subscriptionStatus: "Active",
       price: Number(form.price) || defaultPrice,
-      dateAdded: serverTimestamp(),
+      paymentType: form.paymentType,
+      dateAdded: form.dateAdded ? new Date(form.dateAdded + "T12:00:00") : serverTimestamp(),
     });
-    setForm(emptyForm);
+    setForm(blankForm());
     setShowAdd(false);
     setSaving(false);
   }
@@ -134,7 +166,9 @@ export default function ClientsTab() {
       subscriptionStatus: "Active",
       websiteUrl: editForm.websiteUrl.trim(),
       price: Number(editForm.price) || defaultPrice,
-      // Clear legacy fields so they don't conflict with the one-off `price` field
+      paymentType: editForm.paymentType,
+      dateAdded: editForm.dateAdded ? new Date(editForm.dateAdded + "T12:00:00") : serverTimestamp(),
+      // Clear legacy fields so they don't conflict with the monthly `price` field
       billingPeriod: null,
       monthlyPrice: null,
     });
@@ -146,6 +180,12 @@ export default function ClientsTab() {
     await deleteDoc(doc(db, "clients", deleteConfirm.id));
     setDeleteConfirm(null);
   }
+
+  // Annual recurring revenue = sum of active clients' yearly prices.
+  // Each user sees only their own clients; admins see everyone's.
+  const visibleClients = clients;
+  const activeClients = visibleClients.filter((c) => c.subscriptionStatus === "Active");
+  const arr = activeClients.reduce((sum, c) => sum + revenueFor(c), 0);
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
@@ -167,18 +207,34 @@ export default function ClientsTab() {
           <button
             onClick={() => setShowAdd((v) => !v)}
             className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
-            style={{ background: showAdd ? "rgba(59, 130, 246,0.12)" : "#3b82f6", color: showAdd ? "#3b82f6" : "#000", border: showAdd ? "1px solid rgba(59, 130, 246,0.25)" : "none" }}
+            style={{ background: showAdd ? "rgba(176,255,0,0.12)" : "#b0ff00", color: showAdd ? "#b0ff00" : "#000", border: showAdd ? "1px solid rgba(176,255,0,0.25)" : "none" }}
           >
             {showAdd ? "Cancel" : "+ Add Client"}
           </button>
         </div>
       </div>
 
+      {/* Recurring-revenue summary */}
+      {visibleClients.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "ARR", value: `£${arr.toLocaleString("en-GB")}/yr` },
+            { label: "Monthly avg", value: `£${Math.round(arr / 12).toLocaleString("en-GB")}` },
+            { label: "Active clients", value: String(activeClients.length) },
+          ].map((s) => (
+            <div key={s.label} className="rounded-sm px-4 py-3" style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{s.label}</div>
+              <div className="text-lg font-bold mt-0.5" style={{ color: "#b0ff00" }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Add client form */}
       {showAdd && (
         <div
           className="rounded-sm p-5 flex flex-col gap-4"
-          style={{ border: "1px solid rgba(59, 130, 246,0.2)", background: "rgba(59, 130, 246,0.02)" }}
+          style={{ border: "1px solid rgba(176,255,0,0.2)", background: "rgba(176,255,0,0.02)" }}
         >
           <p className="text-sm font-semibold text-white">New Client</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -232,7 +288,7 @@ export default function ClientsTab() {
               </div>
               <div className="flex-1">
                 <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  £ one-off (override)
+                  £/yr (override)
                 </label>
                 <input
                   type="number"
@@ -245,13 +301,34 @@ export default function ClientsTab() {
                 />
               </div>
             </div>
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Payment type</label>
+              <select
+                value={form.paymentType}
+                onChange={(e) => setForm((f) => ({ ...f, paymentType: e.target.value as PaymentType }))}
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}
+              >
+                {PAYMENT_TYPES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Date created</label>
+              <input
+                type="date"
+                value={form.dateAdded}
+                onChange={(e) => setForm((f) => ({ ...f, dateAdded: e.target.value }))}
+                className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
+                style={inputSt}
+              />
+            </div>
           </div>
           <div className="flex justify-end">
             <button
               onClick={addClient}
               disabled={!form.businessName.trim() || saving}
               className="text-xs px-5 py-2.5 rounded-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-40"
-              style={{ background: "#3b82f6", color: "#000" }}
+              style={{ background: "#b0ff00", color: "#000" }}
             >
               {saving ? "Saving…" : "Save Client"}
             </button>
@@ -260,9 +337,9 @@ export default function ClientsTab() {
       )}
 
       {/* Clients list */}
-      {clients.length > 0 && (
+      {visibleClients.length > 0 && (
         <div className="flex flex-col gap-3">
-          {clients.map((client) => (
+          {visibleClients.map((client) => (
             <div
               key={client.id}
               className="rounded-sm p-4 flex flex-col gap-3"
@@ -300,15 +377,25 @@ export default function ClientsTab() {
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-                          £ one-off (override)
+                          £/yr (override)
                         </label>
                         <input type="number" min={0} step={1} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: Number(e.target.value) }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Payment type</label>
+                      <select value={editForm.paymentType} onChange={(e) => setEditForm((f) => ({ ...f, paymentType: e.target.value as PaymentType }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={{ ...inputSt, background: "rgba(255,255,255,0.04)" }}>
+                        {PAYMENT_TYPES.map((p) => <option key={p} value={p} style={{ background: "#121212" }}>{p}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Date created</label>
+                      <input type="date" value={editForm.dateAdded} onChange={(e) => setEditForm((f) => ({ ...f, dateAdded: e.target.value }))} className="w-full rounded-sm px-3 py-2 text-sm outline-none" style={inputSt} />
+                    </div>
                   </div>
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => setEditId(null)} className="text-xs px-3 py-1.5 rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>Cancel</button>
-                    <button onClick={() => saveEdit(client.id)} disabled={!editForm.businessName.trim()} className="text-xs px-3 py-1.5 rounded-sm font-semibold disabled:opacity-40" style={{ background: "#3b82f6", color: "#000" }}>Save</button>
+                    <button onClick={() => saveEdit(client.id)} disabled={!editForm.businessName.trim()} className="text-xs px-3 py-1.5 rounded-sm font-semibold disabled:opacity-40" style={{ background: "#b0ff00", color: "#000" }}>Save</button>
                   </div>
                 </div>
               ) : (
@@ -334,11 +421,25 @@ export default function ClientsTab() {
                           className="text-xs px-2 py-0.5 rounded-full font-medium"
                           style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}
                         >
-                          £{revenueFor(client).toLocaleString("en-GB")} one-off
+                          £{revenueFor(client).toLocaleString("en-GB")}/yr
+                        </span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full font-medium"
+                          style={client.paymentType === "Invoice"
+                            ? { background: "rgba(251,191,36,0.12)", color: "#fbbf24" }
+                            : { background: "rgba(72,199,142,0.12)", color: "#48c78e" }}
+                          title="Payment type"
+                        >
+                          {client.paymentType ?? "PayPal"}
                         </span>
                       </div>
                       {client.email && (
                         <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{client.email}</p>
+                      )}
+                      {client.dateAdded?.toDate && (
+                        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          Client since {client.dateAdded.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -352,6 +453,8 @@ export default function ClientsTab() {
                             subscriptionStatus: client.subscriptionStatus,
                             websiteUrl: client.websiteUrl,
                             price: revenueFor(client),
+                            paymentType: client.paymentType ?? "PayPal",
+                            dateAdded: dateToInput(client.dateAdded),
                           });
                         }}
                         className="text-xs px-2.5 py-1 rounded-sm transition-opacity hover:opacity-80"
@@ -375,7 +478,7 @@ export default function ClientsTab() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs transition-opacity hover:opacity-80 w-fit"
-                      style={{ color: "#3b82f6", textDecoration: "none" }}
+                      style={{ color: "#b0ff00", textDecoration: "none" }}
                     >
                       {client.websiteUrl.replace(/^https?:\/\//, "")} ↗
                     </a>

@@ -23,7 +23,7 @@ export const CALENDLY_URL = "https://calendly.com/samuelsako-dygiko379/30min";
 const PACKAGES: Package[] = [
   {
     name: "Custom OMS (Operations Management System)",
-    price: 1000,
+    price: 600,
     checkoutPkg: "crm",
     includes: [
       "Custom OMS tailored to your business",
@@ -35,7 +35,7 @@ const PACKAGES: Package[] = [
   },
   {
     name: "Website",
-    price: 500,
+    price: 360,
     checkoutPkg: "site",
     includes: [
       "Custom website design",
@@ -50,13 +50,13 @@ const PACKAGES: Package[] = [
   },
   {
     name: "Website + Custom OMS",
-    price: 1250,
+    price: 840,
     checkoutPkg: "bundle",
     featured: true,
     includes: [
       "Everything in Website",
       "Everything in Custom OMS",
-      "Best value — save £250/yr vs separate",
+      "Best value — save £120/yr vs separate",
       "Single login, unified setup",
       "Unlimited revisions to site & OMS",
     ],

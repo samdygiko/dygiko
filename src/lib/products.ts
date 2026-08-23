@@ -27,7 +27,7 @@ export const PACKAGES: Package[] = [
     key: "site",
     name: "Website",
     tagline: "A fast, professional site — built to order, live in days.",
-    price: 500,
+    price: 360,
     features: [
       "Custom multi-page website design",
       "Mobile-first, lightning fast",
@@ -40,7 +40,7 @@ export const PACKAGES: Package[] = [
     key: "crm",
     name: "Custom OMS (Operations Management System)",
     tagline: "Your own lead + customer system, tailored to how you work.",
-    price: 1000,
+    price: 600,
     features: [
       "Tailored customer & lead database",
       "Pipeline, notes, follow-up tracking",
@@ -53,15 +53,15 @@ export const PACKAGES: Package[] = [
     key: "bundle",
     name: "Website + Custom OMS",
     tagline: "The full stack — your site and system, built together.",
-    price: 1250,
-    compareAt: 1500,
+    price: 840,
+    compareAt: 960,
     featured: true,
     features: [
       "Everything in Website",
       "Everything in Custom OMS",
       "Site and system wired together",
       "Leads flow straight from site to system",
-      "Save £250 every year vs separately",
+      "Save £120 every year vs separately",
     ],
   },
 ];

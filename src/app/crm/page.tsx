@@ -10,9 +10,10 @@ import LeadsTab from "@/components/crm/LeadsTab";
 import EnquiriesTab from "@/components/crm/EnquiriesTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import OrdersTab from "@/components/crm/OrdersTab";
+import ChecklistTab from "@/components/crm/ChecklistTab";
 import { UK_POSTCODES } from "@/lib/ukPostcodes";
 
-const TABS = ["Leads", "Enquiries", "Clients", "Orders", "Admin"] as const;
+const TABS = ["Leads", "Enquiries", "Clients", "Orders", "Checklist", "Admin"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, string> = {
@@ -20,6 +21,7 @@ const TAB_ICONS: Record<Tab, string> = {
   Enquiries: "✉",
   Clients: "◈",
   Orders: "🧾",
+  Checklist: "✓",
   Admin: "⚙",
 };
 
@@ -106,7 +108,7 @@ function CRMPageInner() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#080808" }}>
-        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#3b82f6", borderTopColor: "transparent" }} />
+        <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#b0ff00", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -149,7 +151,7 @@ function CRMPageInner() {
             ].map((stat) => (
               <div key={stat.label} className="flex items-center justify-between px-3 py-2.5 rounded-sm" style={{ background: "rgba(255,255,255,0.03)" }}>
                 <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{stat.label}</span>
-                <span className="text-sm font-bold" style={{ color: "#3b82f6" }}>{stat.value}</span>
+                <span className="text-sm font-bold" style={{ color: "#b0ff00" }}>{stat.value}</span>
               </div>
             ))}
           </div>
@@ -162,8 +164,8 @@ function CRMPageInner() {
                 onClick={() => { setTab(t); setSidebarOpen(false); }}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-left text-sm transition-colors duration-100"
                 style={{
-                  background: tab === t ? "rgba(59, 130, 246,0.08)" : "transparent",
-                  color: tab === t ? "#3b82f6" : "rgba(255,255,255,0.45)",
+                  background: tab === t ? "rgba(176,255,0,0.08)" : "transparent",
+                  color: tab === t ? "#b0ff00" : "rgba(255,255,255,0.45)",
                   fontWeight: tab === t ? 600 : 400,
                 }}
               >
@@ -193,6 +195,7 @@ function CRMPageInner() {
           {tab === "Enquiries" && <EnquiriesTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Orders" && <OrdersTab />}
+          {tab === "Checklist" && <ChecklistTab />}
           {tab === "Admin" && <AdminContent />}
         </main>
       </div>
@@ -202,7 +205,7 @@ function CRMPageInner() {
           onClick={goTop}
           title="Back to top"
           className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold shadow-lg transition-opacity hover:opacity-80"
-          style={{ background: "#3b82f6", color: "#fff", border: "none" }}
+          style={{ background: "#b0ff00", color: "#080808", border: "none" }}
         >
           ↑
         </button>

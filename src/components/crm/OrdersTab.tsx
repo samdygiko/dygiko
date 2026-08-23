@@ -39,13 +39,13 @@ export default function OrdersTab() {
       </p>
 
       <div className="flex gap-3 mb-8">
-        <div className="px-5 py-3 rounded-sm" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
+        <div className="px-5 py-3 rounded-sm" style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.2)" }}>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Paid orders</p>
-          <p className="text-xl font-bold" style={{ color: "#3b82f6" }}>{paid.length}</p>
+          <p className="text-xl font-bold" style={{ color: "#b0ff00" }}>{paid.length}</p>
         </div>
-        <div className="px-5 py-3 rounded-sm" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
+        <div className="px-5 py-3 rounded-sm" style={{ background: "rgba(176,255,0,0.08)", border: "1px solid rgba(176,255,0,0.2)" }}>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Total revenue</p>
-          <p className="text-xl font-bold" style={{ color: "#3b82f6" }}>£{revenue.toLocaleString()}</p>
+          <p className="text-xl font-bold" style={{ color: "#b0ff00" }}>£{revenue.toLocaleString()}</p>
         </div>
       </div>
 

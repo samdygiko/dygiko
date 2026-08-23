@@ -312,7 +312,7 @@ export default function LeadsTab() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#3b82f6", borderTopColor: "transparent" }} />
+          <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#b0ff00", borderTopColor: "transparent" }} />
         </div>
       ) : leads.length === 0 ? (
         <div
@@ -339,8 +339,8 @@ export default function LeadsTab() {
                 {sortedLeads.map((lead) => {
                   // Noted leads get a blue tint so actioned ones stand out.
                   const noted = hasNote(lead);
-                  const baseBg = noted ? "rgba(59,130,246,0.10)" : "transparent";
-                  const hoverBg = noted ? "rgba(59,130,246,0.16)" : "rgba(255,255,255,0.025)";
+                  const baseBg = noted ? "rgba(176,255,0,0.10)" : "transparent";
+                  const hoverBg = noted ? "rgba(176,255,0,0.16)" : "rgba(255,255,255,0.025)";
                   return (
                   <tr
                     key={lead.id}
@@ -388,7 +388,7 @@ export default function LeadsTab() {
                             updateDoc(doc(db, "leads", lead.id), { notes: v });
                           }
                         }}
-                        className="w-full rounded-sm px-2 py-1 text-xs outline-none focus:border-[#3b82f6]"
+                        className="w-full rounded-sm px-2 py-1 text-xs outline-none focus:border-[#b0ff00]"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.8)" }}
                       />
                       {lead.notes && lead.notes.trim() && lead.notesAt && (
@@ -402,7 +402,7 @@ export default function LeadsTab() {
                         <a
                           href={callLink(lead.phone)}
                           onClick={(e) => e.stopPropagation()}
-                          style={{ color: "#3b82f6", textDecoration: "none" }}
+                          style={{ color: "#b0ff00", textDecoration: "none" }}
                           title="Call this number"
                         >
                           {lead.phone}
@@ -415,7 +415,7 @@ export default function LeadsTab() {
                         <button
                           onClick={() => { setMoveToClientsId(lead.id); }}
                           className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-                          style={{ background: "rgba(59, 130, 246,0.1)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246,0.2)" }}
+                          style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)" }}
                           title="Move to Clients"
                         >
                           → Client
@@ -485,7 +485,7 @@ export default function LeadsTab() {
                   onClick={confirmMoveToClients}
                   disabled={movingToClients}
                   className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-                  style={{ background: "#3b82f6" }}
+                  style={{ background: "#b0ff00" }}
                 >
                   {movingToClients ? "Moving…" : "Move to Clients"}
                 </button>
