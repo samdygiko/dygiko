@@ -21,6 +21,7 @@ const PACKAGES = [
   "Website + CRM",
   "Social media management",
   "Website + Social media management",
+  "Reels & video editing",
 ] as const;
 type Package = (typeof PACKAGES)[number];
 
@@ -52,8 +53,9 @@ const PACKAGE_PRICE: Record<AnyPackage, number> = {
   Website: 360,
   CRM: 600,
   "Website + CRM": 840,
-  "Social media management": 150,
-  "Website + Social media management": 510,
+  "Social media management": 156,
+  "Website + Social media management": 516,
+  "Reels & video editing": 216,
   // Legacy — map to a sensible annual amount so old docs don't crash.
   Basic: 360,
   Growth: 360,
@@ -119,6 +121,7 @@ const PKG_COLORS: Record<AnyPackage, { bg: string; color: string }> = {
   "Website + CRM": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
   "Social media management": { bg: "rgba(168,85,247,0.12)", color: "#c084fc" },
   "Website + Social media management": { bg: "rgba(168,85,247,0.18)", color: "#c084fc" },
+  "Reels & video editing": { bg: "rgba(236,72,153,0.14)", color: "#f472b6" },
   // Legacy
   Basic: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
   Growth: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },

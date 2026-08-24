@@ -172,6 +172,16 @@ export const messages: Record<Locale, Messages> = {
           "Scale up or down anytime",
         ],
       },
+      reels: {
+        name: "Reels & video editing",
+        tagline: "Send us your clips — we cut them into proper reels, captions and all.",
+        features: [
+          "You send the clips, we do the rest",
+          "Cuts, captions, music and transitions",
+          "£216/year for each reel per month — just £18 a reel",
+          "Scale up or down anytime",
+        ],
+      },
     },
     checkout: {
       secureCheckout: "Secure checkout",
@@ -291,6 +301,16 @@ export const messages: Record<Locale, Messages> = {
           "Rédigé, conçu et programmé pour vous",
           "75 £/an pour chaque post par mois — soit 6,25 £ le post",
           "Ajustez à la hausse ou à la baisse à tout moment",
+        ],
+      },
+      reels: {
+        name: "Reels & montage vidéo",
+        tagline: "Envoyez vos clips — nous en faisons de vrais reels, sous-titres compris.",
+        features: [
+          "Vous envoyez les clips, on s'occupe du reste",
+          "Coupes, sous-titres, musique et transitions",
+          "216 £/an par reel mensuel — soit 18 £ le reel",
+          "Ajustez à tout moment",
         ],
       },
     },

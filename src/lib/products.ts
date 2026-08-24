@@ -4,7 +4,7 @@
 // the /checkout page, the PayPal billing plans, and the CRM payment-link
 // generator all read from here. `price` is the ANNUAL amount in GBP.
 
-export type PackageKey = "site" | "crm" | "bundle" | "social";
+export type PackageKey = "site" | "crm" | "bundle" | "social" | "reels";
 
 export interface Package {
   key: PackageKey;
@@ -74,8 +74,8 @@ export const PACKAGES: Package[] = [
     key: "social",
     name: "Social media management",
     tagline: "We plan, write and post — so you stay top of mind without lifting a finger.",
-    price: 150, // 2 posts/month baseline (£75/yr per post-per-month = £6.25 a post)
-    perUnit: 75,
+    price: 156, // 2 posts/month baseline (£78/yr per post-per-month = £6.50 a post)
+    perUnit: 78,
     unitLabel: "posts / month",
     unitMin: 1,
     unitMax: 30,
@@ -83,7 +83,24 @@ export const PACKAGES: Package[] = [
     features: [
       "Content planned around your business",
       "Written, designed and scheduled for you",
-      "£75/year for each post per month — just £6.25 a post",
+      "£78/year for each post per month — just £6.50 a post",
+      "Scale up or down anytime",
+    ],
+  },
+  {
+    key: "reels",
+    name: "Reels & video editing",
+    tagline: "Send us your clips — we cut them into proper reels, captions and all.",
+    price: 216, // 1 reel/month baseline (£216/yr per reel-per-month = £18 a reel)
+    perUnit: 216,
+    unitLabel: "reels / month",
+    unitMin: 1,
+    unitMax: 30,
+    unitDefault: 1,
+    features: [
+      "You send the clips, we do the rest",
+      "Cuts, captions, music and transitions",
+      "£216/year for each reel per month — just £18 a reel",
       "Scale up or down anytime",
     ],
   },
@@ -93,4 +110,4 @@ export function getPackage(key: string): Package | undefined {
   return PACKAGES.find((p) => p.key === key);
 }
 
-export const PACKAGE_KEYS: PackageKey[] = ["site", "crm", "bundle", "social"];
+export const PACKAGE_KEYS: PackageKey[] = ["site", "crm", "bundle", "social", "reels"];
