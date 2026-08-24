@@ -168,7 +168,7 @@ export const messages: Record<Locale, Messages> = {
         features: [
           "Content planned around your business",
           "Written, designed and scheduled for you",
-          "£75/year for each post per month — just £6.25 a post",
+          "£78/year for each post per month — just £6.50 a post",
           "Scale up or down anytime",
         ],
       },
@@ -299,7 +299,7 @@ export const messages: Record<Locale, Messages> = {
         features: [
           "Contenu planifié selon votre activité",
           "Rédigé, conçu et programmé pour vous",
-          "75 £/an pour chaque post par mois — soit 6,25 £ le post",
+          "78 £/an pour chaque post par mois — soit 6,50 £ le post",
           "Ajustez à la hausse ou à la baisse à tout moment",
         ],
       },
