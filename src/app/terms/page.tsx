@@ -112,8 +112,8 @@ export default function TermsPage() {
 
           <Section num="03" title="Payment Terms">
             <p>
-              The monthly subscription begins on the date payment is taken and is billed monthly in
-              advance via Stripe. There is no upfront build cost — the subscription covers everything.
+              The subscription begins on the date payment is taken and is billed annually in
+              advance via PayPal. There is no upfront build cost — the subscription covers everything.
               Work on your custom website begins once your first payment has been received and confirmed.
             </p>
             <p>
@@ -143,12 +143,28 @@ export default function TermsPage() {
               You retain full ownership of your business content including your logo, images, text,
               and branding.
             </p>
+            <p>
+              <strong className="text-white">New builds vs. existing property.</strong> This section
+              applies to anything Dygiko creates from scratch. Where we take over, host, maintain,
+              redesign or make changes to a website, app or system you already own, that property
+              remains yours throughout — working on it gives us no ownership in it. Only new builds
+              created by Dygiko are owned by Dygiko.
+            </p>
+            <p>
+              <strong className="text-white">Buying your build outright.</strong> You may buy your
+              build outright at any time. The buy-out fee is five years of your current subscription
+              for that build, payable as a single amount. On cleared payment we transfer the source
+              code, files and design to you, and our hosting, maintenance and support end unless
+              separately agreed in writing. A buy-out covers your build only — it does not transfer
+              any framework, template, library or component that Dygiko reuses across clients, which
+              remains ours and is licensed to you for continued use of that build.
+            </p>
           </Section>
 
           <Section num="05" title="Cancellation Policy">
             <p>
-              You may <strong className="text-white">cancel anytime</strong> from within your Stripe
-              billing portal or by emailing hello@dygiko.com. Billing stops at the end of your current
+              You may <strong className="text-white">cancel anytime</strong> from within your PayPal
+              account or by emailing hello@dygiko.com. Billing stops at the end of your current
               billing period — no further charges will be taken.
             </p>
             <p>
@@ -217,7 +233,7 @@ export default function TermsPage() {
             </p>
             <p>
               Client data is never sold to third parties. We use trusted third-party processors
-              including Stripe (payment processing), Resend (email delivery), and Firebase (data
+              including PayPal (payment processing), Resend (email delivery), and Firebase (data
               storage and hosting), all of which operate under appropriate data protection frameworks.
             </p>
             <p>
