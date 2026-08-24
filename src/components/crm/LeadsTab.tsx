@@ -1,107 +1,40 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import {
   collection,
-  onSnapshot,
-  doc,
-  updateDoc,
-  deleteDoc,
   addDoc,
-  getDocs,
-  query,
+  deleteDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
   orderBy,
+  query,
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-type Lead = {
+// Call list. You ring businesses, take a few notes, and when one agrees to a
+// demo you put the date and time in — the card lights up so the booked ones
+// are obvious at a glance.
+//
+// Reads/writes the same `leads` collection the Chrome extension posts to via
+// /api/add-lead, so leads captured off Google Maps land here too. Field names
+// must stay in step with that route.
+
+const ACCENT = "#b0ff00";
+const ACCENT_TEXT = "#080808";
+
+interface Lead {
   id: string;
-  businessName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  address: string;
-  category: string;
-  websiteStatus: string;
-  googleMapsUrl: string;
-  notes: string;
-  notesAt?: { toDate?: () => Date } | null; // when the note was last written
-  emailSentInterest: boolean;
-  emailSentClosed: boolean;
-  templateSent: boolean;
-  templateLink: string;
-  bookingDateTime?: string; // ISO datetime when the consultation is scheduled
-  notInterested?: boolean; // when true, lead sinks to bottom + renders dimmed
-  // Opening hours captured from the Google listing by the extension.
-  //   hours       → weekly { mon:[["09:00","17:00"]], … } (24h HH:MM ranges)
-  //   hoursStatus → snapshot string e.g. "Open ⋅ Closes 7 pm"
-  hours?: WeeklyHours | null;
-  hoursStatus?: string;
-  dateAdded: { toDate?: () => Date } | null;
-  updates?: { text: string; at: Timestamp }[];
-};
-
-// Weekly opening hours: per-day list of [open, close] ranges in 24h "HH:MM".
-// An empty array means closed all day. A missing day key means unknown.
-// Each range is an "HH:MM-HH:MM" string (Firestore rejects nested arrays).
-type WeeklyHours = Partial<Record<"sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat", string[]>>;
-
-const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
-
-// Decide whether a lead's business is open right now.
-//   - Weekly hours present  → compute from current local day + time.
-//   - Only a snapshot status → best-effort parse of "open"/"closed".
-//   - No hours data at all   → treat as OPEN/unknown (never hide or badge).
-function isOpenNow(lead: Lead): boolean {
-  const weekly = lead.hours;
-  if (weekly && typeof weekly === "object") {
-    const now = new Date();
-    const dk = DAY_KEYS[now.getDay()];
-    const ranges = weekly[dk];
-    if (ranges !== undefined) {
-      // Known day. Empty array = closed today.
-      if (ranges.length === 0) return false;
-      const mins = now.getHours() * 60 + now.getMinutes();
-      for (const rng of ranges) {
-        const [open, close] = (rng || "").split("-");
-        if (!open || !close) continue;
-        const [oh, om] = open.split(":").map(Number);
-        const [ch, cm] = close.split(":").map(Number);
-        const openMin = oh * 60 + om;
-        let closeMin = ch * 60 + cm;
-        // Past-midnight close (e.g. 18:00–02:00): treat as open until close next day.
-        if (closeMin <= openMin) closeMin += 24 * 60;
-        if (mins >= openMin && mins <= closeMin) return true;
-        // Also catch the early-morning tail of a past-midnight range.
-        if (mins + 24 * 60 >= openMin && mins + 24 * 60 <= closeMin) return true;
-      }
-      return false;
-    }
-    // Weekly object exists but this day is unknown → don't penalise.
-    return true;
-  }
-  const status = (lead.hoursStatus || "").toLowerCase();
-  if (status) {
-    if (/open 24|open\b|opens? \d|⋅ closes/i.test(status) && !/closed/.test(status)) return true;
-    if (/closed/.test(status)) return false;
-  }
-  // No usable hours data → unknown, show as open.
-  return true;
-}
-
-// Safely parse the JSON-encoded weekly-hours param from the extension URL.
-function parseHoursParam(raw: string | null): WeeklyHours | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as WeeklyHours;
-  } catch {
-    // Malformed — ignore rather than blocking the lead.
-  }
-  return null;
+  businessName?: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+  bookingDateTime?: string; // ISO local datetime, e.g. 2026-08-27T14:30
+  createdAt?: Timestamp | null;
 }
 
 const inputSt = {
@@ -110,390 +43,330 @@ const inputSt = {
   color: "#fff",
 };
 
-// Normalize a phone number to digits only, collapsing UK prefixes so that
-// "020 8960 3642", "02089603642" and "+442089603642" all compare equal.
-// Strategy: keep digits only, drop a leading "44" (intl) or leading "0"
-// (national trunk) so the "subscriber" portion is what we compare.
-function normalizePhone(raw: string | null | undefined): string {
-  let digits = (raw || "").replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("44")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = digits.slice(1);
-  return digits;
-}
+const blankForm = () => ({
+  businessName: "",
+  contactName: "",
+  phone: "",
+  email: "",
+  notes: "",
+  bookingDateTime: "",
+});
 
-// Click-to-call: dial this number (opens FaceTime/handoff call on Mac, or the
-// dialler on mobile). Outreach is done by calling, not texting.
-function callLink(raw: string | null | undefined): string {
-  const sub = normalizePhone(raw);
-  return sub ? `tel:+44${sub}` : "#";
+/** "Thu 27 Aug, 2:30pm" — and whether the slot has already passed. */
+function bookingLabel(iso?: string): { text: string; past: boolean } | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const text = d.toLocaleString("en-GB", {
+    weekday: "short", day: "numeric", month: "short",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+  return { text, past: d.getTime() < Date.now() };
 }
 
 export default function LeadsTab() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [moveToClientsId, setMoveToClientsId] = useState<string | null>(null);
-  const [movePackage, setMovePackage] = useState<"Website" | "CRM" | "Website + CRM">("Website");
-  const [movingToClients, setMovingToClients] = useState(false);
-  // Bulk-delete all leads.
-  const [deletingAll, setDeletingAll] = useState(false);
-  async function deleteAll() {
-    if (leads.length === 0) return;
-    if (!window.confirm(`Delete ALL ${leads.length} leads? This can't be undone.`)) return;
-    setDeletingAll(true);
-    try {
-      await Promise.all(leads.map((l) => deleteDoc(doc(db, "leads", l.id))));
-    } catch { /* ignore individual failures */ }
-    setDeletingAll(false);
-  }
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  // Guard so the extension deep-link is only processed once per navigation.
-  const handledAddLead = useRef(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState(blankForm);
+  const [saving, setSaving] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(blankForm);
+  const [search, setSearch] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, "leads"), orderBy("dateAdded", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
+    const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
       setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Lead)));
-      setLoading(false);
     });
-    return unsub;
   }, []);
 
-  // Handle the Chrome-extension deep-link:
-  //   /crm?tab=Leads&addLead=1&businessName=…&phone=…
-  // Creates the lead in Firestore (deduping against existing leads), then
-  // cleans the query string afterwards so a refresh doesn't re-add the lead.
-  useEffect(() => {
-    if (handledAddLead.current) return;
-    if (!searchParams) return;
-    if (searchParams.get("addLead") !== "1") return;
-    handledAddLead.current = true;
-
-    const businessName = (searchParams.get("businessName") || "").trim();
-    const phone = (searchParams.get("phone") || "").trim();
-
-    (async () => {
-      if (businessName || phone) {
-        // Dedupe: query the live `leads` collection directly (the onSnapshot
-        // state may not have loaded yet on mount) and look for an existing
-        // match on normalized phone, or — if no phone — on lowercased name.
-        const wantedPhone = normalizePhone(phone);
-        const wantedName = businessName.toLowerCase();
-        let existing = false;
-        try {
-          const snap = await getDocs(collection(db, "leads"));
-          for (const d of snap.docs) {
-            const data = d.data() as Partial<Lead>;
-            const matchPhone = wantedPhone && normalizePhone(data.phone) === wantedPhone;
-            const matchName = !wantedPhone && wantedName && (data.businessName || "").trim().toLowerCase() === wantedName;
-            if (matchPhone || matchName) {
-              existing = true;
-              break;
-            }
-          }
-        } catch {
-          // If the dedupe read fails, fall through and add as new rather than
-          // silently dropping the lead.
-        }
-
-        if (!existing) {
-          await addDoc(collection(db, "leads"), {
-            businessName,
-            contactName: (searchParams.get("contact") || "").trim(),
-            email: "",
-            phone,
-            address: (searchParams.get("address") || "").trim(),
-            category: (searchParams.get("category") || "").trim(),
-            websiteStatus: "",
-            googleMapsUrl: (searchParams.get("googleMapsUrl") || "").trim(),
-            hours: parseHoursParam(searchParams.get("hours")),
-            hoursStatus: (searchParams.get("hoursStatus") || "").trim(),
-            notes: "",
-            emailSentInterest: false,
-            emailSentClosed: false,
-            templateSent: false,
-            templateLink: "",
-            dateAdded: serverTimestamp(),
-          });
-        }
-      }
-    })().catch(() => {});
-
-    // Strip the deep-link params from the URL so a refresh won't re-add.
-    router.replace("/crm?tab=Leads");
-  }, [searchParams, router]);
-
-  async function deleteLead(id: string) {
-    await deleteDoc(doc(db, "leads", id));
-  }
-
-
-  // Toggle the `notInterested` flag on a lead. Missing/false → mark not
-  // interested; true → mark interested again.
-  async function toggleNotInterested(lead: Lead) {
-    await updateDoc(doc(db, "leads", lead.id), { notInterested: !lead.notInterested });
-  }
-
-  async function confirmMoveToClients() {
-    if (!moveToClientsId) return;
-    const lead = leads.find((l) => l.id === moveToClientsId);
-    if (!lead) return;
-    setMovingToClients(true);
-
-    // One-off price for the package chosen in the move modal
-    const PACKAGE_PRICE = { "Website": 500, "CRM": 1000, "Website + CRM": 1250 } as const;
-    const price = PACKAGE_PRICE[movePackage];
-
-    await addDoc(collection(db, "clients"), {
-      businessName: lead.businessName,
-      email: lead.email ?? "",
-      package: movePackage,
-      price,
-      subscriptionStatus: "Active",
-      websiteUrl: "",
-      dateAdded: serverTimestamp(),
+  async function addLead() {
+    if (!form.businessName.trim() || saving) return;
+    setSaving(true);
+    await addDoc(collection(db, "leads"), {
+      businessName: form.businessName.trim(),
+      contactName: form.contactName.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+      notes: form.notes.trim(),
+      bookingDateTime: form.bookingDateTime || "",
+      createdAt: serverTimestamp(),
     });
-    await deleteDoc(doc(db, "leads", moveToClientsId));
-    setMoveToClientsId(null);
-    setMovingToClients(false);
+    setForm(blankForm());
+    setShowAdd(false);
+    setSaving(false);
   }
 
-  // Order leads into three tiers, keeping the existing dateAdded-desc order
-  // within each tier (stable sort):
-  //   0 = open now (or unknown hours), 1 = currently closed, 2 = not interested.
-  // Not-interested always wins the bottom slot regardless of open/closed.
-  const tier = (l: Lead) => (l.notInterested ? 2 : isOpenNow(l) ? 0 : 1);
-  // Leads with a note float to the very top (you've actioned them); within that,
-  // keep the open/closed/not-interested tiering.
-  const hasNote = (l: Lead) => !!(l.notes && l.notes.trim());
-  const sortedLeads = [...leads].sort((a, b) => {
-    // Not interested always sinks to the bottom — even if it has a note.
-    if (!!a.notInterested !== !!b.notInterested) return a.notInterested ? 1 : -1;
-    // Among the rest, noted leads float to the top.
-    if (hasNote(a) !== hasNote(b)) return hasNote(a) ? -1 : 1;
-    return tier(a) - tier(b);
-  });
-
-  function formatDate(lead: Lead) {
-    if (!lead.dateAdded?.toDate) return "—";
-    return lead.dateAdded.toDate().toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
+  async function saveEdit(id: string) {
+    await updateDoc(doc(db, "leads", id), {
+      businessName: editForm.businessName.trim(),
+      contactName: editForm.contactName.trim(),
+      phone: editForm.phone.trim(),
+      email: editForm.email.trim(),
+      notes: editForm.notes.trim(),
+      bookingDateTime: editForm.bookingDateTime || "",
     });
+    setEditId(null);
   }
 
-  // When a note was last written, e.g. "30 Jun, 12:21".
-  function formatNoteTime(ts: { toDate?: () => Date } | null | undefined) {
-    if (!ts?.toDate) return "";
-    try {
-      return ts.toDate().toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    } catch { return ""; }
-  }
+  // Booked demos float to the top, soonest first; everything else keeps
+  // newest-first below them.
+  const shown = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const list = term
+      ? leads.filter((l) =>
+          [l.businessName, l.contactName, l.phone, l.email, l.notes]
+            .some((v) => (v ?? "").toLowerCase().includes(term))
+        )
+      : leads;
+    return [...list].sort((a, b) => {
+      const ab = a.bookingDateTime ? 0 : 1;
+      const bb = b.bookingDateTime ? 0 : 1;
+      if (ab !== bb) return ab - bb;
+      if (ab === 0) return (a.bookingDateTime ?? "").localeCompare(b.bookingDateTime ?? "");
+      return 0;
+    });
+  }, [leads, search]);
+
+  const bookedCount = leads.filter((l) => l.bookingDateTime).length;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-        <h2 className="text-2xl font-bold text-white">Leads</h2>
-        {leads.length > 0 && (
-          <button
-            onClick={deleteAll}
-            disabled={deletingAll}
-            className="text-xs px-3 py-1.5 rounded-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-40"
-            style={{ background: "rgba(255,107,107,0.1)", color: "#ff6b6b", border: "1px solid rgba(255,107,107,0.25)" }}
-            title="Delete every lead"
-          >
-            {deletingAll ? "Deleting…" : "🗑 Delete all leads"}
-          </button>
-        )}
+    <div className="max-w-5xl">
+      <div className="flex items-baseline justify-between flex-wrap gap-3 mb-1">
+        <h2 className="text-lg font-semibold text-white">Leads</h2>
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {leads.length} lead{leads.length === 1 ? "" : "s"}
+          {bookedCount > 0 && (
+            <span style={{ color: ACCENT }}> · {bookedCount} demo{bookedCount === 1 ? "" : "s"} booked</span>
+          )}
+        </p>
+      </div>
+      <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>
+        Your call list. Add a demo date and time and the card lights up.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, number, notes…"
+          className="flex-1 min-w-[220px] rounded-sm px-3 py-2 text-sm outline-none"
+          style={inputSt}
+        />
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
+          style={{
+            background: showAdd ? "rgba(176,255,0,0.12)" : ACCENT,
+            color: showAdd ? ACCENT : ACCENT_TEXT,
+            border: showAdd ? "1px solid rgba(176,255,0,0.25)" : "none",
+          }}
+        >
+          {showAdd ? "Cancel" : "+ Add lead"}
+        </button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: "#b0ff00", borderTopColor: "transparent" }} />
+      {showAdd && (
+        <div className="mb-6 p-4 rounded-sm flex flex-col gap-3" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Business name" value={form.businessName} onChange={(v) => setForm((f) => ({ ...f, businessName: v }))} />
+            <Field label="Contact name" value={form.contactName} onChange={(v) => setForm((f) => ({ ...f, contactName: v }))} />
+            <Field label="Number" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} type="tel" />
+            <Field label="Email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} type="email" />
+          </div>
+          <div>
+            <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Notes</label>
+            <textarea
+              rows={3}
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="w-full rounded-sm px-3 py-2 text-sm outline-none resize-y"
+              style={inputSt}
+            />
+          </div>
+          <div>
+            <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Demo booked</label>
+            <input
+              type="datetime-local"
+              value={form.bookingDateTime}
+              onChange={(e) => setForm((f) => ({ ...f, bookingDateTime: e.target.value }))}
+              className="rounded-sm px-3 py-2 text-sm outline-none"
+              style={{ ...inputSt, colorScheme: "dark" }}
+            />
+          </div>
+          <button
+            onClick={addLead}
+            disabled={!form.businessName.trim() || saving}
+            className="self-start px-4 py-2 rounded-sm text-sm font-semibold transition-opacity"
+            style={{
+              background: form.businessName.trim() ? ACCENT : "rgba(255,255,255,0.08)",
+              color: form.businessName.trim() ? ACCENT_TEXT : "rgba(255,255,255,0.3)",
+              cursor: form.businessName.trim() ? "pointer" : "not-allowed",
+            }}
+          >
+            {saving ? "Saving…" : "Add lead"}
+          </button>
         </div>
-      ) : leads.length === 0 ? (
-        <div
-          className="rounded-sm px-5 py-10 text-center text-sm"
-          style={{ border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)" }}
-        >
-          No leads yet.
-        </div>
+      )}
+
+      {shown.length === 0 ? (
+        <p className="text-xs py-10 text-center" style={{ color: "rgba(255,255,255,0.3)" }}>
+          {search ? "Nothing matches that." : "No leads yet — add one above."}
+        </p>
       ) : (
-        <div className="flex gap-5 flex-1 min-h-0">
-          {/* Table */}
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-sm border-collapse min-w-[560px]">
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Business", "Notes", "Phone", "Date", ""].map((h) => (
-                    <th key={h} className="text-left py-2.5 px-3 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedLeads.map((lead) => {
-                  // Noted leads get a blue tint so actioned ones stand out.
-                  const noted = hasNote(lead);
-                  const baseBg = noted ? "rgba(176,255,0,0.10)" : "transparent";
-                  const hoverBg = noted ? "rgba(176,255,0,0.16)" : "rgba(255,255,255,0.025)";
-                  return (
-                  <tr
-                    key={lead.id}
-                    id={"lead-" + lead.id}
-                    className="transition-colors duration-100"
-                    style={{
-                      borderBottom: "1px solid rgba(255,255,255,0.04)",
-                      background: baseBg,
-                      opacity: lead.notInterested ? 0.4 : 1,
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = hoverBg)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = baseBg)}
-                  >
-                    <td className="py-3 px-3 font-medium text-white">
-                      <span className="truncate min-w-0 block max-w-[240px]">{lead.businessName}</span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <input
-                        type="text"
-                        defaultValue={lead.notes || ""}
-                        placeholder="Add note…"
-                        onKeyDown={(e) => {
-                          // Enter = deliberate save → log a fresh timestamp.
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const v = e.currentTarget.value;
-                            updateDoc(doc(db, "leads", lead.id), {
-                              notes: v,
-                              notesAt: v.trim() ? Timestamp.now() : null,
-                            });
-                            e.currentTarget.blur();
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const v = e.target.value;
-                          const changed = v !== (lead.notes || "");
-                          if (!v.trim()) {
-                            if (changed) updateDoc(doc(db, "leads", lead.id), { notes: v, notesAt: null });
-                          } else if (!lead.notesAt) {
-                            // First note → stamp it.
-                            updateDoc(doc(db, "leads", lead.id), { notes: v, notesAt: Timestamp.now() });
-                          } else if (changed) {
-                            // Edited an existing note → save text, KEEP the old time
-                            // (no accidental restamp). Press Enter to update the time.
-                            updateDoc(doc(db, "leads", lead.id), { notes: v });
-                          }
-                        }}
-                        className="w-full rounded-sm px-2 py-1 text-xs outline-none focus:border-[#b0ff00]"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.8)" }}
+        <div className="flex flex-col gap-2">
+          {shown.map((lead) => {
+            const booked = bookingLabel(lead.bookingDateTime);
+            const lit = !!booked && !booked.past;
+            return (
+              <div
+                key={lead.id}
+                className="rounded-sm p-4"
+                style={
+                  lit
+                    ? { border: `1px solid ${ACCENT}`, background: "rgba(176,255,0,0.08)" }
+                    : { border: "1px solid rgba(255,255,255,0.07)" }
+                }
+              >
+                {editId === lead.id ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Field label="Business name" value={editForm.businessName} onChange={(v) => setEditForm((f) => ({ ...f, businessName: v }))} />
+                      <Field label="Contact name" value={editForm.contactName} onChange={(v) => setEditForm((f) => ({ ...f, contactName: v }))} />
+                      <Field label="Number" value={editForm.phone} onChange={(v) => setEditForm((f) => ({ ...f, phone: v }))} type="tel" />
+                      <Field label="Email" value={editForm.email} onChange={(v) => setEditForm((f) => ({ ...f, email: v }))} type="email" />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Notes</label>
+                      <textarea
+                        rows={3}
+                        value={editForm.notes}
+                        onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+                        className="w-full rounded-sm px-3 py-2 text-sm outline-none resize-y"
+                        style={inputSt}
                       />
-                      {lead.notes && lead.notes.trim() && lead.notesAt && (
-                        <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                          ({formatNoteTime(lead.notesAt)})
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>Demo booked</label>
+                      <input
+                        type="datetime-local"
+                        value={editForm.bookingDateTime}
+                        onChange={(e) => setEditForm((f) => ({ ...f, bookingDateTime: e.target.value }))}
+                        className="rounded-sm px-3 py-2 text-sm outline-none"
+                        style={{ ...inputSt, colorScheme: "dark" }}
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setEditId(null)} className="text-xs px-3 py-1.5 rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>Cancel</button>
+                      <button onClick={() => saveEdit(lead.id)} className="text-xs px-3 py-1.5 rounded-sm font-semibold" style={{ background: ACCENT, color: ACCENT_TEXT }}>Save</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-semibold text-white">{lead.businessName || "—"}</h3>
+                          {booked && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={
+                                booked.past
+                                  ? { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }
+                                  : { background: "rgba(176,255,0,0.18)", color: ACCENT }
+                              }
+                            >
+                              {booked.past ? "Demo was " : "Demo "}{booked.text}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-3" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      {lead.phone ? (
-                        <a
-                          href={callLink(lead.phone)}
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ color: "#b0ff00", textDecoration: "none" }}
-                          title="Call this number"
-                        >
-                          {lead.phone}
-                        </a>
-                      ) : "—"}
-                    </td>
-                    <td className="py-3 px-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{formatDate(lead)}</td>
-                    <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
+                        {lead.contactName && (
+                          <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>{lead.contactName}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {lead.phone && (
+                            <a href={`tel:${lead.phone}`} className="text-xs" style={{ color: ACCENT }}>{lead.phone}</a>
+                          )}
+                          {lead.email && (
+                            <a href={`mailto:${lead.email}`} className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{lead.email}</a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
                         <button
-                          onClick={() => { setMoveToClientsId(lead.id); }}
-                          className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-                          style={{ background: "rgba(176,255,0,0.1)", color: "#b0ff00", border: "1px solid rgba(176,255,0,0.2)" }}
-                          title="Move to Clients"
+                          onClick={() => {
+                            setEditId(lead.id);
+                            setEditForm({
+                              businessName: lead.businessName ?? "",
+                              contactName: lead.contactName ?? "",
+                              phone: lead.phone ?? "",
+                              email: lead.email ?? "",
+                              notes: lead.notes ?? "",
+                              bookingDateTime: lead.bookingDateTime ?? "",
+                            });
+                          }}
+                          className="text-xs px-2.5 py-1 rounded-sm transition-opacity hover:opacity-80"
+                          style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}
                         >
-                          → Client
+                          Edit
                         </button>
                         <button
-                          onClick={() => toggleNotInterested(lead)}
-                          className="text-xs px-2 py-1 rounded-sm font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-                          style={
-                            lead.notInterested
-                              ? { background: "rgba(72,199,142,0.1)", color: "#48c78e", border: "1px solid rgba(72,199,142,0.2)" }
-                              : { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }
-                          }
-                          title={lead.notInterested ? "Mark as interested again" : "Mark as not interested"}
-                        >
-                          {lead.notInterested ? "Interested" : "Not interested"}
-                        </button>
-                        <button
-                          onClick={() => deleteLead(lead.id)}
-                          className="text-xs opacity-30 hover:opacity-80 transition-opacity"
-                          style={{ color: "#ff6b6b" }}
-                          title="Delete lead"
+                          onClick={() => setDeleteConfirm({ id: lead.id, name: lead.businessName || "this lead" })}
+                          aria-label="Delete lead"
+                          className="text-xs px-1.5 transition-opacity opacity-40 hover:opacity-100"
+                          style={{ color: "#ef4444" }}
                         >
                           ✕
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
+                    </div>
+                    {lead.notes && (
+                      <p className="text-xs mt-2 whitespace-pre-wrap" style={{ color: "rgba(255,255,255,0.55)" }}>{lead.notes}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Move to Clients modal */}
-      {moveToClientsId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.75)" }}>
-            <div className="w-full max-w-sm rounded-sm p-6 flex flex-col gap-4" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-white">Move to Clients</h3>
-                <button onClick={() => setMoveToClientsId(null)} style={{ color: "rgba(255,255,255,0.35)" }}>✕</button>
-              </div>
-              <div>
-                <label className="block text-xs mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Package</label>
-                <select
-                  value={movePackage}
-                  onChange={(e) => setMovePackage(e.target.value as typeof movePackage)}
-                  className="w-full rounded-sm px-3 py-2.5 text-sm outline-none"
-                  style={inputSt}
-                >
-                  <option value="Website" style={{ background: "#121212" }}>Website (£500)</option>
-                  <option value="CRM" style={{ background: "#121212" }}>CRM (£1,000)</option>
-                  <option value="Website + CRM" style={{ background: "#121212" }}>Website + CRM (£1,250)</option>
-                </select>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setMoveToClientsId(null)}
-                  className="flex-1 py-2.5 text-sm rounded-sm"
-                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmMoveToClients}
-                  disabled={movingToClients}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-sm text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-                  style={{ background: "#b0ff00" }}
-                >
-                  {movingToClients ? "Moving…" : "Move to Clients"}
-                </button>
-              </div>
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setDeleteConfirm(null)}>
+          <div className="rounded-sm p-5 max-w-sm w-full" style={{ background: "#121212", border: "1px solid rgba(255,255,255,0.1)" }} onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm text-white mb-1">Delete lead?</p>
+            <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>{deleteConfirm.name} will be removed for good.</p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setDeleteConfirm(null)} className="text-xs px-3 py-1.5 rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>Cancel</button>
+              <button
+                onClick={async () => { await deleteDoc(doc(db, "leads", deleteConfirm.id)); setDeleteConfirm(null); }}
+                className="text-xs px-3 py-1.5 rounded-sm font-semibold"
+                style={{ background: "#ef4444", color: "#fff" }}
+              >
+                Delete
+              </button>
             </div>
           </div>
+        </div>
       )}
+    </div>
+  );
+}
 
+function Field({
+  label, value, onChange, type = "text",
+}: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label className="block text-xs mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-sm px-3 py-2 text-sm outline-none"
+        style={inputSt}
+      />
     </div>
   );
 }

@@ -6,15 +6,17 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import DygikoLogo from "@/components/DygikoLogo";
+import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import OrdersTab from "@/components/crm/OrdersTab";
 import ChecklistTab from "@/components/crm/ChecklistTab";
 import { useCrmUser } from "@/lib/useCrmUser";
 
-const TABS = ["Clients", "Orders", "Checklist", "Admin"] as const;
+const TABS = ["Leads", "Clients", "Orders", "Checklist", "Admin"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, string> = {
+  Leads: "◎",
   Clients: "◈",
   Orders: "🧾",
   Checklist: "✓",
@@ -186,6 +188,7 @@ function CRMPageInner() {
         )}
 
         <main className="flex-1 min-w-0 overflow-auto px-6 py-8 lg:px-8">
+          {tab === "Leads" && <LeadsTab />}
           {tab === "Clients" && <ClientsTab />}
           {tab === "Orders" && <OrdersTab />}
           {tab === "Checklist" && <ChecklistTab />}
