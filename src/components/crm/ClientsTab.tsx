@@ -19,8 +19,8 @@ const PACKAGES = [
   "Website",
   "CRM",
   "Website + CRM",
-  "Social media management",
-  "Website + Social media management",
+  "Static posts",
+  "Website + Static posts",
   "Reels & video editing",
 ] as const;
 type Package = (typeof PACKAGES)[number];
@@ -45,7 +45,12 @@ const periodOf = (c: { billingPeriod?: string }): BillingPeriod =>
 // Legacy package names from clients added before the rebrand. Read-only — kept
 // so existing client cards and revenue calcs don't break. Pre-existing clients
 // keep their stored package name; only new clients pick from PACKAGES above.
-type LegacyPackage = "Basic" | "Growth" | "Full Business";
+type LegacyPackage =
+  | "Basic"
+  | "Growth"
+  | "Full Business"
+  | "Social media management"
+  | "Website + Social media management";
 type AnyPackage = Package | LegacyPackage;
 
 // Annual subscription prices — what a client pays each year.
@@ -53,9 +58,12 @@ const PACKAGE_PRICE: Record<AnyPackage, number> = {
   Website: 360,
   CRM: 600,
   "Website + CRM": 840,
+  "Static posts": 156,
+  "Website + Static posts": 516,
+  "Reels & video editing": 216,
+  // Renamed 2026-08-24 — kept so existing client docs still price.
   "Social media management": 156,
   "Website + Social media management": 516,
-  "Reels & video editing": 216,
   // Legacy — map to a sensible annual amount so old docs don't crash.
   Basic: 360,
   Growth: 360,
@@ -119,6 +127,8 @@ const PKG_COLORS: Record<AnyPackage, { bg: string; color: string }> = {
   Website: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" },
   CRM: { bg: "rgba(176,255,0,0.08)", color: "#b0ff00" },
   "Website + CRM": { bg: "rgba(176,255,0,0.15)", color: "#b0ff00" },
+  "Static posts": { bg: "rgba(168,85,247,0.12)", color: "#c084fc" },
+  "Website + Static posts": { bg: "rgba(168,85,247,0.18)", color: "#c084fc" },
   "Social media management": { bg: "rgba(168,85,247,0.12)", color: "#c084fc" },
   "Website + Social media management": { bg: "rgba(168,85,247,0.18)", color: "#c084fc" },
   "Reels & video editing": { bg: "rgba(236,72,153,0.14)", color: "#f472b6" },

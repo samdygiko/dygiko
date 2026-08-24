@@ -163,7 +163,7 @@ export const messages: Record<Locale, Messages> = {
         ],
       },
       social: {
-        name: "Social media management",
+        name: "Static posts",
         tagline: "We plan, write and post — so you stay top of mind without lifting a finger.",
         features: [
           "Content planned around your business",
@@ -294,7 +294,7 @@ export const messages: Record<Locale, Messages> = {
         ],
       },
       social: {
-        name: "Gestion des réseaux sociaux",
+        name: "Posts statiques",
         tagline: "On planifie, rédige et publie — pour rester présent sans lever le petit doigt.",
         features: [
           "Contenu planifié selon votre activité",

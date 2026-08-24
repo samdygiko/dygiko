@@ -72,7 +72,7 @@ export const PACKAGES: Package[] = [
   },
   {
     key: "social",
-    name: "Social media management",
+    name: "Static posts",
     tagline: "We plan, write and post — so you stay top of mind without lifting a finger.",
     price: 156, // 2 posts/month baseline (£78/yr per post-per-month = £6.50 a post)
     perUnit: 78,
