@@ -10,9 +10,10 @@ import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import OrdersTab from "@/components/crm/OrdersTab";
 import ChecklistTab from "@/components/crm/ChecklistTab";
+import UsersTab from "@/components/crm/UsersTab";
 import { useCrmUser } from "@/lib/useCrmUser";
 
-const TABS = ["Leads", "Clients", "Orders", "Checklist", "Admin"] as const;
+const TABS = ["Leads", "Clients", "Orders", "Checklist", "Users", "Admin"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, string> = {
@@ -20,11 +21,12 @@ const TAB_ICONS: Record<Tab, string> = {
   Clients: "◈",
   Orders: "🧾",
   Checklist: "✓",
+  Users: "👥",
   Admin: "⚙",
 };
 
 // Tabs only admins see.
-const ADMIN_ONLY: Tab[] = ["Admin"];
+const ADMIN_ONLY: Tab[] = ["Users", "Admin"];
 
 export default function CRMPage() {
   return (
@@ -192,6 +194,7 @@ function CRMPageInner() {
           {tab === "Clients" && <ClientsTab />}
           {tab === "Orders" && <OrdersTab />}
           {tab === "Checklist" && <ChecklistTab />}
+          {tab === "Users" && isAdmin && <UsersTab />}
           {tab === "Admin" && isAdmin && <AdminContent />}
         </main>
       </div>

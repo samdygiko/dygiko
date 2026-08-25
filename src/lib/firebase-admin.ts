@@ -1,5 +1,6 @@
 import { cert, getApp, getApps, initializeApp, App } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { getAuth, Auth } from "firebase-admin/auth";
 
 // Server-only Firebase Admin SDK — used by the PayPal order routes to write
 // paid orders to Firestore without going through client-side auth rules, so
@@ -24,4 +25,8 @@ function getAdminApp(): App {
 
 export function adminDb(): Firestore {
   return getFirestore(getAdminApp());
+}
+
+export function adminAuth(): Auth {
+  return getAuth(getAdminApp());
 }
