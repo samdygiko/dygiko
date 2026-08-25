@@ -4,10 +4,44 @@
 // is a scaled-down live iframe of the real demo, and the whole strip scrolls
 // slowly + loops seamlessly (cards are duplicated once).
 
-const DEMOS: { label: string; url: string }[] = [
-  { label: "Electrician CRM", url: "https://voltix-crm.vercel.app" },
-  { label: "Construction CRM", url: "https://marsden-crm.vercel.app" },
-  { label: "Dental CRM", url: "https://brightwater-crm.vercel.app" },
+type Demo = { label: string; url: string };
+
+const SYSTEMS: Demo[] = [
+  { label: "Electrician", url: "https://voltix-crm.vercel.app" },
+  { label: "Construction", url: "https://marsden-crm.vercel.app" },
+  { label: "Dental", url: "https://brightwater-crm.vercel.app" },
+  { label: "Barber", url: "https://blendsmith-crm.vercel.app" },
+  { label: "Hair salon", url: "https://lumiere-crm-two.vercel.app" },
+  { label: "Beauty salon", url: "https://velora-crm-beta.vercel.app" },
+  { label: "Tailor", url: "https://ashcroft-crm.vercel.app" },
+  { label: "Recording studio", url: "https://basswood-crm.vercel.app" },
+  { label: "Architect", url: "https://halden-crm.vercel.app" },
+  { label: "Hotel", url: "https://ellison-crm.vercel.app" },
+  { label: "Pet store", url: "https://barkwell-crm.vercel.app" },
+  { label: "Pub", url: "https://oakwell-crm.vercel.app" },
+  { label: "Restaurant", url: "https://sorrel-crm.vercel.app" },
+  { label: "Caf\u00e9", url: "https://fernwood-crm.vercel.app" },
+  { label: "Internet caf\u00e9", url: "https://pixelpoint-crm.vercel.app" },
+  { label: "Phone repair", url: "https://fonefix-crm.vercel.app" },
+];
+
+const SITES: Demo[] = [
+  { label: "Electrician", url: "https://voltix-web-mocha.vercel.app" },
+  { label: "Construction", url: "https://marsden-web.vercel.app" },
+  { label: "Dental", url: "https://brightwater-web.vercel.app" },
+  { label: "Barber", url: "https://blendsmith-web.vercel.app" },
+  { label: "Hair salon", url: "https://lumiere-web-theta.vercel.app" },
+  { label: "Beauty salon", url: "https://velora-web-self.vercel.app" },
+  { label: "Tailor", url: "https://ashcroft-web.vercel.app" },
+  { label: "Recording studio", url: "https://basswood-web.vercel.app" },
+  { label: "Architect", url: "https://halden-web.vercel.app" },
+  { label: "Hotel", url: "https://ellison-web.vercel.app" },
+  { label: "Pet store", url: "https://barkwell-web.vercel.app" },
+  { label: "Pub", url: "https://oakwell-web.vercel.app" },
+  { label: "Restaurant", url: "https://sorrel-web-lac.vercel.app" },
+  { label: "Caf\u00e9", url: "https://fernwood-web.vercel.app" },
+  { label: "Internet caf\u00e9", url: "https://pixelpoint-web.vercel.app" },
+  { label: "Phone repair", url: "https://fonefix-web.vercel.app" },
 ];
 
 function DemoCard({ label, url }: { label: string; url: string }) {
@@ -58,8 +92,25 @@ function DemoCard({ label, url }: { label: string; url: string }) {
   );
 }
 
+function Row({ items, label, reverse }: { items: Demo[]; label: string; reverse?: boolean }) {
+  const cards = [...items, ...items]; // duplicated for a seamless loop
+  return (
+    <div style={{ marginBottom: reverse ? 0 : 40 }}>
+      <p style={{ textAlign: "center", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 18 }}>
+        {label}
+      </p>
+      <div className="dyg-marquee-wrap" style={{ width: "100%", overflow: "hidden" }}>
+        <div className={`dyg-marquee-track${reverse ? " dyg-marquee-reverse" : ""}`}>
+          {cards.map((d, i) => (
+            <DemoCard key={i} label={d.label} url={d.url} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DemoMarquee() {
-  const cards = [...DEMOS, ...DEMOS]; // duplicate for seamless loop
   return (
     <section
       id="demos"
@@ -74,13 +125,8 @@ export default function DemoMarquee() {
           Demo systems
         </h2>
       </div>
-      <div className="dyg-marquee-wrap" style={{ width: "100%", overflow: "hidden" }}>
-        <div className="dyg-marquee-track">
-          {cards.map((d, i) => (
-            <DemoCard key={i} label={d.label} url={d.url} />
-          ))}
-        </div>
-      </div>
+      <Row items={SYSTEMS} label="Operations systems" />
+      <Row items={SITES} label="Websites" reverse />
     </section>
   );
 }

@@ -236,3 +236,9 @@ html.lenis body {
 .dyg-marquee-wrap:hover .dyg-marquee-track {
   animation-play-state: paused;
 }
+/* Second row runs the other way so the two strips read as distinct sets. */
+.dyg-marquee-track.dyg-marquee-reverse { animation-name: dyg-marquee-rev; }
+@keyframes dyg-marquee-rev {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
