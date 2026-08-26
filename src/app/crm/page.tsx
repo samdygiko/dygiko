@@ -39,6 +39,19 @@ export default function CRMPage() {
 function CRMPageInner() {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useCrmUser();
+
+  // The call-tracker extension identifies the caller from here, so a lead
+  // claimed on Google Maps is stamped with the same name as in the CRM.
+  const me = useCrmUser();
+  useEffect(() => {
+    const el = document.documentElement;
+    if (me.name) {
+      el.dataset.crmUser = me.name;
+      el.dataset.crmBrand = "dygiko";
+    } else {
+      delete el.dataset.crmUser;
+    }
+  }, [me.name]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
