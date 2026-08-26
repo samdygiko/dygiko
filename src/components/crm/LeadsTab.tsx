@@ -14,6 +14,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useCrmUser } from "@/lib/useCrmUser";
 
 // Call list. You ring businesses, take a few notes, and when one agrees to a
 // demo you put the date and time in — the card lights up so the booked ones
@@ -29,6 +30,8 @@ const ACCENT_TEXT = "#080808";
 interface Lead {
   id: string;
   businessName?: string;
+  /** Who is working this lead. Set the moment someone notes or statuses it. */
+  claimedBy?: string;
   contactName?: string;
   phone?: string;
   email?: string;
@@ -65,7 +68,9 @@ function bookingLabel(iso?: string): { text: string; past: boolean } | null {
 }
 
 export default function LeadsTab() {
+  const me = useCrmUser();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [showClaimed, setShowClaimed] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
@@ -100,6 +105,8 @@ export default function LeadsTab() {
 
   async function saveEdit(id: string) {
     await updateDoc(doc(db, "leads", id), {
+      // Editing a lead claims it, so it drops off everyone else's list.
+      ...(me.name ? { claimedBy: me.name } : {}),
       businessName: editForm.businessName.trim(),
       contactName: editForm.contactName.trim(),
       phone: editForm.phone.trim(),
@@ -110,16 +117,24 @@ export default function LeadsTab() {
     setEditId(null);
   }
 
-  // Booked demos float to the top, soonest first; everything else keeps
-  // newest-first below them.
+  // A lead someone else is already working is hidden by default — the whole
+  // point is that two people don't ring the same shop. Admins can toggle them
+  // back on to see the full picture.
+  const claimedByOthers = leads.filter(
+    (l) => l.claimedBy && me.name && l.claimedBy !== me.name
+  ).length;
+
   const shown = useMemo(() => {
+    const mine = showClaimed
+      ? leads
+      : leads.filter((l) => !l.claimedBy || !me.name || l.claimedBy === me.name);
     const term = search.trim().toLowerCase();
     const list = term
-      ? leads.filter((l) =>
+      ? mine.filter((l) =>
           [l.businessName, l.contactName, l.phone, l.email, l.notes]
             .some((v) => (v ?? "").toLowerCase().includes(term))
         )
-      : leads;
+      : mine;
     return [...list].sort((a, b) => {
       const ab = a.bookingDateTime ? 0 : 1;
       const bb = b.bookingDateTime ? 0 : 1;
@@ -127,7 +142,7 @@ export default function LeadsTab() {
       if (ab === 0) return (a.bookingDateTime ?? "").localeCompare(b.bookingDateTime ?? "");
       return 0;
     });
-  }, [leads, search]);
+  }, [leads, search, showClaimed, me.name]);
 
   const bookedCount = leads.filter((l) => l.bookingDateTime).length;
 
@@ -136,7 +151,7 @@ export default function LeadsTab() {
       <div className="flex items-baseline justify-between flex-wrap gap-3 mb-1">
         <h2 className="text-lg font-semibold text-white">Leads</h2>
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-          {leads.length} lead{leads.length === 1 ? "" : "s"}
+          {shown.length} lead{shown.length === 1 ? "" : "s"}
           {bookedCount > 0 && (
             <span style={{ color: ACCENT }}> · {bookedCount} demo{bookedCount === 1 ? "" : "s"} booked</span>
           )}
@@ -154,6 +169,15 @@ export default function LeadsTab() {
           className="flex-1 min-w-[220px] rounded-sm px-3 py-2 text-sm outline-none"
           style={inputSt}
         />
+        {claimedByOthers > 0 && (
+          <button
+            onClick={() => setShowClaimed((v) => !v)}
+            className="text-xs px-3 py-2 rounded-sm transition-opacity hover:opacity-80"
+            style={{ border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }}
+          >
+            {showClaimed ? "Hide" : "Show"} {claimedByOthers} being worked
+          </button>
+        )}
         <button
           onClick={() => setShowAdd((v) => !v)}
           className="text-xs px-4 py-2 rounded-sm font-medium transition-opacity hover:opacity-80"
@@ -268,6 +292,14 @@ export default function LeadsTab() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-sm font-semibold text-white">{lead.businessName || "—"}</h3>
+                          {lead.claimedBy && me.name && lead.claimedBy !== me.name && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={{ background: "rgba(245,158,11,0.16)", color: "#f59e0b" }}
+                            >
+                              {lead.claimedBy}
+                            </span>
+                          )}
                           {booked && (
                             <span
                               className="text-xs px-2 py-0.5 rounded-full font-medium"
