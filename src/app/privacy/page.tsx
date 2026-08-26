@@ -153,7 +153,40 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="10. Contact and complaints">
+          <Section title="10. Chrome extension (Dygiko — Call Tracker)">
+            <p>
+              We publish a Chrome extension that helps our team keep track of which businesses
+              have already been telephoned. It is unlisted and requires a Dygiko CRM account to
+              do anything.
+            </p>
+            <p>
+              When you open a business listing on Google Maps, the extension reads only what that
+              page already displays: the business name, telephone number, address and business
+              category. It does not read anything from any other website and does not track your
+              browsing.
+            </p>
+            <p>
+              When you record an outcome — not interested, a note, or a booked demonstration —
+              that outcome, the business details above and your CRM username are sent to your own
+              Dygiko CRM account so colleagues can see the business has already been contacted.
+              Your username is stored locally in the browser so entries are attributed to you.
+            </p>
+            <p>
+              Dygiko and Kojo Builds are run by the same family and share a single record of which
+              businesses have been contacted, so that neither team telephones the same business
+              twice. That shared record is hosted on kojobuilds.com and holds only the business
+              name, telephone number, the outcome recorded and the name of the person who recorded
+              it. This is why the extension requests access to kojobuilds.com.
+            </p>
+            <p>
+              The extension does not collect health, financial or authentication data, does not
+              sell or transfer data to third parties, and does not use data for advertising or
+              creditworthiness. Removing the extension clears the locally stored username; records
+              already sent remain until deleted — see &ldquo;Your rights&rdquo; above.
+            </p>
+          </Section>
+
+          <Section title="11. Contact and complaints">
             <p>
               If you have any questions about this privacy policy or how we handle your
               data, please contact us at hello@dygiko.com.
