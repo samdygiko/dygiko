@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       hours?: Record<string, string[]> | null;
       email?: string;
       notes?: string;
+      bookingDateTime?: string;
     };
 
     if (body.token !== SHARED_TOKEN) {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
     });
     const email = (body.email || "").trim();
     const notes = (body.notes || "").trim();
+    const bookingDateTime = (body.bookingDateTime || "").trim();
 
     if (dupe) {
       // Already in the CRM — stamp the email + note (e.g. "Emailed 2 Jul") so
@@ -64,6 +66,7 @@ export async function POST(req: NextRequest) {
       const patch: Record<string, unknown> = {};
       if (email) patch.email = email;
       if (notes) { patch.notes = notes; patch.notesAt = Timestamp.now(); }
+      if (bookingDateTime) patch.bookingDateTime = bookingDateTime;
       if (Object.keys(patch).length) await dupe.ref.update(patch);
       return NextResponse.json({ ok: true, deduped: true, id: dupe.id });
     }
@@ -81,7 +84,12 @@ export async function POST(req: NextRequest) {
       notes,
       ...(notes ? { notesAt: Timestamp.now() } : {}),
       notInterested: false,
+      bookingDateTime,
       dateAdded: Timestamp.now(),
+      // The Leads tab orders on createdAt; a document missing that field is
+      // dropped from the query entirely, so extension-captured leads were
+      // never showing up in the CRM.
+      createdAt: Timestamp.now(),
       source: "extension",
     });
     return NextResponse.json({ ok: true, id: ref.id });
