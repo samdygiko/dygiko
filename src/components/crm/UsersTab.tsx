@@ -1,27 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-type CrmUser = { id: string; name?: string; email?: string; role?: string };
+type CrmUser = {
+  id: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  orphaned?: boolean;
+  isSelf?: boolean;
+};
 
 export default function UsersTab() {
   const { user } = useAuth();
   const [users, setUsers] = useState<CrmUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "users"), (snap) => {
-      setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CrmUser)));
-    });
-    return unsub;
-  }, []);
+  // The list comes from Firebase Auth, not Firestore — otherwise a login that
+  // exists without a profile doc stays hidden while its email is still taken.
+  const load = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/users", { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok) setUsers(data.users || []);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { load(); }, [load]);
 
   const inputSt = { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" };
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -39,8 +54,14 @@ export default function UsersTab() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't create user");
-      setMsg({ ok: true, text: `${name.trim()} can now log in with ${email.trim()}` });
+      setMsg({
+        ok: true,
+        text: data.reclaimed
+          ? `${email.trim()} already had a login — password reset and added to the team`
+          : `${name.trim()} can now log in with ${email.trim()}`,
+      });
       setName(""); setEmail(""); setPassword("");
+      load();
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : "Couldn't create user" });
     } finally {
@@ -49,8 +70,17 @@ export default function UsersTab() {
   };
 
   const removeUser = async (u: CrmUser) => {
-    if (!window.confirm(`Remove ${u.name || u.email} from the team list? (Their login stays — this just hides them here.)`)) return;
-    await deleteDoc(doc(db, "users", u.id));
+    if (!user) return;
+    if (!window.confirm(`Delete ${u.name || u.email}? Their login stops working straight away and the email is freed up for reuse.`)) return;
+    const token = await user.getIdToken();
+    const res = await fetch("/api/users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ uid: u.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) setMsg({ ok: false, text: data.error || "Couldn't remove user" });
+    load();
   };
 
   return (
@@ -83,24 +113,40 @@ export default function UsersTab() {
             </span>
           )}
         </div>
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+          If the email already has a login, this resets its password to the one you type — you won&apos;t get an &quot;already in use&quot; error.
+        </p>
       </div>
 
       {/* User list */}
       <div className="flex flex-col gap-2">
-        {users.length === 0 ? (
+        {loading ? (
           <div className="rounded-sm px-5 py-8 text-center text-sm" style={{ border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)" }}>
-            No team members yet. Add one above — they&apos;ll log in at the same CRM address with the email + password you set.
+            Loading logins…
+          </div>
+        ) : users.length === 0 ? (
+          <div className="rounded-sm px-5 py-8 text-center text-sm" style={{ border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.3)" }}>
+            No logins yet. Add one above — they&apos;ll log in at the same CRM address with the email + password you set.
           </div>
         ) : (
           users.map((u) => (
             <div key={u.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-sm" style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-white">{u.name || u.email}</div>
+                <div className="text-sm font-semibold text-white">
+                  {u.name || u.email}{u.isSelf && <span className="ml-2 text-xs font-normal" style={{ color: "rgba(255,255,255,0.35)" }}>(you)</span>}
+                </div>
                 <div className="text-xs truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{u.email}</div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
+                {u.orphaned && !u.isSelf && (
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }} title="No profile — this login currently has full admin access">
+                    full access
+                  </span>
+                )}
                 <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)" }}>{u.role || "user"}</span>
-                <button onClick={() => removeUser(u)} className="text-xs opacity-40 hover:opacity-90 transition-opacity" style={{ color: "#ff6b6b" }} title="Remove from list">✕</button>
+                {!u.isSelf && (
+                  <button onClick={() => removeUser(u)} className="text-xs opacity-40 hover:opacity-90 transition-opacity" style={{ color: "#ff6b6b" }} title="Delete this login">✕</button>
+                )}
               </div>
             </div>
           ))

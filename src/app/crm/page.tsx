@@ -10,10 +10,11 @@ import LeadsTab from "@/components/crm/LeadsTab";
 import ClientsTab from "@/components/crm/ClientsTab";
 import OrdersTab from "@/components/crm/OrdersTab";
 import ChecklistTab from "@/components/crm/ChecklistTab";
+import AreasTab from "@/components/crm/AreasTab";
 import UsersTab from "@/components/crm/UsersTab";
 import { useCrmUser } from "@/lib/useCrmUser";
 
-const TABS = ["Leads", "Clients", "Orders", "Checklist", "Users", "Admin"] as const;
+const TABS = ["Leads", "Clients", "Orders", "Checklist", "Areas", "Users", "Admin"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, string> = {
@@ -21,6 +22,7 @@ const TAB_ICONS: Record<Tab, string> = {
   Clients: "◈",
   Orders: "🧾",
   Checklist: "✓",
+  Areas: "🗺",
   Users: "👥",
   Admin: "⚙",
 };
@@ -207,6 +209,7 @@ function CRMPageInner() {
           {tab === "Clients" && <ClientsTab />}
           {tab === "Orders" && <OrdersTab />}
           {tab === "Checklist" && <ChecklistTab />}
+          {tab === "Areas" && <AreasTab />}
           {tab === "Users" && isAdmin && <UsersTab />}
           {tab === "Admin" && isAdmin && <AdminContent />}
         </main>
