@@ -19,22 +19,39 @@ interface CustomerInfo {
 
 export async function POST(req: NextRequest) {
   try {
-    const { pkg, customer } = (await req.json()) as {
+    const { pkg, amount, customer, label } = (await req.json()) as {
       pkg?: string;
+      amount?: number; // one-off custom amount (£), clamped
       customer?: CustomerInfo;
+      /** What to call this on the PayPal page and in the CRM, e.g. a deposit. */
+      label?: string;
     };
+    const cleanLabel = (label || "").trim().slice(0, 60);
 
     const product = pkg ? getPackage(pkg) : undefined;
-    if (!product) {
+    // A custom one-off amount (a deposit, or a bespoke price link) overrides
+    // the package price. Previously this was ignored and the package price was
+    // charged regardless, so a £25 deposit link would have taken the full
+    // package fee.
+    const custom = typeof amount === "number" && amount >= 5 && amount <= 100000 ? Math.round(amount) : null;
+    if (!product && custom == null) {
       return NextResponse.json({ error: "Unknown package" }, { status: 400 });
     }
 
+    const unitAmount = custom ?? product!.price;
+    const lineName = cleanLabel
+      ? `Dygiko — ${cleanLabel}`
+      : product ? `Dygiko — ${product.name}` : "Dygiko — Custom (one-off)";
+    const lineDesc = cleanLabel
+      ? "Credited against your first invoice"
+      : product?.tagline || "One-off payment";
+
     const order = await createPayPalOrder([
       {
-        name: `Kojo Builds — ${product.name}`,
-        description: product.tagline,
+        name: lineName,
+        description: lineDesc,
         quantity: 1,
-        unitAmount: product.price,
+        unitAmount,
       },
     ]);
 
@@ -49,8 +66,8 @@ export async function POST(req: NextRequest) {
           friendlyId: `KB-${shortCode}`,
           paymentProvider: "paypal",
           status: "pending_payment",
-          packageKey: product.key,
-          packageName: product.name,
+          packageKey: product?.key || "custom",
+          packageName: cleanLabel || product?.name || "Custom (one-off)",
           customer: {
             name: customer.name || null,
             email: customer.email,
@@ -58,7 +75,7 @@ export async function POST(req: NextRequest) {
             business: customer.business || null,
             website: customer.website || null,
           },
-          amountTotal: Math.round(product.price * 100),
+          amountTotal: Math.round(unitAmount * 100),
           currency: "gbp",
           notes: customer.notes || "",
           createdAt: Timestamp.now(),

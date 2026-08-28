@@ -39,6 +39,7 @@ function CheckoutInner() {
   const cart = useCart();
 
   // Three checkout modes:
+  //   ?deposit=25    → Consultation deposit → single capture payment
   //   ?oneoff=250    → Admin one-off link    → single capture payment
   //   ?price=400     → Admin custom-annual   → annual subscription
   //   ?quarterly=390 → Admin custom-quarterly→ subscription billed every 3 months
@@ -50,14 +51,20 @@ function CheckoutInner() {
     return Number.isFinite(n) && n >= min && n <= max ? n : null;
   };
   const oneoff = parseAmt(params.get("oneoff"), 10, 100000);
+  // Booking deposit, sent to a prospect from the call tracker. Capped low —
+  // this link goes out over SMS, so a typo shouldn't be able to bill someone
+  // hundreds of pounds.
+  const deposit = parseAmt(params.get("deposit"), 5, 500);
   const priceOverride = parseAmt(params.get("price"), 10, 100000);
   const quarterly = parseAmt(params.get("quarterly"), 10, 100000);
   const monthly = parseAmt(params.get("monthly"), 10, 100000);
   const pkgParam = params.get("pkg");
   const singlePkg = pkgParam ? getPackage(pkgParam) : undefined;
 
-  const mode: "oneoff" | "custom" | "quarterly" | "monthly" | "cart" =
-    oneoff !== null
+  const mode: "oneoff" | "deposit" | "custom" | "quarterly" | "monthly" | "cart" =
+    deposit !== null
+      ? "deposit"
+      : oneoff !== null
       ? "oneoff"
       : quarterly !== null
         ? "quarterly"
@@ -66,7 +73,8 @@ function CheckoutInner() {
           : priceOverride !== null
             ? "custom"
             : "cart";
-  const isOneOff = mode === "oneoff";
+  const isDeposit = mode === "deposit";
+  const isOneOff = mode === "oneoff" || mode === "deposit";
   const isQuarterly = mode === "quarterly";
   const isMonthly = mode === "monthly";
   const isCart = mode === "cart";
@@ -90,8 +98,12 @@ function CheckoutInner() {
   }, [cart.hydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Line items + total for the summary and payment.
-  const singleName = singlePkg ? t.packages[singlePkg.key].name : "Custom order";
-  const singleAmt = isOneOff
+  const singleName = isDeposit
+    ? "Consultation deposit"
+    : singlePkg ? t.packages[singlePkg.key].name : "Custom order";
+  const singleAmt = isDeposit
+    ? deposit!
+    : mode === "oneoff"
     ? oneoff!
     : isQuarterly
       ? quarterly!
@@ -182,7 +194,11 @@ function CheckoutInner() {
             setPaying(true);
             const res = await fetch("/api/paypal/create-order", {
               method: "POST", headers,
-              body: JSON.stringify({ pkg: primaryPkg, amount: total, customer }),
+              body: JSON.stringify(
+                isDeposit
+                  ? { amount: total, customer, label: "Consultation deposit" }
+                  : { pkg: primaryPkg, amount: total, customer }
+              ),
             });
             const d = await res.json();
             if (!res.ok || !d.id) throw new Error(d?.error || "Couldn't start checkout");
@@ -236,7 +252,7 @@ function CheckoutInner() {
 
     window.paypal.Buttons(config).render(el);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sdkReady, canPay, isOneOff, isCart, billingPeriod, primaryPkg, total, lineKey, name, email, phone, business, website, notes, router]);
+  }, [sdkReady, canPay, isOneOff, isDeposit, isCart, billingPeriod, primaryPkg, total, lineKey, name, email, phone, business, website, notes, router]);
 
   return (
     <>
@@ -329,7 +345,17 @@ function CheckoutInner() {
                 </div>
               )}
 
-              {isOneOff ? (
+              {isDeposit ? (
+                <div style={{ background: "rgba(176,255,0,0.07)", border: "1px solid rgba(176,255,0,0.25)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, color: "#7aa800", fontWeight: 700, marginBottom: 6 }}>
+                    Holds your consultation slot
+                  </p>
+                  <p style={{ fontSize: 12, color: "#44516b", lineHeight: 1.6, margin: 0 }}>
+                    A one-off £{deposit} to book the appointment. It comes straight off your
+                    first invoice, so if you go ahead it costs you nothing extra.
+                  </p>
+                </div>
+              ) : isOneOff ? (
                 <p style={{ fontSize: 12, color: "#b0ff00", fontWeight: 600, marginBottom: 16 }}>One-off payment</p>
               ) : lineItems.length > 0 ? (
                 <p style={{ fontSize: 12, color: "#16a34a", fontWeight: 600, marginBottom: 16 }}>{t.pricing.billedAnnually} · hosting, updates & support included</p>
