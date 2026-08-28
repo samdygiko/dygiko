@@ -32,6 +32,9 @@ interface Lead {
   businessName?: string;
   /** Who is working this lead. Set the moment someone notes or statuses it. */
   claimedBy?: string;
+  /** Who the lead belongs to — whoever was signed in when it was captured. */
+  ownerUid?: string;
+  ownerName?: string;
   contactName?: string;
   phone?: string;
   email?: string;
@@ -107,6 +110,7 @@ export default function LeadsTab() {
     await updateDoc(doc(db, "leads", id), {
       // Editing a lead claims it, so it drops off everyone else's list.
       ...(me.name ? { claimedBy: me.name } : {}),
+      ...(me.uid ? { ownerUid: me.uid, ownerName: me.name } : {}),
       businessName: editForm.businessName.trim(),
       contactName: editForm.contactName.trim(),
       phone: editForm.phone.trim(),
@@ -292,6 +296,15 @@ export default function LeadsTab() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-sm font-semibold text-white">{lead.businessName || "—"}</h3>
+                          {me.isAdmin && lead.ownerName && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={{ background: "rgba(176,255,0,0.12)", color: "#b0ff00" }}
+                              title="Rep"
+                            >
+                              👤 {lead.ownerName}
+                            </span>
+                          )}
                           {lead.claimedBy && me.name && lead.claimedBy !== me.name && (
                             <span
                               className="text-xs px-2 py-0.5 rounded-full font-medium"

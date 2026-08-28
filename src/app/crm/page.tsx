@@ -49,11 +49,15 @@ function CRMPageInner() {
     const el = document.documentElement;
     if (me.name) {
       el.dataset.crmUser = me.name;
+      // The uid too, so a lead captured on Maps is owned by the same account
+      // the CRM knows — not just tagged with a display name.
+      if (me.uid) el.dataset.crmUid = me.uid;
       el.dataset.crmBrand = "dygiko";
     } else {
       delete el.dataset.crmUser;
+      delete el.dataset.crmUid;
     }
-  }, [me.name]);
+  }, [me.name, me.uid]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {

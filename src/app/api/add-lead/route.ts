@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
       email?: string;
       notes?: string;
       bookingDateTime?: string;
+      ownerUid?: string;
+      ownerName?: string;
     };
 
     if (body.token !== SHARED_TOKEN) {
@@ -85,6 +87,10 @@ export async function POST(req: NextRequest) {
       ...(notes ? { notesAt: Timestamp.now() } : {}),
       notInterested: false,
       bookingDateTime,
+      // Whoever was signed into the CRM on that device when the lead was
+      // captured. Sent by the extension, which reads it off the CRM page.
+      ownerUid: (body.ownerUid || "").trim() || null,
+      ownerName: (body.ownerName || "").trim() || null,
       dateAdded: Timestamp.now(),
       // The Leads tab orders on createdAt; a document missing that field is
       // dropped from the query entirely, so extension-captured leads were
