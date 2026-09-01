@@ -90,6 +90,7 @@ function postCallHtml(name: string): string {
     <p>Hi ${esc(name)}, good to speak earlier.</p>
     <p>Here's my website: <a href="https://dygiko.com" style="color:#7aa800;">dygiko.com</a></p>
     <p>On there you can see various demos of the custom apps and websites I offer.</p>
+    <p>Would be great to get on a short consultation call with you whenever you're available.</p>
     ${SIGNATURE_HTML}
   </div>`;
 }
@@ -101,6 +102,8 @@ Here's my website: https://dygiko.com
 
 On there you can see various demos of the custom apps and websites I offer.
 
+Would be great to get on a short consultation call with you whenever you're available.
+
 Kind regards,
 
 Sam Sako
@@ -108,20 +111,34 @@ dygiko.com`;
 }
 
 /** Post-call note, sent from the call tracker the moment you hang up. */
-export async function sendPostCallEmail(to: string, name?: string): Promise<void> {
+// SMTP lets you set any From header, but Zoho only relays it if the address is
+// the mailbox itself or a verified "Send Mail As" alias — otherwise 553. Ask
+// for the preferred address, fall back to the authenticated one rather than
+// dropping the email, and report which was used.
+const POSTCALL_FROM = process.env.DYGIKO_FROM_EMAIL || "info@dygiko.com";
+
+export async function sendPostCallEmail(to: string, name?: string): Promise<{ from: string }> {
   const t = transporter();
   const user = process.env.ZOHO_MAIL_USER;
   if (!t || !user) throw new Error("Email not configured");
   // No name given: "Hi, good to speak earlier" still reads fine.
   const first = ((name || "").trim().split(/\s+/)[0] || "").slice(0, 40);
-  await t.sendMail({
-    from: `Sam Sako <${user}>`,
-    replyTo: user,
+  const mail = {
     to: to.trim(),
     subject: "Good to speak earlier",
     html: postCallHtml(first).replace("Hi , ", "Hi, "),
     text: postCallText(first).replace("Hi , ", "Hi, "),
-  });
+  };
+  try {
+    await t.sendMail({ ...mail, from: `Sam Sako <${POSTCALL_FROM}>`, replyTo: POSTCALL_FROM });
+    return { from: POSTCALL_FROM };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!/553|relay|not allowed|sender/i.test(msg) || POSTCALL_FROM === user) throw err;
+    console.warn(`Zoho refused From ${POSTCALL_FROM}; falling back to ${user}`);
+    await t.sendMail({ ...mail, from: `Sam Sako <${user}>`, replyTo: user });
+    return { from: user };
+  }
 }
 
 export async function sendFollowupEmail(to: string, trade?: string): Promise<void> {

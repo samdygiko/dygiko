@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
     if (!to || !isValidEmail(to)) {
       return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
     }
-    await sendPostCallEmail(to, name);
-    return NextResponse.json({ ok: true });
+    const { from } = await sendPostCallEmail(to, name);
+    return NextResponse.json({ ok: true, from });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send";
     console.error("send-postcall error:", message);
