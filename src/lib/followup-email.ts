@@ -115,7 +115,11 @@ dygiko.com`;
 // the mailbox itself or a verified "Send Mail As" alias — otherwise 553. Ask
 // for the preferred address, fall back to the authenticated one rather than
 // dropping the email, and report which was used.
-const POSTCALL_FROM = process.env.DYGIKO_FROM_EMAIL || "info@dygiko.com";
+// Send from the authenticated Zoho account (the mail. subdomain) by default —
+// a spam complaint then damages that subdomain rather than the root domain.
+// DYGIKO_FROM_EMAIL overrides, but must be the mailbox or a verified Zoho
+// "Send Mail As" alias or Zoho rejects it with 553.
+const POSTCALL_FROM = process.env.DYGIKO_FROM_EMAIL || "";
 
 // Where replies go, regardless of which address the mail left from. Outreach
 // sends from the mail.dygiko.com subdomain so spam complaints hit that and not
@@ -135,13 +139,17 @@ export async function sendPostCallEmail(to: string, name?: string): Promise<{ fr
     html: postCallHtml(first).replace("Hi , ", "Hi, "),
     text: postCallText(first).replace("Hi , ", "Hi, "),
   };
+  // No override configured: use the authenticated account, which Zoho always
+  // accepts. Avoids a guaranteed-to-fail send on every single email.
+  const sender = POSTCALL_FROM || user;
+
   try {
-    await t.sendMail({ ...mail, from: `Sam Sako <${POSTCALL_FROM}>`, replyTo: POSTCALL_REPLY_TO });
-    return { from: POSTCALL_FROM };
+    await t.sendMail({ ...mail, from: `Sam Sako <${sender}>`, replyTo: POSTCALL_REPLY_TO });
+    return { from: sender };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (!/553|relay|not allowed|sender/i.test(msg) || POSTCALL_FROM === user) throw err;
-    console.warn(`Zoho refused From ${POSTCALL_FROM}; falling back to ${user}`);
+    if (!/553|relay|not allowed|sender/i.test(msg) || sender === user) throw err;
+    console.warn(`Zoho refused From ${sender}; falling back to ${user}`);
     await t.sendMail({ ...mail, from: `Sam Sako <${user}>`, replyTo: POSTCALL_REPLY_TO });
     return { from: user };
   }
