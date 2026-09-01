@@ -137,8 +137,6 @@ function depositHtml(name: string): string {
   <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #0b1b3b; line-height: 1.5;">
     <p>Hi ${esc(name)}, here's the payment link for the consultation:</p>
     <p><a href="${DEPOSIT_LINK}" style="color:#7aa800;">${DEPOSIT_LINK}</a></p>
-    <p>It's £${DEPOSIT_AMOUNT} to hold the slot, and it comes straight off your first
-       invoice — so if you go ahead it costs you nothing extra.</p>
     ${SIGNATURE_HTML}
   </div>`;
 }
@@ -147,8 +145,6 @@ function depositText(name: string): string {
   return `Hi ${name}, here's the payment link for the consultation:
 
 ${DEPOSIT_LINK}
-
-It's £${DEPOSIT_AMOUNT} to hold the slot, and it comes straight off your first invoice — so if you go ahead it costs you nothing extra.
 
 Kind regards,
 
