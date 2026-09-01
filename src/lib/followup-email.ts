@@ -81,6 +81,49 @@ function transporter() {
 }
 
 /** Send one follow-up email. Returns true on success. Throws if not configured. */
+// Straight after a call: a short note with the website, which carries the
+// demos itself. Deliberately no price list — that conversation already
+// happened on the phone.
+function postCallHtml(name: string): string {
+  return `
+  <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #0b1b3b; line-height: 1.5;">
+    <p>Hi ${esc(name)}, good to speak earlier.</p>
+    <p>Here's my website: <a href="https://dygiko.com" style="color:#7aa800;">dygiko.com</a></p>
+    <p>On there you can see various demos of the custom apps and websites I offer.</p>
+    ${SIGNATURE_HTML}
+  </div>`;
+}
+
+function postCallText(name: string): string {
+  return `Hi ${name}, good to speak earlier.
+
+Here's my website: https://dygiko.com
+
+On there you can see various demos of the custom apps and websites I offer.
+
+Kind regards,
+
+Sam Sako
+dygiko.com`;
+}
+
+/** Post-call note, sent from the call tracker the moment you hang up. */
+export async function sendPostCallEmail(to: string, name?: string): Promise<void> {
+  const t = transporter();
+  const user = process.env.ZOHO_MAIL_USER;
+  if (!t || !user) throw new Error("Email not configured");
+  // No name given: "Hi, good to speak earlier" still reads fine.
+  const first = ((name || "").trim().split(/\s+/)[0] || "").slice(0, 40);
+  await t.sendMail({
+    from: `Sam Sako <${user}>`,
+    replyTo: user,
+    to: to.trim(),
+    subject: "Good to speak earlier",
+    html: postCallHtml(first).replace("Hi , ", "Hi, "),
+    text: postCallText(first).replace("Hi , ", "Hi, "),
+  });
+}
+
 export async function sendFollowupEmail(to: string, trade?: string): Promise<void> {
   const t = transporter();
   const user = process.env.ZOHO_MAIL_USER;
