@@ -127,17 +127,53 @@ const POSTCALL_FROM = process.env.DYGIKO_FROM_EMAIL || "";
 // it can point at the real inbox without giving up that separation.
 const POSTCALL_REPLY_TO = process.env.DYGIKO_REPLY_TO || "info@dygiko.com";
 
-export async function sendPostCallEmail(to: string, name?: string): Promise<{ from: string }> {
+// The consultation deposit link, emailed rather than texted — a landline
+// can't receive a text, and silently so.
+const DEPOSIT_AMOUNT = 25;
+const DEPOSIT_LINK = `https://www.dygiko.com/checkout?deposit=${DEPOSIT_AMOUNT}`;
+
+function depositHtml(name: string): string {
+  return `
+  <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #0b1b3b; line-height: 1.5;">
+    <p>Hi ${esc(name)}, here's the payment link for the consultation:</p>
+    <p><a href="${DEPOSIT_LINK}" style="color:#7aa800;">${DEPOSIT_LINK}</a></p>
+    <p>It's £${DEPOSIT_AMOUNT} to hold the slot, and it comes straight off your first
+       invoice — so if you go ahead it costs you nothing extra.</p>
+    ${SIGNATURE_HTML}
+  </div>`;
+}
+
+function depositText(name: string): string {
+  return `Hi ${name}, here's the payment link for the consultation:
+
+${DEPOSIT_LINK}
+
+It's £${DEPOSIT_AMOUNT} to hold the slot, and it comes straight off your first invoice — so if you go ahead it costs you nothing extra.
+
+Kind regards,
+
+Sam Sako
+dygiko.com`;
+}
+
+export type PostCallKind = "postcall" | "deposit";
+
+export async function sendPostCallEmail(
+  to: string,
+  name?: string,
+  kind: PostCallKind = "postcall"
+): Promise<{ from: string }> {
   const t = transporter();
   const user = process.env.ZOHO_MAIL_USER;
   if (!t || !user) throw new Error("Email not configured");
   // No name given: "Hi, good to speak earlier" still reads fine.
   const first = ((name || "").trim().split(/\s+/)[0] || "").slice(0, 40);
+  const deposit = kind === "deposit";
   const mail = {
     to: to.trim(),
-    subject: "Good to speak earlier",
-    html: postCallHtml(first).replace("Hi , ", "Hi, "),
-    text: postCallText(first).replace("Hi , ", "Hi, "),
+    subject: deposit ? "Your consultation booking" : "Good to speak earlier",
+    html: (deposit ? depositHtml(first) : postCallHtml(first)).replace("Hi , ", "Hi, "),
+    text: (deposit ? depositText(first) : postCallText(first)).replace("Hi , ", "Hi, "),
   };
   // No override configured: use the authenticated account, which Zoho always
   // accepts. Avoids a guaranteed-to-fail send on every single email.

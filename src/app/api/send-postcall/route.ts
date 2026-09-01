@@ -11,10 +11,11 @@ const SHARED_TOKEN = "dygiko-ext-7a2c5e91";
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, to, name } = (await req.json()) as {
+    const { token, to, name, kind } = (await req.json()) as {
       token?: string;
       to?: string;
       name?: string;
+      kind?: string;
     };
     if (token !== SHARED_TOKEN) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (!to || !isValidEmail(to)) {
       return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
     }
-    const { from } = await sendPostCallEmail(to, name);
+    const { from } = await sendPostCallEmail(to, name, kind === "deposit" ? "deposit" : "postcall");
     return NextResponse.json({ ok: true, from });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send";
