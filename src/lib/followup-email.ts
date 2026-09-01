@@ -117,6 +117,12 @@ dygiko.com`;
 // dropping the email, and report which was used.
 const POSTCALL_FROM = process.env.DYGIKO_FROM_EMAIL || "info@dygiko.com";
 
+// Where replies go, regardless of which address the mail left from. Outreach
+// sends from the mail.dygiko.com subdomain so spam complaints hit that and not
+// the root domain; Reply-To is only a header (no bearing on SPF/DKIM/DMARC) so
+// it can point at the real inbox without giving up that separation.
+const POSTCALL_REPLY_TO = process.env.DYGIKO_REPLY_TO || "info@dygiko.com";
+
 export async function sendPostCallEmail(to: string, name?: string): Promise<{ from: string }> {
   const t = transporter();
   const user = process.env.ZOHO_MAIL_USER;
@@ -130,13 +136,13 @@ export async function sendPostCallEmail(to: string, name?: string): Promise<{ fr
     text: postCallText(first).replace("Hi , ", "Hi, "),
   };
   try {
-    await t.sendMail({ ...mail, from: `Sam Sako <${POSTCALL_FROM}>`, replyTo: POSTCALL_FROM });
+    await t.sendMail({ ...mail, from: `Sam Sako <${POSTCALL_FROM}>`, replyTo: POSTCALL_REPLY_TO });
     return { from: POSTCALL_FROM };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (!/553|relay|not allowed|sender/i.test(msg) || POSTCALL_FROM === user) throw err;
     console.warn(`Zoho refused From ${POSTCALL_FROM}; falling back to ${user}`);
-    await t.sendMail({ ...mail, from: `Sam Sako <${user}>`, replyTo: user });
+    await t.sendMail({ ...mail, from: `Sam Sako <${user}>`, replyTo: POSTCALL_REPLY_TO });
     return { from: user };
   }
 }
