@@ -1,4 +1,4 @@
-// Creates a PayPal order for a single Kojo Builds package. The package is
+// Creates a PayPal order for a single Dygiko package. The package is
 // re-priced server-side from products.ts (never trust a client-sent price),
 // then mirrored into Firestore as a pending order so it shows in the CRM
 // immediately — even before the customer completes payment.
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
         const shortCode = order.id.slice(-6).toUpperCase();
         await adminDb().collection("orders").doc(`pp_${order.id}`).set({
           paypalOrderId: order.id,
-          friendlyId: `KB-${shortCode}`,
+          friendlyId: `DY-${shortCode}`,
           paymentProvider: "paypal",
           status: "pending_payment",
           packageKey: outrightTotal != null ? "outright" : (product?.key || "custom"),

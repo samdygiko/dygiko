@@ -1,5 +1,5 @@
 // Captures a PayPal order, promotes the matching Firestore order doc to
-// "paid", and emails Kojo Builds a notification. Firestore + email are
+// "paid", and emails Dygiko a notification. Firestore + email are
 // best-effort: the capture itself is what matters and always returns its
 // result so the customer reaches the success page.
 
@@ -14,7 +14,7 @@ interface PayPalOrder {
   purchase_units?: { amount?: { value: string; currency_code: string } }[];
 }
 
-const NOTIFY_TO = "sam@kojobuilds.com";
+const NOTIFY_TO = "sam@dygiko.com";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
         .join(" ") || customer?.name || null;
     const paidValue = order.purchase_units?.[0]?.amount?.value || null;
 
+    // Full package label pulled from the Firestore doc if we have one — the
+    // pending doc written by create-order carries the outright items list, so
+    // this is where multi-item outright orders get named properly in the email.
+    let mirroredName: string | null = null;
+    let mirroredAmount: number | null = null;
+
     // Promote the pending order doc to paid (best-effort).
     try {
       const { adminDb } = await import("@/lib/firebase-admin");
@@ -52,6 +58,9 @@ export async function POST(req: NextRequest) {
       const orderRef = adminDb().collection("orders").doc(`pp_${order.id}`);
       const existing = await orderRef.get();
       if (existing.exists) {
+        const data = existing.data() as { packageName?: string; amountTotal?: number } | undefined;
+        mirroredName = data?.packageName ?? null;
+        mirroredAmount = typeof data?.amountTotal === "number" ? data.amountTotal / 100 : null;
         await orderRef.update({
           status: "paid",
           paidAt: Timestamp.now(),
@@ -61,7 +70,7 @@ export async function POST(req: NextRequest) {
       } else {
         await orderRef.set({
           paypalOrderId: order.id,
-          friendlyId: `KB-${order.id.slice(-6).toUpperCase()}`,
+          friendlyId: `DY-${order.id.slice(-6).toUpperCase()}`,
           paymentProvider: "paypal",
           status: "paid",
           packageKey: product?.key || null,
@@ -84,20 +93,20 @@ export async function POST(req: NextRequest) {
       console.error("Order doc write skipped:", err);
     }
 
-    // Notify Kojo Builds by email (best-effort).
+    // Notify Dygiko by email (best-effort).
     try {
       if (process.env.RESEND_API_KEY) {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-          from: "Kojo Builds <sam@kojobuilds.com>",
+          from: "Dygiko <sam@dygiko.com>",
           to: NOTIFY_TO,
-          subject: `💸 New order — ${product?.name || "package"} (£${paidValue || product?.price || "?"})`,
+          subject: `💸 New order — ${mirroredName || product?.name || "package"} (£${paidValue || mirroredAmount || product?.price || "?"})`,
           text: [
             `New paid order via PayPal.`,
             ``,
-            `Package: ${product?.name || pkg || "unknown"}`,
-            `Amount: £${paidValue || product?.price || "?"}`,
+            `Package: ${mirroredName || product?.name || pkg || "unknown"}`,
+            `Amount: £${paidValue || mirroredAmount || product?.price || "?"}`,
             `PayPal order: ${order.id}`,
             ``,
             `Customer`,
