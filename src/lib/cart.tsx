@@ -11,7 +11,22 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { PACKAGES, getPackage, type Package, type PackageKey } from "./products";
+import {
+  PACKAGES, getPackage, isOwnable, outrightPrice, outrightUnitPrice,
+  OUTRIGHT_YEARS, OUTRIGHT_HOURLY_RATE,
+  type Package, type PackageKey,
+} from "./products";
+
+/**
+ * How the cart is being bought.
+ *   "annual"   — recurring yearly subscription, Dygiko owns and hosts the build
+ *   "outright" — five years upfront, one payment, the client owns it outright
+ *
+ * This is cart-wide rather than per-item on purpose: PayPal approves one flow
+ * per checkout (a subscription OR a one-off capture), so a cart can't contain
+ * both. Switching to "outright" drops anything that isn't ownable.
+ */
+export type PurchaseMode = "annual" | "outright";
 
 export type CartItem = { pkg: PackageKey; qty: number };
 
@@ -28,6 +43,7 @@ export type LineItem = {
 };
 
 const STORAGE_KEY = "kojoCart";
+const MODE_KEY = "kojoCartMode";
 const VALID_KEYS = new Set(PACKAGES.map((p) => p.key));
 
 // A slider package (social) is priced per unit; others use their flat price.
@@ -37,12 +53,15 @@ const minOf = (p: Package) => p.unitMin ?? 1;
 const maxOf = (p: Package) => p.unitMax ?? 20;
 const defaultQtyOf = (p: Package) => p.unitDefault ?? 1;
 
-export function buildLineItems(items: CartItem[]): LineItem[] {
+export function buildLineItems(items: CartItem[], mode: PurchaseMode = "annual"): LineItem[] {
   return items
     .map((it) => {
       const p = getPackage(it.pkg);
       if (!p) return null;
-      const unitPrice = unitPriceOf(p);
+      const outright = mode === "outright" && isOwnable(p);
+      const unitPrice = outright
+        ? (isSlider(p) ? outrightUnitPrice(p) : outrightPrice(p))
+        : unitPriceOf(p);
       return {
         pkg: p.key,
         name: p.name,
@@ -70,6 +89,10 @@ type CartValue = {
   setQty: (pkg: PackageKey, qty: number) => void;
   removeItem: (pkg: PackageKey) => void;
   clear: () => void;
+  mode: PurchaseMode;
+  setMode: (m: PurchaseMode) => void;
+  /** Items dropped by the last switch to outright, so the drawer can say so. */
+  droppedForOutright: PackageKey[];
 };
 
 const CartContext = createContext<CartValue | null>(null);
@@ -78,6 +101,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [mode, setModeState] = useState<PurchaseMode>("annual");
+  const [droppedForOutright, setDropped] = useState<PackageKey[]>([]);
 
   // Load once on mount (SSR renders an empty cart to avoid hydration mismatch).
   useEffect(() => {
@@ -93,6 +118,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           );
         }
       }
+      const savedMode = localStorage.getItem(MODE_KEY);
+      if (savedMode === "outright" || savedMode === "annual") setModeState(savedMode);
     } catch {
       /* ignore */
     }
@@ -104,10 +131,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(MODE_KEY, mode);
     } catch {
       /* ignore */
     }
-  }, [items, hydrated]);
+  }, [items, mode, hydrated]);
+
+  // Switching to outright drops anything that can't be owned (static posts,
+  // reels) — they're ongoing work, not a one-time build. The drawer surfaces
+  // what went so it never happens silently.
+  const setMode = (m: PurchaseMode) => {
+    setModeState(m);
+    if (m !== "outright") { setDropped([]); return; }
+    setItems((prev) => {
+      const keep = prev.filter((it) => { const p = getPackage(it.pkg); return p && isOwnable(p); });
+      setDropped(prev.filter((it) => !keep.includes(it)).map((it) => it.pkg));
+      return keep;
+    });
+  };
 
   const clampQty = (pkg: PackageKey, qty: number) => {
     const p = getPackage(pkg);
@@ -119,6 +160,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (pkg: PackageKey, openDrawer = true) => {
     const p = getPackage(pkg);
     if (!p) return;
+    // An unownable package added while in outright mode flips the cart back to
+    // annual rather than silently pricing it at five years.
+    if (mode === "outright" && !isOwnable(p)) setModeState("annual");
     setItems((prev) => {
       const existing = prev.find((it) => it.pkg === pkg);
       if (existing) {
@@ -138,12 +182,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clear = () => setItems([]);
 
-  const lineItems = useMemo(() => buildLineItems(items), [items]);
+  const lineItems = useMemo(() => buildLineItems(items, mode), [items, mode]);
   const total = useMemo(() => lineItems.reduce((s, li) => s + li.lineTotal, 0), [lineItems]);
   const count = lineItems.length;
 
   const value: CartValue = {
     items, lineItems, total, count, hydrated, open, setOpen, addItem, setQty, removeItem, clear,
+    mode, setMode, droppedForOutright,
   };
 
   return (
@@ -161,6 +206,7 @@ export function useCart(): CartValue {
     return {
       items: [], lineItems: [], total: 0, count: 0, hydrated: false, open: false,
       setOpen: () => {}, addItem: () => {}, setQty: () => {}, removeItem: () => {}, clear: () => {},
+      mode: "annual", setMode: () => {}, droppedForOutright: [],
     };
   }
   return ctx;
@@ -169,7 +215,8 @@ export function useCart(): CartValue {
 const ACCENT = "#b0ff00";
 
 function CartDrawer() {
-  const { open, setOpen, lineItems, total, setQty, removeItem, clear } = useCart();
+  const { open, setOpen, lineItems, total, setQty, removeItem, clear, mode, droppedForOutright } = useCart();
+  const outright = mode === "outright";
   const router = useRouter();
 
   // Lock body scroll while the drawer is open.
@@ -217,6 +264,21 @@ function CartDrawer() {
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          {outright && (
+            <div style={{ background: "#eff4ff", border: "1px solid #d6e0f0", borderRadius: 12, padding: 14 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#0b1b3b", marginBottom: 6 }}>Owning it outright</p>
+              <p style={{ fontSize: 12, color: "#44516b", lineHeight: 1.6, margin: 0 }}>
+                {OUTRIGHT_YEARS} years paid upfront in one payment. The project and its content
+                become fully yours, with 12 months of maintenance and unlimited revisions
+                included. After that year, revisions are £{OUTRIGHT_HOURLY_RATE} an hour.
+              </p>
+              {droppedForOutright.length > 0 && (
+                <p style={{ fontSize: 11, color: "#7c89a3", lineHeight: 1.5, margin: "8px 0 0" }}>
+                  Removed: {droppedForOutright.map((k) => getPackage(k)?.name).filter(Boolean).join(", ")} — ongoing service, available on the annual plan only.
+                </p>
+              )}
+            </div>
+          )}
           {lineItems.length === 0 ? (
             <p style={{ fontSize: 14, color: "#7c89a3", textAlign: "center", marginTop: 40 }}>
               Your cart is empty.
@@ -241,8 +303,8 @@ function CartDrawer() {
                   </div>
 
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0b1b3b" }}>£{li.lineTotal.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#7c89a3" }}>/yr</span></div>
-                    {li.isSlider && <div style={{ fontSize: 10, color: "#7c89a3" }}>£{li.unitPrice}/yr each</div>}
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0b1b3b" }}>£{li.lineTotal.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#7c89a3" }}>{outright ? " one-off" : "/yr"}</span></div>
+                    {li.isSlider && <div style={{ fontSize: 10, color: "#7c89a3" }}>£{li.unitPrice}{outright ? " each" : "/yr each"}</div>}
                   </div>
                 </div>
               </div>
@@ -254,9 +316,11 @@ function CartDrawer() {
           <div style={{ borderTop: "1px solid #e4ebf5", padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.15em", color: "#7c89a3" }}>Total</span>
-              <span style={{ fontSize: 24, fontWeight: 700, color: "#0b1b3b" }}>£{total.toLocaleString()}<span style={{ fontSize: 13, fontWeight: 500, color: "#7c89a3" }}>/yr</span></span>
+              <span style={{ fontSize: 24, fontWeight: 700, color: "#0b1b3b" }}>£{total.toLocaleString()}<span style={{ fontSize: 13, fontWeight: 500, color: "#7c89a3" }}>{outright ? "" : "/yr"}</span></span>
             </div>
-            <p style={{ fontSize: 11, color: "#16a34a", fontWeight: 600, marginTop: -6 }}>Billed once a year</p>
+            <p style={{ fontSize: 11, color: "#16a34a", fontWeight: 600, marginTop: -6 }}>
+              {outright ? `One payment — ${OUTRIGHT_YEARS} years upfront, then it is yours` : "Billed once a year"}
+            </p>
             <button onClick={goCheckout} style={{ background: ACCENT, color: "#080808", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
               Checkout →
             </button>

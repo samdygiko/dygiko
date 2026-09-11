@@ -245,9 +245,8 @@ function AdminContent() {
 
 // Simple invoice generator — fill in who you're invoicing, the reason and the
 // amount, and it opens a clean printable invoice (Save as PDF from the print
-// dialog). Payment details are fixed to Eden's account.
-// TODO: confirm Dygiko's bank details before invoicing a client.
-const PAY = { name: "Sam Sako", sort: "00-00-00", account: "00000000" };
+// dialog). Payment details are fixed to Sam's account.
+const PAY = { name: "Samuel Sako", sort: "23-11-85", account: "81562530" };
 
 function InvoiceGenerator() {
   const today = new Date();

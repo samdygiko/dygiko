@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Nav from "@/components/Nav";
-import { getPackage, type PackageKey } from "@/lib/products";
+import { getPackage, OUTRIGHT_YEARS, OUTRIGHT_HOURLY_RATE, type PackageKey } from "@/lib/products";
 import { useI18n } from "@/lib/i18n";
 import { useCart, type LineItem } from "@/lib/cart";
 
@@ -73,8 +73,11 @@ function CheckoutInner() {
           : priceOverride !== null
             ? "custom"
             : "cart";
+  // A cart in outright mode is a single payment, so it takes the same capture
+  // path as an admin one-off link rather than the subscription path.
+  const isOutrightCart = mode === "cart" && cart.mode === "outright";
   const isDeposit = mode === "deposit";
-  const isOneOff = mode === "oneoff" || mode === "deposit";
+  const isOneOff = mode === "oneoff" || mode === "deposit" || isOutrightCart;
   const isQuarterly = mode === "quarterly";
   const isMonthly = mode === "monthly";
   const isCart = mode === "cart";
@@ -146,6 +149,10 @@ function CheckoutInner() {
   // everything else (standard packages + one-off custom links) is capture.
   useEffect(() => {
     if (!PAYPAL_CLIENT_ID || sdkReady) return;
+    // Wait for the cart to hydrate: the SDK bakes its intent into the script
+    // URL, and until localStorage is read we don't know whether this is an
+    // outright (capture) or annual (subscription) checkout.
+    if (!cart.hydrated) return;
     if (window.paypal) {
       setSdkReady(true);
       return;
@@ -159,7 +166,7 @@ function CheckoutInner() {
     script.onload = () => setSdkReady(true);
     script.onerror = () => setError("Couldn't load PayPal — refresh and try again");
     document.head.appendChild(script);
-  }, [sdkReady]);
+  }, [sdkReady, isOneOff, cart.hydrated]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const formValid = !!name && emailValid && agreed;
@@ -195,7 +202,9 @@ function CheckoutInner() {
             const res = await fetch("/api/paypal/create-order", {
               method: "POST", headers,
               body: JSON.stringify(
-                isDeposit
+                isOutrightCart
+                  ? { pkg: primaryPkg, customer, mode: "outright", items: cart.items }
+                  : isDeposit
                   ? { amount: total, customer, label: "Consultation deposit" }
                   : { pkg: primaryPkg, amount: total, customer }
               ),
@@ -208,9 +217,10 @@ function CheckoutInner() {
             try {
               const res = await fetch("/api/paypal/capture", {
                 method: "POST", headers,
-                body: JSON.stringify({ orderId: data.orderID, pkg: primaryPkg, amount: total, customer }),
+                body: JSON.stringify({ orderId: data.orderID, pkg: primaryPkg, amount: total, customer, mode: isOutrightCart ? "outright" : "one-off" }),
               });
               if (!res.ok) { const err = await res.json(); throw new Error(err?.error || "Couldn't take payment"); }
+              if (isOutrightCart) cart.clear();
               router.push(successUrl);
             } catch (e) {
               setError(e instanceof Error ? e.message : "Payment failed");
@@ -252,7 +262,7 @@ function CheckoutInner() {
 
     window.paypal.Buttons(config).render(el);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sdkReady, canPay, isOneOff, isDeposit, isCart, billingPeriod, primaryPkg, total, lineKey, name, email, phone, business, website, notes, router]);
+  }, [sdkReady, canPay, isOneOff, isDeposit, isOutrightCart, isCart, billingPeriod, primaryPkg, total, lineKey, name, email, phone, business, website, notes, router]);
 
   return (
     <>
@@ -353,6 +363,17 @@ function CheckoutInner() {
                   <p style={{ fontSize: 12, color: "#44516b", lineHeight: 1.6, margin: 0 }}>
                     A one-off £{deposit} to book the appointment. It comes straight off your
                     first invoice, so if you go ahead it costs you nothing extra.
+                  </p>
+                </div>
+              ) : isOutrightCart ? (
+                <div style={{ background: "rgba(176,255,0,0.07)", border: "1px solid rgba(176,255,0,0.25)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, color: "#7aa800", fontWeight: 700, marginBottom: 6 }}>
+                    One payment — {OUTRIGHT_YEARS} years upfront
+                  </p>
+                  <p style={{ fontSize: 12, color: "#44516b", lineHeight: 1.6, margin: 0 }}>
+                    The project and its content become fully yours. Includes 12 months of
+                    maintenance and unlimited revisions; after that, revisions are
+                    £{OUTRIGHT_HOURLY_RATE} an hour.
                   </p>
                 </div>
               ) : isOneOff ? (

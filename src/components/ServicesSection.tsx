@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Magnetic from "./Magnetic";
 import { useCart } from "@/lib/cart";
-import { getPackage } from "@/lib/products";
+import { getPackage, isOwnable, outrightPrice, OUTRIGHT_YEARS, OUTRIGHT_HOURLY_RATE } from "@/lib/products";
 
 type Package = {
   name: string;
@@ -83,7 +83,8 @@ const PACKAGES: Package[] = [
 ];
 
 export default function ServicesSection() {
-  const { addItem } = useCart();
+  const { addItem, mode, setMode } = useCart();
+  const outright = mode === "outright";
   // The social card sells two things at different rates — static posts and
   // edited reels. One card, a toggle inside, and the chosen kind decides
   // which package key is added to the cart.
@@ -115,14 +116,50 @@ export default function ServicesSection() {
           >
             Pricing
           </h2>
+
+          {/* Annual vs one-off. Cart-wide, because PayPal approves one flow
+              per checkout — a subscription or a one-off, never both. */}
+          <div className="mt-8 flex flex-col gap-3">
+            <div className="inline-flex gap-1 p-1 rounded-sm self-start" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              {([["annual", "Annual"], ["outright", "One off"]] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setMode(k)}
+                  className="px-5 py-2 rounded-sm text-sm font-semibold transition-colors cursor-pointer"
+                  style={{
+                    background: mode === k ? "#b0ff00" : "transparent",
+                    color: mode === k ? "#080808" : "rgba(255,255,255,0.65)",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm max-w-2xl" style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+              {outright
+                ? `Pay ${OUTRIGHT_YEARS} years upfront in one payment and the project and its content are fully yours — with 12 months of maintenance and unlimited revisions included. After that, revisions are £${OUTRIGHT_HOURLY_RATE} an hour.`
+                : "Billed once a year. We build, host, maintain and support it — cancel anytime."}
+            </p>
+          </div>
         </motion.div>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {PACKAGES.map((pkg, i) => {
             const displayName = pkg.isSocial ? socialTitle : pkg.name;
-            const displayPrice = pkg.isSocial ? socialFromPrice : pkg.price;
             const cartKey = pkg.isSocial ? socialKind : pkg.checkoutPkg;
+            // Resolve the underlying products.ts entry so we can price it
+            // properly for the current cart mode. The social card resolves to
+            // whichever kind is toggled; the rest map straight from checkoutPkg.
+            const resolvedPkg = getPackage(cartKey);
+            const cardOwnable = !!resolvedPkg && isOwnable(resolvedPkg);
+            const displayPrice = pkg.isSocial
+              ? socialFromPrice
+              : (outright && cardOwnable && resolvedPkg
+                  ? outrightPrice(resolvedPkg)
+                  : pkg.price);
+            const priceSuffix = outright && cardOwnable ? "" : "/year";
             return (
               <motion.div
                 key={pkg.checkoutPkg}
@@ -154,10 +191,17 @@ export default function ServicesSection() {
                       </span>
                     )}
                     £{displayPrice.toLocaleString()}
-                    <span className="text-base font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      {" "}/year
-                    </span>
+                    {priceSuffix && (
+                      <span className="text-base font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
+                        {" "}{priceSuffix}
+                      </span>
+                    )}
                   </p>
+                  {outright && !cardOwnable && (
+                    <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
+                      Ongoing monthly work — annual plan only. Adding it switches your cart back to annual.
+                    </p>
+                  )}
                 </div>
 
                 {/* Posts / Reels toggle — only on the social card. */}

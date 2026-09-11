@@ -16,6 +16,13 @@ export interface Package {
   price: number;
   /** Optional "was" price to show a saving (bundle) */
   compareAt?: number;
+  /**
+   * Can this package be bought outright (5 years upfront → client owns it)?
+   * True for things that are *built once* — a site or a system. Deliberately
+   * false for static posts and reels: those are ongoing work every month, so
+   * "owning" them means nothing and 5 years upfront would owe 5 years of work.
+   */
+  ownable?: boolean;
   /** Bullet points shown on the pricing card */
   features: string[];
   /** Highlight as the recommended card */
@@ -31,6 +38,7 @@ export interface Package {
 export const PACKAGES: Package[] = [
   {
     key: "site",
+    ownable: true,
     name: "Website",
     tagline: "A fast, professional site — built, hosted and kept live for you.",
     price: 360,
@@ -44,6 +52,7 @@ export const PACKAGES: Package[] = [
   },
   {
     key: "crm",
+    ownable: true,
     name: "Custom OMS (Operations Management System)",
     tagline: "Your own lead + customer system, tailored to how you work.",
     price: 600,
@@ -57,6 +66,7 @@ export const PACKAGES: Package[] = [
   },
   {
     key: "bundle",
+    ownable: true,
     name: "Website + Custom OMS",
     tagline: "The full stack — your site and system, built together.",
     price: 840,
@@ -105,6 +115,28 @@ export const PACKAGES: Package[] = [
     ],
   },
 ];
+
+// ── Outright ownership ────────────────────────────────────────────────────
+// Pay this many years of the annual price in one go and the build is yours:
+// full ownership of the project and its content, 12 months of maintenance and
+// unlimited revisions included, then revisions at the hourly rate below.
+
+export const OUTRIGHT_YEARS = 5;
+export const OUTRIGHT_HOURLY_RATE = 50;
+export const OUTRIGHT_FREE_MAINTENANCE_MONTHS = 12;
+
+/** Outright price for a package — five years of its annual price. */
+export function outrightPrice(p: Package): number {
+  return p.price * OUTRIGHT_YEARS;
+}
+
+/** Outright per-unit price, for slider packages. Unused today (nothing
+ *  slider-priced is ownable) but keeps the two prices derived the same way. */
+export function outrightUnitPrice(p: Package): number {
+  return (p.perUnit ?? p.price) * OUTRIGHT_YEARS;
+}
+
+export const isOwnable = (p: Package) => p.ownable === true;
 
 export function getPackage(key: string): Package | undefined {
   return PACKAGES.find((p) => p.key === key);
